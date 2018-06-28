@@ -82,6 +82,9 @@ public interface DSL {
     // Recipe book recipe reference stored inside player data
     TypeReference RECIPE = () -> "recipe";
 
+    // Biome names
+    TypeReference BIOME = () -> "biome";
+
     // Type/Template Factories
 
     static Type<Boolean> bool() {
