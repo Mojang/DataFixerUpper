@@ -5,8 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.util.Pair;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -23,6 +25,46 @@ public class JsonOps implements DynamicOps<JsonElement> {
     @Override
     public JsonElement empty() {
         return JsonNull.INSTANCE;
+    }
+
+    @Override
+    public Type<?> getType(final JsonElement input) {
+        if (input.isJsonObject()) {
+            return DSL.compoundList(DSL.remainderType(), DSL.remainderType());
+        }
+        if (input.isJsonArray()) {
+            return DSL.list(DSL.remainderType());
+        }
+        if (input.isJsonNull()) {
+            return DSL.nilType();
+        }
+        final JsonPrimitive primitive = input.getAsJsonPrimitive();
+        if (primitive.isString()) {
+            return DSL.string();
+        }
+        if (primitive.isBoolean()) {
+            return DSL.bool();
+        }
+        final BigDecimal value = primitive.getAsBigDecimal();
+        try {
+            final long l = value.longValueExact();
+            if ((byte) l == l) {
+                return DSL.byteType();
+            }
+            if ((short) l == l) {
+                return DSL.shortType();
+            }
+            if ((int) l == l) {
+                return DSL.intType();
+            }
+            return DSL.longType();
+        } catch (final ArithmeticException e) {
+            final double d = value.doubleValue();
+            if ((float) d == d) {
+                return DSL.floatType();
+            }
+            return DSL.doubleType();
+        }
     }
 
     @Override
