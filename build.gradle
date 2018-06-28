@@ -1,0 +1,91 @@
+import groovy.io.FileType
+
+apply plugin: 'java-library'
+apply plugin: 'maven'
+
+version = '1.0.0'
+group = 'com.mojang'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.0'
+}
+
+repositories {
+    maven {
+        url "https://libraries.minecraft.net"
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.code.findbugs:jsr305:2.0.1'
+    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'org.apache.logging.log4j:log4j-api:2.8.1'
+    compile 'com.google.guava:guava:21.0'
+    compile 'org.apache.commons:commons-lang3:3.5'
+    compile 'it.unimi.dsi:fastutil:7.1.0'
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+}
+
+test {
+    testLogging {
+        events "failed", "skipped"
+        showStandardStreams = true
+        showExceptions true
+    }
+}
+
+def repoDir = new File(projectDir, "repo")
+repoDir.mkdirs()
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "file://" + repoDir.absolutePath)
+
+            pom.project {
+                description 'Data upgrade engine'
+                url 'http://github.com/Mojang/DataFixerUpper'
+            }
+        }
+    }
+
+    doLast {
+        // Purge all annoying files that arent needed
+        repoDir.traverse(type: FileType.FILES, nameFilter: ~/.*\.(xml|xml\.sha1|md5)$/) {
+            it.delete()
+        }
+    }
+}
+
+clean.doLast {
+    repoDir.deleteDir()
+}

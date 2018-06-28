@@ -1,0 +1,228 @@
+package com.mojang.datafixers.types.templates;
+
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.DSL;
+import com.mojang.datafixers.FamilyOptic;
+import com.mojang.datafixers.RewriteResult;
+import com.mojang.datafixers.TypeRewriteRule;
+import com.mojang.datafixers.TypedOptic;
+import com.mojang.datafixers.functions.Functions;
+import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.datafixers.types.Type;
+import com.mojang.datafixers.types.families.RecursiveTypeFamily;
+import com.mojang.datafixers.types.families.TypeFamily;
+
+import javax.annotation.Nullable;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.IntFunction;
+
+public final class Check implements TypeTemplate {
+    private final String name;
+    private final int index;
+    private final TypeTemplate element;
+
+    public Check(final String name, final int index, final TypeTemplate element) {
+        this.name = name;
+        this.index = index;
+        this.element = element;
+    }
+
+    @Override
+    public int size() {
+        return Math.max(index + 1, element.size());
+    }
+
+    @Override
+    public TypeFamily apply(final TypeFamily family) {
+        return new TypeFamily() {
+            @Override
+            public Type<?> apply(final int index) {
+                if (index < 0) {
+                    throw new IndexOutOfBoundsException();
+                }
+                return new CheckType<>(name, index, Check.this.index, element.apply(family).apply(index));
+            }
+
+            /*@Override
+            public <A, B> Either<Type.FieldOptic<?, ?, A, B>, Type.FieldNotFoundException> findField(final int index, final String name, final Type<A> aType, final Type<B> bType) {
+                if (index == Tag.this.index) {
+                    return element.apply(family).findField(index, name, aType, bType);
+                }
+                return Either.right(new Type.FieldNotFoundException("Not a matching index"));
+            }*/
+        };
+    }
+
+    @Override
+    public <A, B> FamilyOptic<A, B> applyO(final FamilyOptic<A, B> input, final Type<A> aType, final Type<B> bType) {
+        return TypeFamily.familyOptic(i -> element.applyO(input, aType, bType).apply(i));
+    }
+
+    @Override
+    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, @Nullable final String name, final Type<FT> type, final Type<FR> resultType) {
+        if (index == this.index) {
+            return element.findFieldOrType(index, name, type, resultType);
+        }
+        return Either.right(new Type.FieldNotFoundException("Not a matching index"));
+    }
+
+    @Override
+    public IntFunction<RewriteResult<?, ?>> hmap(final TypeFamily family, final IntFunction<RewriteResult<?, ?>> function) {
+        return index -> {
+            final RewriteResult<?, ?> elementResult = element.hmap(family, function).apply(index);
+            return cap(family, index, elementResult);
+        };
+    }
+
+    private <A> RewriteResult<?, ?> cap(final TypeFamily family, final int index, final RewriteResult<A, ?> elementResult) {
+        return CheckType.fix((CheckType<A>) apply(family).apply(index), elementResult);
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Check)) {
+            return false;
+        }
+        final Check that = (Check) obj;
+        return Objects.equals(name, that.name) && index == that.index && Objects.equals(element, that.element);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, index, element);
+    }
+
+    @Override
+    public String toString() {
+        return "Tag[" + name + ", " + index + ": " + element + "]";
+    }
+
+    public static final class CheckType<A> extends Type<A> {
+        private final String name;
+        private final int index;
+        private final int expectedIndex;
+        private final Type<A> delegate;
+
+        public CheckType(final String name, final int index, final int expectedIndex, final Type<A> delegate) {
+            this.name = name;
+            this.index = index;
+            this.expectedIndex = expectedIndex;
+            this.delegate = delegate;
+        }
+
+        @Override
+        public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
+            if (index != expectedIndex) {
+                return Pair.of(input, Optional.empty());
+            }
+            return delegate.read(ops, input);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final T rest, final A value) {
+            return delegate.write(ops, rest, value);
+        }
+
+        public static <A, B> RewriteResult<A, ?> fix(final CheckType<A> type, final RewriteResult<A, B> instance) {
+            if (Objects.equals(instance.view().function(), Functions.id())) {
+                return RewriteResult.nop(type);
+            }
+            return opticView(type, instance, wrapOptic(type, TypedOptic.adapter(instance.view().type(), instance.view().newType())));
+        }
+
+        @Override
+        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+            return fix(this, delegate.rewriteOrNop(rule));
+        }
+
+        @Override
+        public Optional<RewriteResult<A, ?>> one(final TypeRewriteRule rule) {
+            return rule.rewrite(delegate).map(view -> fix(this, view));
+        }
+
+        @Override
+        public Type<?> updateMu(final RecursiveTypeFamily newFamily) {
+            return new CheckType<>(name, index, expectedIndex, delegate.updateMu(newFamily));
+        }
+
+        @Override
+        public TypeTemplate buildTemplate() {
+            return DSL.check(name, expectedIndex, delegate.template());
+        }
+
+        @Override
+        public Optional<TaggedChoice.TaggedChoiceType<?>> findChoiceType(final String name, final int index) {
+            if (index == expectedIndex) {
+                return delegate.findChoiceType(name, index);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Type<?>> findCheckedType(final int index) {
+            if (index == expectedIndex) {
+                return Optional.of(delegate);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Type<?>> findFieldTypeOpt(final String name) {
+            if (index == expectedIndex) {
+                return delegate.findFieldTypeOpt(name);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<A> point(final DynamicOps<?> ops) {
+            if (index == expectedIndex) {
+                return delegate.point(ops);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public <FT, FR> Either<TypedOptic<A, ?, FT, FR>, FieldNotFoundException> findTypeInChildren(final Type<FT> type, final Type<FR> resultType, final TypeMatcher<FT, FR> matcher, final boolean recurse) {
+            if (index != expectedIndex) {
+                return Either.right(new FieldNotFoundException("Incorrect index in CheckType"));
+            }
+            return delegate.findType(type, resultType, matcher, recurse).mapLeft(optic -> wrapOptic(this, optic));
+        }
+
+        protected static <A, B, FT, FR> TypedOptic<A, B, FT, FR> wrapOptic(final CheckType<A> type, final TypedOptic<A, B, FT, FR> optic) {
+            return new TypedOptic<>(
+                optic.bounds(),
+                type,
+                new CheckType<>(type.name, type.index, type.expectedIndex, optic.tType()),
+                optic.aType(),
+                optic.bType(),
+                optic.optic()
+            );
+        }
+
+        @Override
+        public String toString() {
+            return "TypeTag[" + index + "~" + expectedIndex + "][" + name + ": " + delegate + "]";
+        }
+
+        @Override
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+            if (!(obj instanceof CheckType<?>)) {
+                return false;
+            }
+            final CheckType<?> type = (CheckType<?>) obj;
+            return index == type.index && expectedIndex == type.expectedIndex && delegate.equals(type.delegate, ignoreRecursionPoints);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(index, expectedIndex, delegate);
+        }
+    }
+}
