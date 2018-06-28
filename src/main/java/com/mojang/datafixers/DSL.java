@@ -39,7 +39,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public interface DSL {
-    // Referenced types.
     interface TypeReference {
         String typeName();
 
@@ -47,43 +46,6 @@ public interface DSL {
             return schema.id(typeName());
         }
     }
-
-    // Top-level references, used by the game when loading the data
-    TypeReference LEVEL = DataFixTypes.LEVEL;
-    TypeReference PLAYER = DataFixTypes.PLAYER;
-    TypeReference CHUNK = DataFixTypes.CHUNK;
-    TypeReference HOTBAR = DataFixTypes.HOTBAR;
-    TypeReference OPTIONS = DataFixTypes.OPTIONS;
-    TypeReference STRUCTURE = DataFixTypes.STRUCTURE;
-    TypeReference STATS = DataFixTypes.STATS;
-    TypeReference SAVED_DATA = DataFixTypes.SAVED_DATA;
-    TypeReference ADVANCEMENTS = DataFixTypes.ADVANCEMENTS;
-
-    // Not used explicitly from the main game
-    TypeReference BLOCK_ENTITY = () -> "block_entity";
-    TypeReference ITEM_STACK = () -> "item_stack";
-    TypeReference BLOCK_STATE = () -> "block_state";
-
-    // entity with the tree of passengers inside
-    TypeReference ENTITY_TREE = () -> "entity_tree";
-    // entity without passengers
-    TypeReference ENTITY = () -> "entity";
-
-    // block and item names are needed mostly for historic reasons, and we should replace remaining usages with full block states and item stacks.
-    TypeReference BLOCK_NAME = () -> "block_name";
-    TypeReference ITEM_NAME = () -> "item_name";
-
-    // needed to reference the common data inside spawner minecart and spawner block entity
-    TypeReference UNTAGGED_SPAWNER = () -> "untagged_spawner";
-
-    // Structure features, inside saved_data and inside the chunk
-    TypeReference STRUCTURE_FEATURE = () -> "structure_feature";
-
-    // Recipe book recipe reference stored inside player data
-    TypeReference RECIPE = () -> "recipe";
-
-    // Biome names
-    TypeReference BIOME = () -> "biome";
 
     // Type/Template Factories
 

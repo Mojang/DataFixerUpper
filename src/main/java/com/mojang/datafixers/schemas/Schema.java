@@ -99,14 +99,6 @@ public class Schema {
         return DSL.named(name, resolveTemplate(name));
     }
 
-    public Type<?> resolveEntityType(final String name) {
-        return getChoiceType(DSL.ENTITY_TREE, name);
-    }
-
-    public Type<?> resolveBlockEntityType(final String name) {
-        return getChoiceType(DSL.BLOCK_ENTITY, name);
-    }
-
     public Type<?> getChoiceType(final DSL.TypeReference type, final String choiceName) {
         final TaggedChoice.TaggedChoiceType<?> choiceType = findChoiceType(type);
         if (!choiceType.types().containsKey(choiceName)) {
