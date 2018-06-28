@@ -1,5 +1,7 @@
 package com.mojang.datafixers.types;
 
+import com.mojang.datafixers.Dynamic;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,15 @@ import java.util.stream.Stream;
 
 public interface DynamicOps<T> {
     T empty();
+
+    Type<?> getType(final T input);
+
+    default <R> Optional<R> cast(final T input, final Type<R> type) {
+        if (type == getType(input)) {
+            return Optional.of(type.readTyped(new Dynamic<>(this, input)).getSecond().orElseThrow(() -> new IllegalStateException("Parse error during dynamic cast")).getValue());
+        }
+        return Optional.empty();
+    }
 
     Optional<Number> getNumberValue(T input);
 
@@ -47,10 +58,6 @@ public interface DynamicOps<T> {
 
     default T createBoolean(final boolean value) {
         return createByte((byte) (value ? 1 : 0));
-    }
-
-    default T createChar(final char value) {
-        return createShort((short) value);
     }
 
     Optional<String> getStringValue(T input);
@@ -148,5 +155,4 @@ public interface DynamicOps<T> {
     default T updateGeneric(final T input, final T key, final Function<T, T> function) {
         return getGeneric(input, key).map(value -> mergeInto(input, key, function.apply(value))).orElse(input);
     }
-
 }

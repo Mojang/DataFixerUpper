@@ -34,6 +34,16 @@ public abstract class DataFix {
         return fixTypeEverywhere(name, type, newType, ops -> (FunctionType<A, B>) Optics.func(Function.identity()), new BitSet());
     }
 
+    protected TypeRewriteRule writeAndRead(final String name, final Type<?> type, final Type<?> newType) {
+        return writeFixAndRead(name, type, newType, Function.identity());
+    }
+
+    protected <A, B> TypeRewriteRule writeFixAndRead(final String name, final Type<A> type, final Type<B> newType, final Function<Dynamic<?>, Dynamic<?>> fix) {
+        return fixTypeEverywhere(name, type, newType, ops -> input ->
+            newType.readTyped(fix.apply(type.writeDynamic(ops, input))).getSecond().orElseThrow(() -> new IllegalStateException("Could not read new type in \"" + name + "\"")).getValue()
+        );
+    }
+
     protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, FunctionType<A, B>> function) {
         return fixTypeEverywhere(name, type, newType, function, new BitSet());
     }

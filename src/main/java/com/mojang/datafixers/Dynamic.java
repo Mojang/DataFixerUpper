@@ -2,6 +2,8 @@ package com.mojang.datafixers;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.datafixers.types.Type;
+import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
@@ -9,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -91,6 +94,13 @@ public class Dynamic<T> {
             builder.put(entry.getKey().cast(ops), entry.getValue().cast(ops));
         }
         return new Dynamic<>(ops, ops.createMap(builder.build()));
+    }
+
+    public Dynamic<T> updateMapValues(final Function<Pair<Dynamic<?>, Dynamic<?>>, Pair<Dynamic<?>, Dynamic<?>>> updater) {
+        return DataFixUtils.orElse(getMapValues().map(map -> map.entrySet().stream().map(e -> {
+            final Pair<Dynamic<?>, Dynamic<?>> pair = updater.apply(Pair.of(e.getKey(), e.getValue()));
+            return Pair.of(pair.getFirst().castTyped(ops), pair.getSecond().castTyped(ops));
+        }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))).map(this::createMap), this);
     }
 
     public Optional<Stream<Dynamic<T>>> getStream() {
@@ -184,10 +194,6 @@ public class Dynamic<T> {
 
     public Dynamic<T> createBoolean(final boolean value) {
         return new Dynamic<>(ops, ops.createBoolean(value));
-    }
-
-    public Dynamic<T> createChar(final char value) {
-        return new Dynamic<>(ops, ops.createChar(value));
     }
 
     public Dynamic<T> createString(final String value) {
@@ -302,5 +308,62 @@ public class Dynamic<T> {
     @Override
     public String toString() {
         return String.format("%s[%s]", ops, value);
+    }
+
+    public <R> Dynamic<R> convert(final DynamicOps<R> outOps) {
+        return new Dynamic<>(outOps, convert(ops, outOps, value));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S, T> T convert(final DynamicOps<S> inOps, final DynamicOps<T> outOps, final S input) {
+        if (Objects.equals(inOps, outOps)) {
+            return (T) input;
+        }
+        final Type<?> type = inOps.getType(input);
+        if (Objects.equals(type, DSL.nilType())) {
+            return outOps.empty();
+        }
+        if (Objects.equals(type, DSL.byteType())) {
+            return outOps.createByte(inOps.getNumberValue(input, 0).byteValue());
+        }
+        if (Objects.equals(type, DSL.shortType())) {
+            return outOps.createShort(inOps.getNumberValue(input, 0).shortValue());
+        }
+        if (Objects.equals(type, DSL.intType())) {
+            return outOps.createInt(inOps.getNumberValue(input, 0).intValue());
+        }
+        if (Objects.equals(type, DSL.longType())) {
+            return outOps.createLong(inOps.getNumberValue(input, 0).longValue());
+        }
+        if (Objects.equals(type, DSL.floatType())) {
+            return outOps.createFloat(inOps.getNumberValue(input, 0).floatValue());
+        }
+        if (Objects.equals(type, DSL.doubleType())) {
+            return outOps.createDouble(inOps.getNumberValue(input, 0).doubleValue());
+        }
+        if (Objects.equals(type, DSL.bool())) {
+            return outOps.createBoolean(inOps.getNumberValue(input, 0).byteValue() != 0);
+        }
+        if (Objects.equals(type, DSL.string())) {
+            return outOps.createString(inOps.getStringValue(input).orElse(""));
+        }
+        if (Objects.equals(type, DSL.list(DSL.byteType()))) {
+            return outOps.createByteList(inOps.getByteBuffer(input).orElse(ByteBuffer.wrap(new byte[0])));
+        }
+        if (Objects.equals(type, DSL.list(DSL.intType()))) {
+            return outOps.createIntList(inOps.getIntStream(input).orElse(IntStream.empty()));
+        }
+        if (Objects.equals(type, DSL.list(DSL.longType()))) {
+            return outOps.createLongList(inOps.getLongStream(input).orElse(LongStream.empty()));
+        }
+        if (Objects.equals(type, DSL.list(DSL.remainderType()))) {
+            return outOps.createList(inOps.getStream(input).orElse(Stream.empty()).map(e -> convert(inOps, outOps, e)));
+        }
+        if (Objects.equals(type, DSL.compoundList(DSL.remainderType(), DSL.remainderType()))) {
+            return outOps.createMap(inOps.getMapValues(input).orElse(ImmutableMap.of()).entrySet().stream().map(e ->
+                Pair.of(convert(inOps, outOps, e.getKey()), convert(inOps, outOps, e.getValue()))
+            ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+        }
+        throw new IllegalStateException("Could not convert value of type " + type);
     }
 }
