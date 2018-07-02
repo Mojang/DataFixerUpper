@@ -192,7 +192,7 @@ public final class CompoundList implements TypeTemplate {
         public <T> T write(final DynamicOps<T> ops, final T rest, final List<Pair<K, V>> value) {
             final ImmutableMap.Builder<T, T> builder = ImmutableMap.builder();
             value.forEach(pair -> builder.put(key.write(ops, ops.empty(), pair.getFirst()), element.write(ops, ops.empty(), pair.getSecond())));
-            return ops.mergeInto(ops.createMap(builder.build()), rest);
+            return ops.merge(rest, ops.createMap(builder.build()));
         }
 
         @Override

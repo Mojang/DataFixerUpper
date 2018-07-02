@@ -38,10 +38,6 @@ public class Dynamic<T> {
         return value;
     }
 
-    public Dynamic<T> empty() {
-        return new Dynamic<>(ops);
-    }
-
     public Dynamic<T> map(final Function<? super T, ? extends T> function) {
         return new Dynamic<>(ops, function.apply(value));
     }
@@ -137,10 +133,6 @@ public class Dynamic<T> {
 
     public Dynamic<T> remove(final String key) {
         return map(v -> ops.remove(v, key));
-    }
-
-    public Dynamic<T> getOrEmpty(final String key) {
-        return get(key).orElseGet(this::empty);
     }
 
     public Optional<Dynamic<T>> get(final String key) {
@@ -365,5 +357,13 @@ public class Dynamic<T> {
             ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
         }
         throw new IllegalStateException("Could not convert value of type " + type);
+    }
+
+    public Dynamic<T> emptyList() {
+        return new Dynamic<>(ops, ops.emptyList());
+    }
+
+    public Dynamic<T> emptyMap() {
+        return new Dynamic<>(ops, ops.emptyMap());
     }
 }

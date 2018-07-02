@@ -1,5 +1,6 @@
 package com.mojang.datafixers.types;
 
+import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.Dynamic;
 
 import java.nio.ByteBuffer;
@@ -14,6 +15,14 @@ import java.util.stream.Stream;
 
 public interface DynamicOps<T> {
     T empty();
+
+    default T emptyMap() {
+        return createMap(ImmutableMap.of());
+    }
+
+    default T emptyList() {
+        return createList(Stream.empty());
+    }
 
     Type<?> getType(final T input);
 
@@ -65,7 +74,7 @@ public interface DynamicOps<T> {
     T createString(String value);
 
     /**
-     * keeps input unchanged if it's not map-like
+     * keeps input unchanged if it's not list-like
      */
     T mergeInto(T input, T value);
 
@@ -73,6 +82,11 @@ public interface DynamicOps<T> {
      * keeps input unchanged if it's not map-like
      */
     T mergeInto(T input, T key, T value);
+
+    /**
+     * merges 2 values together, if possible (list + list, map + map, empty + anything)
+     */
+    T merge(T first, T second);
 
     Optional<Map<T, T>> getMapValues(T input);
 
