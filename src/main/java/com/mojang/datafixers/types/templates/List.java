@@ -168,8 +168,7 @@ public final class List implements TypeTemplate {
 
         @Override
         public <T> T write(final DynamicOps<T> ops, final T rest, final java.util.List<A> value) {
-            // TODO: merge better?
-            return ops.createList(value.stream().map(a -> element.write(ops, ops.empty(), a)));
+            return ops.merge(rest, ops.createList(value.stream().map(a -> element.write(ops, ops.empty(), a))));
         }
 
         @Override

@@ -16,7 +16,7 @@ public final class NilSave extends Const.ConstType<Dynamic<?>> {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T write(final DynamicOps<T> ops, final T rest, final Dynamic<?> value) {
-        return ops.mergeInto(value.cast(ops), rest);
+        return ops.mergeInto(ops.mergeInto(ops.emptyMap(), rest), value.cast(ops));
     }
 
     @Override
@@ -26,6 +26,10 @@ public final class NilSave extends Const.ConstType<Dynamic<?>> {
 
     @Override
     public Optional<Dynamic<?>> point(final DynamicOps<?> ops) {
-        return Optional.of(new Dynamic<>(ops));
+        return Optional.of(capEmpty(ops));
+    }
+
+    private <T> Dynamic<T> capEmpty(final DynamicOps<T> ops) {
+        return new Dynamic<>(ops, ops.emptyMap());
     }
 }

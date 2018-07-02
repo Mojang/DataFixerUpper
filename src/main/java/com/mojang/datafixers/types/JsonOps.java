@@ -101,6 +101,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
     @Override
     public JsonElement mergeInto(final JsonElement input, final JsonElement value) {
         final JsonArray result;
+        if (value.isJsonNull()) {
+            return input;
+        }
         if (input.isJsonObject()) {
             if (value.isJsonObject()) {
                 final JsonObject resultObject = new JsonObject();
@@ -116,7 +119,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
             }
             return input;
         } else if (input.isJsonNull()) {
-            result = new JsonArray();
+            throw new IllegalArgumentException("mergeInto called with null input.");
         } else if (input.isJsonArray()) {
             result = new JsonArray();
             StreamSupport.stream(input.getAsJsonArray().spliterator(), false).forEach(result::add);
@@ -140,6 +143,29 @@ public class JsonOps implements DynamicOps<JsonElement> {
         }
         output.add(key.getAsString(), value);
         return output;
+    }
+
+    @Override
+    public JsonElement merge(final JsonElement first, final JsonElement second) {
+        if (first.isJsonNull()) {
+            return second;
+        }
+        if (second.isJsonNull()) {
+            return first;
+        }
+        if (first.isJsonObject() && second.isJsonObject()) {
+            JsonObject result = new JsonObject();
+            first.getAsJsonObject().entrySet().forEach(entry -> result.add(entry.getKey(), entry.getValue()));
+            second.getAsJsonObject().entrySet().forEach(entry -> result.add(entry.getKey(), entry.getValue()));
+            return result;
+        }
+        if (first.isJsonArray() && second.isJsonArray()) {
+            JsonArray result = new JsonArray();
+            first.getAsJsonArray().forEach(result::add);
+            second.getAsJsonArray().forEach(result::add);
+            return result;
+        }
+        throw new IllegalArgumentException("Could not merge " + first + " and " + second);
     }
 
     @Override
