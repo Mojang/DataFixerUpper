@@ -147,6 +147,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
     public Optional<RewriteResult<?, ?>> everywhere(final int index, final TypeRewriteRule rule, final PointFreeRule optimizationRule) {
         final Type<?> sourceType = apply(index).unfold();
         final RewriteResult<?, ?> sourceView = DataFixUtils.orElse(sourceType.everywhere(rule, optimizationRule, false), RewriteResult.nop(sourceType));
+        // FIXME: CheckType rewriting stop makes this not build the whole family correctly, since only 1 type will match here; need to apply rule to all and merge, or apply to Code; stops CataFuse, cause it will mark all algebra elements as affected
         final RecursivePoint.RecursivePointType<?> newType = buildMuType(sourceView.view().newType(), null);
         final RecursiveTypeFamily newFamily = newType.family();
 

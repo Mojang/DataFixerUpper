@@ -385,11 +385,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
             if (!Objects.equals(name, other.name)) {
                 return false;
             }
-            // FIXME: ugly special case
-            if (!(keyType.equals(other.keyType, ignoreRecursionPoints)
-                || keyType == DSL.string() && other.keyType == DSL.namespacedString()
-                || keyType == DSL.namespacedString() && other.keyType == DSL.string()
-            )) {
+            if (!(keyType.equals(other.keyType, ignoreRecursionPoints))) {
                 return false;
             }
             if (types.size() != other.types.size()) {
