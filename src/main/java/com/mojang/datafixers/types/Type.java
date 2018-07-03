@@ -223,7 +223,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     @SuppressWarnings("unchecked")
     public <B> Optional<A> ifSame(final Type<B> type, final B value) {
-        if (Objects.equals(this, type)) {
+        if (equals(type, true)) {
             return Optional.of((A) value);
         }
         return Optional.empty();
