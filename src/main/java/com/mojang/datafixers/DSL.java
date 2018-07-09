@@ -458,6 +458,6 @@ public interface DSL {
 
         private static final OpticFinder<Dynamic<?>> REMAINDER_FINDER = remainderType().finder();
 
-        private static final Map<Triple<String, Type<?>, Map<?, Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = Maps.newHashMap();
+        private static final Map<Triple<String, Type<?>, Map<?, Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = Maps.newConcurrentMap();
     }
 }
