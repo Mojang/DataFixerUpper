@@ -51,7 +51,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
     private final String name;
     private final Type<K> keyType;
     private final Map<K, TypeTemplate> templates;
-    private final Map<Pair<TypeFamily, Integer>, Type<?>> types = Maps.newHashMap();
+    private final Map<Pair<TypeFamily, Integer>, Type<?>> types = Maps.newConcurrentMap();
     private final int size;
 
     public TaggedChoice(final String name, final Type<K> keyType, final Map<K, TypeTemplate> templates) {
