@@ -35,6 +35,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -213,7 +214,7 @@ public interface DSL {
         return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getLeft(), (Type<K>) k.getMiddle(), (Map<K, Type<?>>) k.getRight()));
     }
 
-    static <A, B> Type<App2<FunctionType.Mu, A, B>> func(final Type<A> input, final Type<B> output) {
+    static <A, B> Type<Function<A, B>> func(final Type<A> input, final Type<B> output) {
         return new Func<>(input, output);
     }
 

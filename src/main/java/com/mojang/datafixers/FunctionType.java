@@ -1,8 +1,6 @@
 package com.mojang.datafixers;
 
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.Functor;
@@ -17,6 +15,8 @@ import com.mojang.datafixers.optics.profunctors.Mapping;
 import com.mojang.datafixers.optics.profunctors.MonoidProfunctor;
 import com.mojang.datafixers.optics.profunctors.Monoidal;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.Nonnull;
 import java.util.function.Function;
@@ -31,11 +31,11 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
         return function::apply;
     }
 
-    static <A, B> FunctionType<A, B> unbox(final App2<Mu, A, B> box) {
+    static <A, B> Function<A, B> unbox(final App2<Mu, A, B> box) {
         return (FunctionType<A, B>) box;
     }
 
-    static <A, B> FunctionType<A, B> unbox(final App<ReaderMu<A>, B> box) {
+    static <A, B> Function<A, B> unbox(final App<ReaderMu<A>, B> box) {
         return (FunctionType<A, B>) box;
     }
 
@@ -43,17 +43,12 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
     @Nonnull
     B apply(@Nonnull A a);
 
-    @Override
-    default <C> FunctionType<C, B> compose(final Function<? super C, ? extends A> before) {
-        return (C v) -> apply(before.apply(v));
-    }
-
     final class ReaderInstance<R> implements Representable<ReaderMu<R>, R, ReaderInstance.Mu<R>> {
         public static final class Mu<A> implements Representable.Mu {}
 
         @Override
         public <T, R2> App<ReaderMu<R>, R2> map(final Function<? super T, ? extends R2> func, final App<ReaderMu<R>, T> ts) {
-            return FunctionType.<T, R2>create(func).compose(FunctionType.unbox(ts));
+            return FunctionType.create(func.compose(FunctionType.unbox(ts)));
         }
 
         @Override
@@ -76,7 +71,7 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
 
         @Override
         public <A, B, C, D> FunctionType<App2<FunctionType.Mu, A, B>, App2<FunctionType.Mu, C, D>> dimap(final Function<C, A> g, final Function<B, D> h) {
-            return f -> Optics.func(s -> {
+            return f -> create(s -> {
                 final A a = g.apply(s);
                 final B b = Optics.getFunc(f).apply(a);
                 final D d = h.apply(b);
@@ -86,17 +81,17 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
 
         @Override
         public <A, B, C> App2<FunctionType.Mu, Pair<A, C>, Pair<B, C>> first(final App2<FunctionType.Mu, A, B> input) {
-            return Optics.func(p -> Pair.of(Optics.getFunc(input).apply(p.getFirst()), p.getSecond()));
+            return create(p -> Pair.of(Optics.getFunc(input).apply(p.getFirst()), p.getSecond()));
         }
 
         @Override
         public <A, B, C> App2<FunctionType.Mu, Pair<C, A>, Pair<C, B>> second(final App2<FunctionType.Mu, A, B> input) {
-            return Optics.func(p -> Pair.of(p.getFirst(), Optics.getFunc(input).apply(p.getSecond())));
+            return create(p -> Pair.of(p.getFirst(), Optics.getFunc(input).apply(p.getSecond())));
         }
 
         @Override
         public <S, T, A, B> App2<FunctionType.Mu, S, T> wander(final Wander<S, T, A, B> wander, final App2<FunctionType.Mu, A, B> input) {
-            return Optics.func(s -> IdF.get(wander.wander(
+            return create(s -> IdF.get(wander.wander(
                 IdF.Instance.INSTANCE,
                 a -> IdF.create(Optics.getFunc(input).apply(a))
             ).apply(s)));
@@ -104,22 +99,22 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
 
         @Override
         public <A, B, C> App2<FunctionType.Mu, Either<A, C>, Either<B, C>> left(final App2<FunctionType.Mu, A, B> input) {
-            return Optics.func(either -> either.mapLeft(Optics.getFunc(input)));
+            return create(either -> either.mapLeft(Optics.getFunc(input)));
         }
 
         @Override
         public <A, B, C> App2<FunctionType.Mu, Either<C, A>, Either<C, B>> right(final App2<FunctionType.Mu, A, B> input) {
-            return Optics.func(either -> either.mapRight(Optics.getFunc(input)));
+            return create(either -> either.mapRight(Optics.getFunc(input)));
         }
 
         @Override
         public <A, B, C, D> App2<FunctionType.Mu, Pair<A, C>, Pair<B, D>> par(final App2<FunctionType.Mu, A, B> first, final Supplier<App2<FunctionType.Mu, C, D>> second) {
-            return Optics.func(pair -> Pair.of(Optics.getFunc(first).apply(pair.getFirst()), Optics.getFunc(second.get()).apply(pair.getSecond())));
+            return create(pair -> Pair.of(Optics.getFunc(first).apply(pair.getFirst()), Optics.getFunc(second.get()).apply(pair.getSecond())));
         }
 
         @Override
         public App2<FunctionType.Mu, Void, Void> empty() {
-            return Optics.func(Function.identity());
+            return create(Function.identity());
         }
 
         @Override
@@ -134,12 +129,12 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
         }
 
         private <A, B, C> App2<FunctionType.Mu, A, B> cap(final Procompose<FunctionType.Mu, FunctionType.Mu, A, B, C> cmp) {
-            return Optics.func(Optics.getFunc(cmp.second()).compose(Optics.getFunc(cmp.first().get())));
+            return create(Optics.getFunc(cmp.second()).compose(Optics.getFunc(cmp.first().get())));
         }
 
         @Override
         public <A, B, F extends K1> App2<FunctionType.Mu, App<F, A>, App<F, B>> mapping(final Functor<F, ?> functor, final App2<FunctionType.Mu, A, B> input) {
-            return Optics.func(fa -> functor.map(Optics.getFunc(input), fa));
+            return create(fa -> functor.map(Optics.getFunc(input), fa));
         }
     }
 }

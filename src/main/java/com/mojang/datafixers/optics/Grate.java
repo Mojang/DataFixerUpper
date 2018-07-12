@@ -26,7 +26,7 @@ interface Grate<S, T, A, B> extends App2<Grate.Mu<A, B>, S, T>, Optic<Closed.Mu,
     final class Instance<A2, B2> implements Closed<Mu<A2, B2>, Closed.Mu> {
         @Override
         public <A, B, C, D> FunctionType<App2<Grate.Mu<A2, B2>, A, B>, App2<Grate.Mu<A2, B2>, C, D>> dimap(final Function<C, A> g, final Function<B, D> h) {
-            return input -> Optics.grate(f -> h.apply(Grate.unbox(input).grate(fa -> f.apply(fa.compose(g)))));
+            return input -> Optics.grate(f -> h.apply(Grate.unbox(input).grate(fa -> f.apply(FunctionType.create(fa.compose(g))))));
         }
 
         @Override

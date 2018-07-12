@@ -1,9 +1,6 @@
 package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.DSL;
-import com.mojang.datafixers.FunctionType;
-import com.mojang.datafixers.kinds.App2;
-import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 
@@ -12,11 +9,11 @@ import java.util.Optional;
 import java.util.function.Function;
 
 final class Apply<A, B> extends PointFree<B> {
-    protected final PointFree<App2<FunctionType.Mu, A, B>> func;
+    protected final PointFree<Function<A, B>> func;
     protected final PointFree<A> arg;
     protected final Type<A> argType;
 
-    public Apply(final PointFree<App2<FunctionType.Mu, A, B>> func, final PointFree<A> arg, final Type<A> argType) {
+    public Apply(final PointFree<Function<A, B>> func, final PointFree<A> arg, final Type<A> argType) {
         this.func = func;
         this.arg = arg;
         this.argType = argType;
@@ -24,7 +21,7 @@ final class Apply<A, B> extends PointFree<B> {
 
     @Override
     public Function<DynamicOps<?>, B> eval() {
-        return ops -> Optics.getFunc(func.eval().apply(ops)).apply(arg.eval().apply(ops));
+        return ops -> func.eval().apply(ops).apply(arg.eval().apply(ops));
     }
 
     @Override
@@ -35,7 +32,7 @@ final class Apply<A, B> extends PointFree<B> {
     @Override
     public Optional<? extends PointFree<B>> all(final PointFreeRule rule, final Type<B> type) {
         return Optional.of(Functions.app(
-            rule.rewrite(DSL.func(argType, type), func).map(f1 -> (PointFree<App2<FunctionType.Mu, A, B>>) f1).orElse(func),
+            rule.rewrite(DSL.func(argType, type), func).map(f1 -> (PointFree<Function<A, B>>) f1).orElse(func),
             rule.rewrite(argType, arg).map(f -> (PointFree<A>) f).orElse(arg),
             argType
         ));

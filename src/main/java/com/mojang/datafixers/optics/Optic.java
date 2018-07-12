@@ -10,9 +10,10 @@ import com.mojang.datafixers.kinds.K2;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 public interface Optic<Proof extends K1, S, T, A, B> {
-    <P extends K2> FunctionType<App2<P, A, B>, App2<P, S, T>> eval(final App<? extends Proof, P> proof);
+    <P extends K2> Function<App2<P, A, B>, App2<P, S, T>> eval(final App<? extends Proof, P> proof);
 
     default <Proof2 extends Proof, A1, B1> Optic<Proof2, S, T, A1, B1> compose(final Optic<? super Proof2, A, B, A1, B1> optic) {
         return new CompositionOptic<>(this, optic);
@@ -33,8 +34,8 @@ public interface Optic<Proof extends K1, S, T, A, B> {
         }
 
         @Override
-        public <P extends K2> FunctionType<App2<P, A1, B1>, App2<P, S, T>> eval(final App<? extends Proof, P> proof) {
-            return Optics.func(outer.eval(proof).compose(inner.eval(proof)));
+        public <P extends K2> Function<App2<P, A1, B1>, App2<P, S, T>> eval(final App<? extends Proof, P> proof) {
+            return outer.eval(proof).compose(inner.eval(proof));
         }
 
         @Override

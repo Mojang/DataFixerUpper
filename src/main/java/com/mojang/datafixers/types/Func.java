@@ -7,8 +7,9 @@ import com.mojang.datafixers.types.templates.TypeTemplate;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
-public final class Func<A, B> extends Type<App2<FunctionType.Mu, A, B>> {
+public final class Func<A, B> extends Type<Function<A, B>> {
     protected final Type<A> first;
     protected final Type<B> second;
 
@@ -23,12 +24,12 @@ public final class Func<A, B> extends Type<App2<FunctionType.Mu, A, B>> {
     }
 
     @Override
-    public <T> Pair<T, Optional<App2<FunctionType.Mu, A, B>>> read(final DynamicOps<T> ops, final T input) {
+    public <T> Pair<T, Optional<Function<A, B>>> read(final DynamicOps<T> ops, final T input) {
         return Pair.of(input, Optional.empty());
     }
 
     @Override
-    public <T> T write(final DynamicOps<T> ops, final T rest, final App2<FunctionType.Mu, A, B> value) {
+    public <T> T write(final DynamicOps<T> ops, final T rest, final Function<A, B> value) {
         return rest;
     }
 
