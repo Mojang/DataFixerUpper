@@ -26,6 +26,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface PointFreeRule {
@@ -87,7 +88,7 @@ public interface PointFreeRule {
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp2 = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> second = comp2.second;
+                final PointFree<? extends Function<?, ?>> second = comp2.second;
                 if (second instanceof Comp<?, ?, ?>) {
                     final Comp<?, ?, ?> comp1 = (Comp<?, ?, ?>) second;
                     return swap(comp1, comp2);
@@ -110,7 +111,7 @@ public interface PointFreeRule {
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp1 = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> first = comp1.first;
+                final PointFree<? extends Function<?, ?>> first = comp1.first;
                 if (first instanceof Comp<?, ?, ?>) {
                     final Comp<?, ?, ?> comp2 = (Comp<?, ?, ?>) first;
                     return swap(comp1, comp2);
@@ -135,8 +136,8 @@ public interface PointFreeRule {
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Apply<?, ?>) {
                 final Apply<?, A> apply = (Apply<?, A>) expr;
-                final PointFree<? extends App2<FunctionType.Mu, ?, A>> func = apply.func;
-                if (func instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?> && Objects.equals(apply.arg, Functions.id())) {
+                final PointFree<? extends Function<?, A>> func = apply.func;
+                if (func instanceof ProfunctorTransformer<?, ?, ?, ?> && Objects.equals(apply.arg, Functions.id())) {
                     return Optional.of((PointFree<A>) Functions.id());
                 }
             }
@@ -163,7 +164,7 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private <A, B, C, D, E> Optional<? extends PointFree<A>> cap(final Apply<D, E> applyFirst, final Apply<B, C> applySecond) {
             final PointFree<?> func = applySecond.func;
-            return Optional.of((PointFree<A>) Functions.app(Functions.comp(applyFirst.argType, applyFirst.func, (PointFree<App2<FunctionType.Mu, B, D>>) func), applySecond.arg, applySecond.argType));
+            return Optional.of((PointFree<A>) Functions.app(Functions.comp(applyFirst.argType, applyFirst.func, (PointFree<Function<B, D>>) func), applySecond.arg, applySecond.argType));
         }
     }
 
@@ -172,8 +173,8 @@ public interface PointFreeRule {
         default <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> first = comp.first;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> second = comp.second;
+                final PointFree<? extends Function<?, ?>> first = comp.first;
+                final PointFree<? extends Function<?, ?>> second = comp.second;
                 if (first instanceof Comp<?, ?, ?>) {
                     final Comp<?, ?, ?> firstComp = (Comp<?, ?, ?>) first;
                     return doRewrite(type, comp.middleType, firstComp.second, comp.second).map(result -> {
@@ -201,12 +202,12 @@ public interface PointFreeRule {
 
         @SuppressWarnings("unchecked")
         static <A, B, C, D> PointFree<D> buildLeft(final PointFree<?> result, final Comp<A, B, C> comp) {
-            return (PointFree<D>) new Comp<>(comp.middleType, (PointFree<App2<FunctionType.Mu, B, C>>) result, comp.second);
+            return (PointFree<D>) new Comp<>(comp.middleType, (PointFree<Function<B, C>>) result, comp.second);
         }
 
         @SuppressWarnings("unchecked")
         static <A, B, C, D> PointFree<D> buildRight(final Comp<A, B, C> comp, final PointFree<?> result) {
-            return (PointFree<D>) new Comp<>(comp.middleType, comp.first, (PointFree<App2<FunctionType.Mu, A, B>>) result);
+            return (PointFree<D>) new Comp<>(comp.middleType, comp.first, (PointFree<Function<A, B>>) result);
         }
 
         @SuppressWarnings("unchecked")
@@ -221,7 +222,7 @@ public interface PointFreeRule {
             return (PointFree<E>) new Comp<>(comp2.middleType, comp2.first, new Comp<>(comp1.middleType, comp2.second, comp1.second));
         }
 
-        <A> Optional<? extends PointFree<?>> doRewrite(Type<A> type, Type<?> middleType, PointFree<? extends App2<FunctionType.Mu, ?, ?>> first, PointFree<? extends App2<FunctionType.Mu, ?, ?>> second);
+        <A> Optional<? extends PointFree<?>> doRewrite(Type<A> type, Type<?> middleType, PointFree<? extends Function<?, ?>> first, PointFree<? extends Function<?, ?>> second);
     }
 
     enum SortProj implements CompRewrite {
@@ -229,15 +230,15 @@ public interface PointFreeRule {
 
         // (ap π1 f)◦(ap π2 g) -> (ap π2 g)◦(ap π1 f)
         @Override
-        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> first, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> second) {
+        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
                 final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
                 final Apply<?, ?> applySecond = (Apply<?, ?>) second;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> firstFunc = applyFirst.func;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> secondFunc = applySecond.func;
-                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) firstFunc;
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) secondFunc;
+                final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
+                final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
+                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?>) {
+                    final ProfunctorTransformer<?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?>) firstFunc;
+                    final ProfunctorTransformer<?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?>) secondFunc;
 
                     Optic<?, ?, ?, ?, ?> fo = firstOptic.optic;
                     while (fo instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
@@ -263,8 +264,8 @@ public interface PointFreeRule {
         private <R, A, A2, B, B2> R cap(final Func<B, B2> firstArg, final Func<A, A2> secondArg, final Apply<?, ?> first, final Apply<?, ?> second) {
             return (R) Functions.comp(
                 DSL.and(secondArg.first(), firstArg.second()),
-                (PointFree<App2<FunctionType.Mu, Pair<A, B2>, Pair<A2, B2>>>) second,
-                (PointFree<App2<FunctionType.Mu, Pair<A, B>, Pair<A, B2>>>) first
+                (PointFree<Function<Pair<A, B2>, Pair<A2, B2>>>) second,
+                (PointFree<Function<Pair<A, B>, Pair<A, B2>>>) first
             );
         }
     }
@@ -274,15 +275,15 @@ public interface PointFreeRule {
 
         // (ap i1 f)◦(ap i2 g) -> (ap i2 g)◦(ap i1 f)
         @Override
-        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> first, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> second) {
+        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
                 final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
                 final Apply<?, ?> applySecond = (Apply<?, ?>) second;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> firstFunc = applyFirst.func;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> secondFunc = applySecond.func;
-                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) firstFunc;
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) secondFunc;
+                final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
+                final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
+                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?>) {
+                    final ProfunctorTransformer<?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?>) firstFunc;
+                    final ProfunctorTransformer<?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?>) secondFunc;
 
                     Optic<?, ?, ?, ?, ?> fo = firstOptic.optic;
                     while (fo instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
@@ -308,8 +309,8 @@ public interface PointFreeRule {
         private <R, A, A2, B, B2> R cap(final Func<B, B2> firstArg, final Func<A, A2> secondArg, final Apply<?, ?> first, final Apply<?, ?> second) {
             return (R) Functions.comp(
                 DSL.or(secondArg.first(), firstArg.second()),
-                (PointFree<App2<FunctionType.Mu, Either<A, B2>, Either<A2, B2>>>) second,
-                (PointFree<App2<FunctionType.Mu, Either<A, B>, Either<A, B2>>>) first
+                (PointFree<Function<Either<A, B2>, Either<A2, B2>>>) second,
+                (PointFree<Function<Either<A, B>, Either<A, B2>>>) first
             );
         }
     }
@@ -322,23 +323,21 @@ public interface PointFreeRule {
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> first = comp.first;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> second = comp.second;
-                if (first instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?> && second instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) first;
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) second;
-                    if (Objects.equals(firstOptic.proof, secondOptic.proof)) {
-                        return Optional.of(cap(firstOptic, secondOptic));
-                    }
+                final PointFree<? extends Function<?, ?>> first = comp.first;
+                final PointFree<? extends Function<?, ?>> second = comp.second;
+                if (first instanceof ProfunctorTransformer<?, ?, ?, ?> && second instanceof ProfunctorTransformer<?, ?, ?, ?>) {
+                    final ProfunctorTransformer<?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?>) first;
+                    final ProfunctorTransformer<?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?>) second;
+                    return Optional.of(cap(firstOptic, secondOptic));
                 }
             }
             return Optional.empty();
         }
 
         @SuppressWarnings("unchecked")
-        private <R, P extends K2, Proof extends K1, X, Y, S, T, A, B> R cap(final ProfunctorTransformer<?, ?, X, Y, ?, ?> first, final ProfunctorTransformer<P, Proof, S, T, A, B> second) {
-            final ProfunctorTransformer<P, Proof, X, Y, S, T> firstCasted = (ProfunctorTransformer<P, Proof, X, Y, S, T>) first;
-            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic), second.proof);
+        private <R, X, Y, S, T, A, B> R cap(final ProfunctorTransformer<X, Y, ?, ?> first, final ProfunctorTransformer<S, T, A, B> second) {
+            final ProfunctorTransformer<X, Y, S, T> firstCasted = (ProfunctorTransformer<X, Y, S, T>) first;
+            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic));
         }
     }
 
@@ -348,15 +347,15 @@ public interface PointFreeRule {
         // (ap lens f)◦(ap lens g) -> (ap lens (f ◦ g))
         @SuppressWarnings("unchecked")
         @Override
-        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> first, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> second) {
+        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
                 final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
                 final Apply<?, ?> applySecond = (Apply<?, ?>) second;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> firstFunc = applyFirst.func;
-                final PointFree<? extends App2<FunctionType.Mu, ?, ?>> secondFunc = applySecond.func;
-                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> lensPFFirst = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) firstFunc;
-                    final ProfunctorTransformer<?, ?, ?, ?, ?, ?> lensPFSecond = (ProfunctorTransformer<?, ?, ?, ?, ?, ?>) secondFunc;
+                final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
+                final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
+                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?>) {
+                    final ProfunctorTransformer<?, ?, ?, ?> lensPFFirst = (ProfunctorTransformer<?, ?, ?, ?>) firstFunc;
+                    final ProfunctorTransformer<?, ?, ?, ?> lensPFSecond = (ProfunctorTransformer<?, ?, ?, ?>) secondFunc;
                     // TODO: better equality - has to be the same lens; find out more about lens profunctor composition
                     if (Objects.equals(lensPFFirst.optic, lensPFSecond.optic)) {
                         final Func<?, ?> firstFuncType = (Func<?, ?>) applyFirst.argType;
@@ -368,13 +367,13 @@ public interface PointFreeRule {
             return Optional.empty();
         }
 
-        private <R, P extends K2, Proof extends K1, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap(final ProfunctorTransformer<P, Proof, S, T, A, B> l1, final ProfunctorTransformer<?, ?, ?, U, ?, C> l2, final PointFree<?> f1, final PointFree<?> f2, final Func<?, ?> firstType, final Func<?, ?> secondType) {
-            return cap2(l1, (ProfunctorTransformer<P, Proof, T, U, B, C>) l2, (PointFree<App2<FunctionType.Mu, B, C>>) f1, (PointFree<App2<FunctionType.Mu, A, B>>) f2, (Func<B, C>) firstType, (Func<A, B>) secondType);
+        private <R, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<?, U, ?, C> l2, final PointFree<?> f1, final PointFree<?> f2, final Func<?, ?> firstType, final Func<?, ?> secondType) {
+            return cap2(l1, (ProfunctorTransformer<T, U, B, C>) l2, (PointFree<Function<B, C>>) f1, (PointFree<Function<A, B>>) f2, (Func<B, C>) firstType, (Func<A, B>) secondType);
         }
 
-        private <R, P extends K2, Proof extends K1, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap2(final ProfunctorTransformer<P, Proof, S, T, A, B> l1, final ProfunctorTransformer<P, Proof, T, U, B, C> l2, final PointFree<App2<FunctionType.Mu, B, C>> f1, final PointFree<App2<FunctionType.Mu, A, B>> f2, final Func<B, C> firstType, final Func<A, B> secondType) {
-            final PointFree<App2<FunctionType.Mu, App2<FunctionType.Mu, A, C>, App2<FunctionType.Mu, S, U>>> lens = (PointFree<App2<FunctionType.Mu, App2<FunctionType.Mu, A, C>, App2<FunctionType.Mu, S, U>>>) (PointFree<?>) l1;
-            final PointFree<App2<FunctionType.Mu, A, C>> arg = Functions.comp(firstType.first(), f1, f2);
+        private <R, P extends K2, Proof extends K1, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap2(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<T, U, B, C> l2, final PointFree<Function<B, C>> f1, final PointFree<Function<A, B>> f2, final Func<B, C> firstType, final Func<A, B> secondType) {
+            final PointFree<Function<Function<A, C>, Function<S, U>>> lens = (PointFree<Function<Function<A, C>, Function<S, U>>>) (PointFree<?>) l1;
+            final PointFree<Function<A, C>> arg = Functions.comp(firstType.first(), f1, f2);
             return Optional.of((PointFree<R>) Functions.app(lens, arg, DSL.func(secondType.first(), firstType.second())));
         }
     }
@@ -385,7 +384,7 @@ public interface PointFreeRule {
         // (fold g ◦ in) ◦ fold (f ◦ in) -> fold ( g ◦ f ◦ in), <== g ◦ in ◦ fold (f ◦ in) ◦ out == in ◦ fold (f ◦ in) ◦ out ◦ g <== g doesn't touch fold's index
         @SuppressWarnings("unchecked")
         @Override
-        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> first, final PointFree<? extends App2<FunctionType.Mu, ?, ?>> second) {
+        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Fold<?, ?> && second instanceof Fold<?, ?>) {
                 // fold (_) ◦ fold (_)
                 final Fold<?, ?> firstFold = (Fold<?, ?>) first;
@@ -421,7 +420,7 @@ public interface PointFreeRule {
                             // outer function depends on the result of the inner one
                             return Optional.empty();
                         }
-                        final PointFree<? extends App2<FunctionType.Mu, ?, ?>> firstFunc;
+                        final PointFree<? extends Function<?, ?>> firstFunc;
                         if (firstId) {
                             firstFunc = Functions.id();
                         } else if (firstF instanceof Comp<?, ?, ?>) {
@@ -447,7 +446,7 @@ public interface PointFreeRule {
 
         @SuppressWarnings("unchecked")
         private <A, B, C> RewriteResult<A, C> getNewAlgFunc(final PointFree<?> firstFunc, final Type<C> newType, final BitSet newSet, final View<A, B> view) {
-            final PointFree<App2<FunctionType.Mu, A, C>> comp = Functions.comp(view.newType(), (PointFree<App2<FunctionType.Mu, B, C>>) firstFunc, view.function());
+            final PointFree<Function<A, C>> comp = Functions.comp(view.newType(), (PointFree<Function<B, C>>) firstFunc, view.function());
             return new RewriteResult<>(View.create(view.type(), newType, comp), newSet);
         }
     }

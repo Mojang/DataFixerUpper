@@ -25,9 +25,9 @@ public final class View<A, B> implements App2<View.Mu, A, B> {
 
     private final Type<A> type;
     protected final Type<B> newType;
-    private final PointFree<App2<FunctionType.Mu, A, B>> function;
+    private final PointFree<Function<A, B>> function;
 
-    public View(final Type<A> type, final Type<B> newType, final PointFree<App2<FunctionType.Mu, A, B>> function) {
+    public View(final Type<A> type, final Type<B> newType, final PointFree<Function<A, B>> function) {
         this.type = type;
         this.newType = newType;
         this.function = function;
@@ -41,11 +41,11 @@ public final class View<A, B> implements App2<View.Mu, A, B> {
         return newType;
     }
 
-    public PointFree<App2<FunctionType.Mu, A, B>> function() {
+    public PointFree<Function<A, B>> function() {
         return function;
     }
 
-    public Type<App2<FunctionType.Mu, A, B>> getFuncType() {
+    public Type<Function<A, B>> getFuncType() {
         return DSL.func(type, newType);
     }
 
@@ -84,7 +84,7 @@ public final class View<A, B> implements App2<View.Mu, A, B> {
         return new View<>(type, instance.newType, Functions.comp(newType, instance.function(), function()));
     }
 
-    public static <A, B> View<A, B> create(final Type<A> type, final Type<B> newType, final PointFree<App2<FunctionType.Mu, A, B>> function) {
+    public static <A, B> View<A, B> create(final Type<A> type, final Type<B> newType, final PointFree<Function<A, B>> function) {
         return new View<>(type, newType, function);
     }
 

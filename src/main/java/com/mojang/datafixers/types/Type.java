@@ -132,7 +132,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     public <T> Pair<T, Optional<?>> read(final DynamicOps<T> ops, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
         return read(ops, input).mapSecond(vo -> vo.map(v ->
-            rewrite(rule, fRule).map(r -> Optics.getFunc(r.view().function().evalCached().apply(ops)).apply(v)
+            rewrite(rule, fRule).map(r -> r.view().function().evalCached().apply(ops).apply(v)
             )
         ));
     }
@@ -150,7 +150,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         if (!expectedType.equals(f.newType(), true)) {
             throw new IllegalStateException("Rewritten type doesn't match.");
         }
-        return f.newType().write(ops, rest, Optics.getFunc(f.function().evalCached().apply(ops)).apply(value));
+        return f.newType().write(ops, rest, f.function().evalCached().apply(ops).apply(value));
     }
 
     @SuppressWarnings("unchecked")

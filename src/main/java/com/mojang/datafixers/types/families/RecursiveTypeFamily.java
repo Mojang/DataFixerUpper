@@ -1,12 +1,8 @@
 package com.mojang.datafixers.types.families;
 
 import com.google.common.collect.Lists;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
-import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.OpticParts;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
@@ -15,17 +11,20 @@ import com.mojang.datafixers.View;
 import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.functions.PointFree;
 import com.mojang.datafixers.functions.PointFreeRule;
-import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import com.mojang.datafixers.util.Either;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
 public final class RecursiveTypeFamily implements TypeFamily {
@@ -44,7 +43,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
     }
 
     @SuppressWarnings("unchecked")
-    public static <A, B> View<A, B> viewUnchecked(final Type<?> type, final Type<?> resType, final PointFree<App2<FunctionType.Mu, A, B>> function) {
+    public static <A, B> View<A, B> viewUnchecked(final Type<?> type, final Type<?> resType, final PointFree<Function<A, B>> function) {
         return View.create((Type<A>) type, (Type<B>) resType, function);
     }
 

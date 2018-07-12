@@ -1,6 +1,5 @@
 package com.mojang.datafixers;
 
-import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
@@ -31,7 +30,7 @@ public abstract class DataFix {
 
     @SuppressWarnings("unchecked")
     protected <A, B> TypeRewriteRule convertUnchecked(final String name, final Type<A> type, final Type<B> newType) {
-        return fixTypeEverywhere(name, type, newType, ops -> (FunctionType<A, B>) Optics.func(Function.identity()), new BitSet());
+        return fixTypeEverywhere(name, type, newType, ops -> (FunctionType<A, B>) Function.identity(), new BitSet());
     }
 
     protected TypeRewriteRule writeAndRead(final String name, final Type<?> type, final Type<?> newType) {

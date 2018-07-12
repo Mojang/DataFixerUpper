@@ -445,7 +445,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
             @SuppressWarnings("unchecked")
             private <A, B> Pair<K, B> capRuleApply(final DynamicOps<?> ops, final Pair<K, ?> input, final RewriteResult<A, B> result) {
-                return input.mapSecond(v -> Optics.getFunc(result.view().function().eval().apply(ops)).apply((A) v));
+                return input.mapSecond(v -> result.view().function().eval().apply(ops).apply((A) v));
             }
 
             @Override

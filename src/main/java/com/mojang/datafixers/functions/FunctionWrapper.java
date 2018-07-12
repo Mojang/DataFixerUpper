@@ -1,7 +1,6 @@
 package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.FunctionType;
-import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.types.DynamicOps;
 
 import java.util.Objects;
@@ -22,7 +21,7 @@ final class FunctionWrapper<A, B> extends PointFreeFunction<A, B> {
     }
 
     @Override
-    public Function<DynamicOps<?>, App2<FunctionType.Mu, A, B>> eval() {
+    public Function<DynamicOps<?>, Function<A, B>> eval() {
         return fun::apply;
     }
 
