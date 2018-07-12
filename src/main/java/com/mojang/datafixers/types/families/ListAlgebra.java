@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 public final class ListAlgebra implements Algebra {
     private final String name;
     private final List<RewriteResult<?, ?>> views;
+    private int hashCode;
 
     public ListAlgebra(final String name, final List<RewriteResult<?, ?>> views) {
         this.name = name;
@@ -39,6 +40,9 @@ public final class ListAlgebra implements Algebra {
 
     @Override
     public int hashCode() {
-        return views.hashCode();
+        if (hashCode == 0) {
+            hashCode = views.hashCode();
+        }
+        return hashCode;
     }
 }

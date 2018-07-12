@@ -154,6 +154,7 @@ public final class Sum implements TypeTemplate {
     public static final class SumType<F, G> extends Type<Either<F, G>> {
         protected final Type<F> first;
         protected final Type<G> second;
+        private int hashCode;
 
         public SumType(final Type<F> first, final Type<G> second) {
             this.first = first;
@@ -240,7 +241,10 @@ public final class Sum implements TypeTemplate {
 
         @Override
         public int hashCode() {
-            return Objects.hash(first, second);
+            if (hashCode == 0) {
+                hashCode = Objects.hash(first, second);
+            }
+            return hashCode;
         }
 
         @Override
