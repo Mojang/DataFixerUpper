@@ -415,29 +415,24 @@ public interface PointFreeRule {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
                         final PointFree<?> firstF = CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function();
+                        final PointFree<?> secondF = CompAssocRight.INSTANCE.rewriteOrNop(secondAlgFunc.view()).function();
                         final boolean firstId = Objects.equals(firstF, Functions.id());
+                        final boolean secondId = Objects.equals(secondF, Functions.id());
                         if (firstAlgFunc.recData().intersects(secondModifies) || secondAlgFunc.recData().intersects(firstModifies)) {
                             // outer function depends on the result of the inner one
                             return Optional.empty();
                         }
-                        final PointFree<? extends Function<?, ?>> firstFunc;
                         if (firstId) {
-                            firstFunc = Functions.id();
-                        } else if (firstF instanceof Comp<?, ?, ?>) {
-                            final Comp<?, ?, ?> firstFComp = (Comp<?, ?, ?>) firstF;
-                            if (Objects.equals(firstFComp.second, Functions.in(family.apply(i)))) {
-                                firstFunc = firstFComp.first;
-                            } else {
-                                return Optional.empty();
-                            }
+                            newAlgebra.add(secondAlgFunc);
+                        } else if (secondId) {
+                            newAlgebra.add(firstAlgFunc);
                         } else {
                             return Optional.empty();
                         }
-                        newAlgebra.add(getNewAlgFunc(firstFunc, firstAlgFunc.view().newType(), newSet, secondAlgFunc.view()));
                     }
                     // have new algebra - make a new fold
 
-                    final Algebra algebra = new ListAlgebra("Fused[" + firstFold.algebra + ", " + secondFold.algebra + "]", newAlgebra);
+                    final Algebra algebra = new ListAlgebra("Fused", newAlgebra);
                     return Optional.of((PointFree<A>) family.fold(algebra).apply(firstFold.index).view().function());
                 }
             }

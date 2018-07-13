@@ -1,8 +1,6 @@
 package com.mojang.datafixers.types;
 
 import com.mojang.datafixers.util.Pair;
-import com.mojang.datafixers.FunctionType;
-import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 
 import java.util.Objects;
@@ -39,12 +37,12 @@ public final class Func<A, B> extends Type<Function<A, B>> {
     }
 
     @Override
-    public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+    public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
         if (!(obj instanceof com.mojang.datafixers.types.Func<?, ?>)) {
             return false;
         }
         final com.mojang.datafixers.types.Func<?, ?> that = (com.mojang.datafixers.types.Func<?, ?>) obj;
-        return first.equals(that.first, ignoreRecursionPoints) && second.equals(that.second, ignoreRecursionPoints);
+        return first.equals(that.first, ignoreRecursionPoints, checkIndex) && second.equals(that.second, ignoreRecursionPoints, checkIndex);
     }
 
     @Override

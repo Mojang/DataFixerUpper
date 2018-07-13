@@ -1,6 +1,7 @@
 package com.mojang.datafixers.types.families;
 
 import com.mojang.datafixers.RewriteResult;
+import com.mojang.datafixers.functions.PointFree;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,7 +24,13 @@ public final class ListAlgebra implements Algebra {
 
     @Override
     public String toString() {
-        return "Algebra[" + name + ", " + views.stream().map(view -> view.view().function().toString()).collect(Collectors.joining(", ")) + "]";
+        return toString(0);
+    }
+
+    @Override
+    public String toString(final int level) {
+        final String wrap = "\n" + PointFree.indent(level + 1);
+        return "Algebra[" + name + wrap + views.stream().map(view -> view.view().function().toString(level + 1)).collect(Collectors.joining(wrap)) + "\n" + PointFree.indent(level) + "]";
     }
 
     @Override

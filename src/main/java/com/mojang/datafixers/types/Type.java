@@ -18,7 +18,6 @@ import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.K1;
-import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
@@ -65,7 +64,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
      * gmapT
      * run rule on all direct children and combine results
      */
-    public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+    public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
         return RewriteResult.nop(this);
     }
 
@@ -76,8 +75,8 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         return Optional.empty();
     }
 
-    public Optional<RewriteResult<A, ?>> everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse) {
-        final TypeRewriteRule rule2 = TypeRewriteRule.seq(TypeRewriteRule.orElse(rule, TypeRewriteRule::nop), TypeRewriteRule.all(TypeRewriteRule.everywhere(rule, optimizationRule, recurse), recurse));
+    public Optional<RewriteResult<A, ?>> everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse, final boolean checkIndex) {
+        final TypeRewriteRule rule2 = TypeRewriteRule.seq(TypeRewriteRule.orElse(rule, TypeRewriteRule::nop), TypeRewriteRule.all(TypeRewriteRule.everywhere(rule, optimizationRule, recurse, checkIndex), recurse, checkIndex));
         return rewrite(rule2, optimizationRule);
     }
 
@@ -147,7 +146,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
     }
 
     public <T, B> T capWrite(final DynamicOps<T> ops, final Type<?> expectedType, final T rest, final A value, final View<A, B> f) {
-        if (!expectedType.equals(f.newType(), true)) {
+        if (!expectedType.equals(f.newType(), true, true)) {
             throw new IllegalStateException("Rewritten type doesn't match.");
         }
         return f.newType().write(ops, rest, f.function().evalCached().apply(ops).apply(value));
@@ -223,7 +222,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     @SuppressWarnings("unchecked")
     public <B> Optional<A> ifSame(final Type<B> type, final B value) {
-        if (equals(type, true)) {
+        if (equals(type, true, true)) {
             return Optional.of((A) value);
         }
         return Optional.empty();
@@ -231,7 +230,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     @SuppressWarnings("unchecked")
     public <B> Optional<RewriteResult<A, ?>> ifSame(final Type<B> type, final RewriteResult<B, ?> value) {
-        if (equals(type, true)) {
+        if (equals(type, true, true)) {
             return Optional.of((RewriteResult<A, ?>) value);
         }
         return Optional.empty();
@@ -242,10 +241,10 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         if (this == o) {
             return true;
         }
-        return equals(o, false);
+        return equals(o, false, true);
     }
 
-    public abstract boolean equals(final Object o, final boolean ignoreRecursionPoints);
+    public abstract boolean equals(final Object o, final boolean ignoreRecursionPoints, final boolean checkIndex);
 
     public abstract static class TypeError {
         private final String message;

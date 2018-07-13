@@ -131,7 +131,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<Pair<K, ?>, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<Pair<K, ?>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             final Map<K, ? extends RewriteResult<?, ?>> results = types.entrySet().stream().map(
                 e -> rule.rewrite(e.getValue()).map(v -> Pair.of(e.getKey(), v))
             ).filter(
@@ -374,7 +374,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (this == obj) {
                 return true;
             }
@@ -385,14 +385,14 @@ public final class TaggedChoice<K> implements TypeTemplate {
             if (!Objects.equals(name, other.name)) {
                 return false;
             }
-            if (!(keyType.equals(other.keyType, ignoreRecursionPoints))) {
+            if (!(keyType.equals(other.keyType, ignoreRecursionPoints, checkIndex))) {
                 return false;
             }
             if (types.size() != other.types.size()) {
                 return false;
             }
             for (final Map.Entry<K, Type<?>> entry : types.entrySet()) {
-                if (!entry.getValue().equals(other.types.get(entry.getKey()), ignoreRecursionPoints)) {
+                if (!entry.getValue().equals(other.types.get(entry.getKey()), ignoreRecursionPoints, checkIndex)) {
                     return false;
                 }
             }
@@ -425,7 +425,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
             return types;
         }
 
-        private static final class RewriteFunc<K> implements Function<DynamicOps<?>, FunctionType<Pair<K, ?>, Pair<K, ?>>> {
+        private static final class RewriteFunc<K> implements Function<DynamicOps<?>, Function<Pair<K, ?>, Pair<K, ?>>> {
             private final Map<K, ? extends RewriteResult<?, ?>> results;
 
             public RewriteFunc(final Map<K, ? extends RewriteResult<?, ?>> results) {

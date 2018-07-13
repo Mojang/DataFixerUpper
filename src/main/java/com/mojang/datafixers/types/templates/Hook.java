@@ -116,7 +116,7 @@ public final class Hook implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             return fix(this, delegate.rewriteOrNop(rule));
         }
 
@@ -184,12 +184,12 @@ public final class Hook implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (!(obj instanceof HookType<?>)) {
                 return false;
             }
             final HookType<?> type = (HookType<?>) obj;
-            return delegate.equals(type.delegate, ignoreRecursionPoints) && Objects.equals(preRead, type.preRead) && Objects.equals(postWrite, type.postWrite);
+            return delegate.equals(type.delegate, ignoreRecursionPoints, checkIndex) && Objects.equals(preRead, type.preRead) && Objects.equals(postWrite, type.postWrite);
         }
 
         @Override

@@ -37,9 +37,9 @@ public abstract class PointFree<T> {
         return toString(0);
     }
 
-    protected static String indent(final int level) {
+    public static String indent(final int level) {
         return StringUtils.repeat("  ", level);
     }
 
-    protected abstract String toString(int level);
+    public abstract String toString(int level);
 }

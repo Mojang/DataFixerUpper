@@ -145,9 +145,9 @@ public final class RecursivePoint implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             // TODO: pass the template along the all, transform accordingly?
-            return unfold().all(rule, recurse);
+            return unfold().all(rule, recurse, checkIndex);
         }
 
         @Override
@@ -156,9 +156,9 @@ public final class RecursivePoint implements TypeTemplate {
         }
 
         @Override
-        public Optional<RewriteResult<A, ?>> everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse) {
+        public Optional<RewriteResult<A, ?>> everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse, final boolean checkIndex) {
             if (recurse) {
-                return family.everywhere(index, rule, optimizationRule).map(view -> (RewriteResult<A, ?>) view);
+                return family.everywhere(this.index, rule, optimizationRule).map(view -> (RewriteResult<A, ?>) view);
             }
             return Optional.of(RewriteResult.nop(this));
         }
@@ -255,7 +255,7 @@ public final class RecursivePoint implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (!(obj instanceof RecursivePointType)) {
                 return false;
             }

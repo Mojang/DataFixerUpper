@@ -43,13 +43,13 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
             final RewriteResult<?, ?> result = HMAP_APPLY_CACHE.computeIfAbsent(Pair.of(hmapped, index), key -> key.getFirst().apply(key.getSecond()));
 
             final PointFree<Function<A, B>> eval = cap(function, result);
-            return eval.eval().apply(ops).apply(a);
+            return eval.evalCached().apply(ops).apply(a);
         };
     }
 
     @Override
-    protected String toString(final int level) {
-        return "fold(" + aType + ", " + index + ", \n" + indent(level + 1) + function.view().function().toString(level + 1) + "\n" + indent(level) + ")";
+    public String toString(final int level) {
+        return "fold(" + aType + ", " + index + ", \n" + indent(level + 1) + algebra.toString(level + 1) + "\n" + indent(level) + ")";
     }
 
     @Override

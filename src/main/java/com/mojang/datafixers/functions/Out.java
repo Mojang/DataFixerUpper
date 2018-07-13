@@ -18,7 +18,7 @@ final class Out<A> extends PointFreeFunction<A, A> {
     }
 
     @Override
-    protected String toString(final int level) {
+    public String toString(final int level) {
         return "Out[" + type + "]";
     }
 

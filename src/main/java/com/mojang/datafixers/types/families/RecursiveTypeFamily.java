@@ -64,7 +64,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
         for (int i1 = 0; i1 < newFamily.size; i1++) {
             final RecursivePoint.RecursivePointType<?> type = newFamily.apply(i1);
             final Type<?> unfold = type.unfold();
-            if (newType.equals(unfold, true)) {
+            if (newType.equals(unfold, true, false)) {
                 newMuType = (RecursivePoint.RecursivePointType<A>) type;
                 break;
             }
@@ -145,8 +145,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
 
     public Optional<RewriteResult<?, ?>> everywhere(final int index, final TypeRewriteRule rule, final PointFreeRule optimizationRule) {
         final Type<?> sourceType = apply(index).unfold();
-        final RewriteResult<?, ?> sourceView = DataFixUtils.orElse(sourceType.everywhere(rule, optimizationRule, false), RewriteResult.nop(sourceType));
-        // FIXME: CheckType rewriting stop makes this not build the whole family correctly, since only 1 type will match here; need to apply rule to all and merge, or apply to Code; stops CataFuse, cause it will mark all algebra elements as affected
+        final RewriteResult<?, ?> sourceView = DataFixUtils.orElse(sourceType.everywhere(rule, optimizationRule, false, false), RewriteResult.nop(sourceType));
         final RecursivePoint.RecursivePointType<?> newType = buildMuType(sourceView.view().newType(), null);
         final RecursiveTypeFamily newFamily = newType.family();
 
@@ -158,7 +157,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
             final Type<?> unfold = type.unfold();
             boolean nop1 = true;
             // FB -> GB
-            final RewriteResult<?, ?> view = DataFixUtils.orElse(unfold.everywhere(rule, optimizationRule, false), RewriteResult.nop(unfold));
+            final RewriteResult<?, ?> view = DataFixUtils.orElse(unfold.everywhere(rule, optimizationRule, false, true), RewriteResult.nop(unfold));
             if (!Objects.equals(view.view().function(), Functions.id())) {
                 nop1 = false;
             }

@@ -24,7 +24,7 @@ public abstract class DataFix {
         this.changesType = changesType;
     }
 
-    protected <A> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Function<DynamicOps<?>, FunctionType<A, A>> function) {
+    protected <A> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Function<DynamicOps<?>, Function<A, A>> function) {
         return fixTypeEverywhere(name, type, type, function, new BitSet());
     }
 
@@ -43,11 +43,11 @@ public abstract class DataFix {
         );
     }
 
-    protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, FunctionType<A, B>> function) {
+    protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function) {
         return fixTypeEverywhere(name, type, newType, function, new BitSet());
     }
 
-    protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, FunctionType<A, B>> function, final BitSet bitSet) {
+    protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function, final BitSet bitSet) {
         return fixTypeEverywhere(type, RewriteResult.create(View.create(name, type, newType, new NamedFunctionWrapper<>(name, function)), bitSet));
     }
 
@@ -71,7 +71,7 @@ public abstract class DataFix {
     public static <A, B> RewriteResult<A, B> checked(final String name, final Type<A> type, final Type<B> newType, final Function<Typed<?>, Typed<?>> function, final BitSet bitSet) {
         return RewriteResult.create(View.create(name, type, newType, new NamedFunctionWrapper<>(name, ops -> a -> {
             final Typed<?> result = function.apply(new Typed<>(type, ops, a));
-            if (!newType.equals(result.type, true)) {
+            if (!newType.equals(result.type, true, false)) {
                 throw new IllegalStateException(String.format("Dynamic type check failed: %s not equal to %s", newType, result.type));
             }
             return (B) result.value;
@@ -79,7 +79,7 @@ public abstract class DataFix {
     }
 
     protected <A, B> TypeRewriteRule fixTypeEverywhere(final Type<A> type, final RewriteResult<A, B> view) {
-        return TypeRewriteRule.checkOnce(TypeRewriteRule.everywhere(TypeRewriteRule.ifSame(type, view), DataFixerUpper.OPTIMIZATION_RULE, true), this::onFail);
+        return TypeRewriteRule.checkOnce(TypeRewriteRule.everywhere(TypeRewriteRule.ifSame(type, view), DataFixerUpper.OPTIMIZATION_RULE, true, true), this::onFail);
     }
 
     protected void onFail(final Type<?> type) {
@@ -110,17 +110,17 @@ public abstract class DataFix {
         return outputSchema;
     }
 
-    private static final class NamedFunctionWrapper<A, B> implements Function<DynamicOps<?>, FunctionType<A, B>> {
+    private static final class NamedFunctionWrapper<A, B> implements Function<DynamicOps<?>, Function<A, B>> {
         private final String name;
-        private final Function<DynamicOps<?>, FunctionType<A, B>> delegate;
+        private final Function<DynamicOps<?>, Function<A, B>> delegate;
 
-        public NamedFunctionWrapper(final String name, final Function<DynamicOps<?>, FunctionType<A, B>> delegate) {
+        public NamedFunctionWrapper(final String name, final Function<DynamicOps<?>, Function<A, B>> delegate) {
             this.name = name;
             this.delegate = delegate;
         }
 
         @Override
-        public FunctionType<A, B> apply(final DynamicOps<?> ops) {
+        public Function<A, B> apply(final DynamicOps<?> ops) {
             return delegate.apply(ops);
         }
 
