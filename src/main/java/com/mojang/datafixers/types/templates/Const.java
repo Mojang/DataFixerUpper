@@ -95,7 +95,7 @@ public final class Const implements TypeTemplate {
 
     public abstract static class ConstType<A> extends Type<A> {
         @Override
-        public boolean equals(final Object o, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object o, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             return this == o;
         }
 

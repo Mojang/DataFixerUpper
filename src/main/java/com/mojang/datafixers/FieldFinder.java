@@ -66,7 +66,7 @@ public final class FieldFinder<FT> implements OpticFinder<FT> {
         @SuppressWarnings("unchecked")
         @Override
         public <S> Either<TypedOptic<S, ?, FT, FR>, Type.FieldNotFoundException> match(final Type<S> targetType) {
-            if (name == null && type.equals(targetType, true)) {
+            if (name == null && type.equals(targetType, true, false)) {
                 return Either.left((TypedOptic<S, FR, FT, FR>) new TypedOptic<>(
                     Profunctor.Mu.TYPE_TOKEN,
                     targetType,

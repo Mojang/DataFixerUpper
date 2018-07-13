@@ -141,7 +141,7 @@ public final class Tag implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             final RewriteResult<A, ?> elementView = element.rewriteOrNop(rule);
             return RewriteResult.create(cap(elementView.view()), elementView.recData());
         }
@@ -194,7 +194,7 @@ public final class Tag implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object o, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object o, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (this == o) {
                 return true;
             }
@@ -202,7 +202,7 @@ public final class Tag implements TypeTemplate {
                 return false;
             }
             final TagType<?> tagType = (TagType<?>) o;
-            return Objects.equals(name, tagType.name) && element.equals(tagType.element, ignoreRecursionPoints);
+            return Objects.equals(name, tagType.name) && element.equals(tagType.element, ignoreRecursionPoints, checkIndex);
         }
 
         @Override

@@ -149,8 +149,8 @@ public interface TypeRewriteRule {
         }
     }
 
-    static TypeRewriteRule all(final TypeRewriteRule rule, final boolean recurse) {
-        return new All(rule, recurse);
+    static TypeRewriteRule all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
+        return new All(rule, recurse, checkIndex);
     }
 
     static TypeRewriteRule one(final TypeRewriteRule rule) {
@@ -167,8 +167,8 @@ public interface TypeRewriteRule {
         return rule;
     }
 
-    static TypeRewriteRule everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse) {
-        return new Everywhere(rule, optimizationRule, recurse);
+    static TypeRewriteRule everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse, final boolean checkIndex) {
+        return new Everywhere(rule, optimizationRule, recurse, checkIndex);
     }
 
     static <B> TypeRewriteRule ifSame(final Type<B> targetType, final RewriteResult<B, ?> value) {
@@ -178,17 +178,19 @@ public interface TypeRewriteRule {
     class All implements TypeRewriteRule {
         private final TypeRewriteRule rule;
         private final boolean recurse;
+        private final boolean checkIndex;
         private final int hashCode;
 
-        public All(final TypeRewriteRule rule, final boolean recurse) {
+        public All(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             this.rule = rule;
             this.recurse = recurse;
-            hashCode = Objects.hash(rule, recurse);
+            this.checkIndex = checkIndex;
+            hashCode = Objects.hash(rule, recurse, checkIndex);
         }
 
         @Override
         public <A> Optional<RewriteResult<A, ?>> rewrite(final Type<A> type) {
-            return Optional.of(type.all(rule, recurse));
+            return Optional.of(type.all(rule, recurse, checkIndex));
         }
 
         @Override
@@ -200,7 +202,7 @@ public interface TypeRewriteRule {
                 return false;
             }
             final All that = (All) obj;
-            return Objects.equals(rule, that.rule) && recurse == that.recurse;
+            return Objects.equals(rule, that.rule) && recurse == that.recurse && checkIndex == that.checkIndex;
         }
 
         @Override
@@ -275,18 +277,20 @@ public interface TypeRewriteRule {
         protected final TypeRewriteRule rule;
         protected final PointFreeRule optimizationRule;
         protected final boolean recurse;
+        private final boolean checkIndex;
         private final int hashCode;
 
-        public Everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse) {
+        public Everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse, final boolean checkIndex) {
             this.rule = rule;
             this.optimizationRule = optimizationRule;
             this.recurse = recurse;
-            hashCode = Objects.hash(rule, optimizationRule, recurse);
+            this.checkIndex = checkIndex;
+            hashCode = Objects.hash(rule, optimizationRule, recurse, checkIndex);
         }
 
         @Override
         public <A> Optional<RewriteResult<A, ?>> rewrite(final Type<A> type) {
-            return type.everywhere(rule, optimizationRule, recurse);
+            return type.everywhere(rule, optimizationRule, recurse, checkIndex);
         }
 
         @Override
@@ -298,7 +302,7 @@ public interface TypeRewriteRule {
                 return false;
             }
             final Everywhere that = (Everywhere) obj;
-            return Objects.equals(rule, that.rule) && Objects.equals(optimizationRule, that.optimizationRule) && recurse == that.recurse;
+            return Objects.equals(rule, that.rule) && Objects.equals(optimizationRule, that.optimizationRule) && recurse == that.recurse && checkIndex == that.checkIndex;
         }
 
         @Override

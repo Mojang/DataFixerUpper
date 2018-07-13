@@ -115,7 +115,7 @@ public final class List implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<java.util.List<A>, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<java.util.List<A>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             final RewriteResult<A, ?> view = element.rewriteOrNop(rule);
             return fix(view);
         }
@@ -177,8 +177,8 @@ public final class List implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
-            return obj instanceof ListType<?> && element.equals(((ListType<?>) obj).element, ignoreRecursionPoints);
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
+            return obj instanceof ListType<?> && element.equals(((ListType<?>) obj).element, ignoreRecursionPoints, checkIndex);
         }
 
         @Override

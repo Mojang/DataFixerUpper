@@ -14,4 +14,6 @@ public interface Algebra {
      * bitset of used recursive values, for optimization
      */
     RewriteResult<?, ?> apply(final int index);
+
+    String toString(int level);
 }

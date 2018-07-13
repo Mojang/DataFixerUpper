@@ -88,7 +88,7 @@ public final class View<A, B> implements App2<View.Mu, A, B> {
         return new View<>(type, newType, function);
     }
 
-    public static <A, B> View<A, B> create(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, FunctionType<A, B>> function) {
+    public static <A, B> View<A, B> create(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function) {
         return new View<>(type, newType, Functions.fun(name, function));
     }
 

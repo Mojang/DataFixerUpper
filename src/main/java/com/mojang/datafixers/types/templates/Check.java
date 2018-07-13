@@ -1,5 +1,6 @@
 package com.mojang.datafixers.types.templates;
 
+import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
@@ -136,8 +137,19 @@ public final class Check implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
+            if (checkIndex && index != expectedIndex) {
+                return RewriteResult.nop(this);
+            }
             return fix(this, delegate.rewriteOrNop(rule));
+        }
+
+        @Override
+        public Optional<RewriteResult<A, ?>> everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse, final boolean checkIndex) {
+            if (checkIndex && index != expectedIndex) {
+                return Optional.empty();
+            }
+            return super.everywhere(rule, optimizationRule, recurse, checkIndex);
         }
 
         @Override
@@ -212,12 +224,20 @@ public final class Check implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (!(obj instanceof CheckType<?>)) {
                 return false;
             }
             final CheckType<?> type = (CheckType<?>) obj;
-            return index == type.index && expectedIndex == type.expectedIndex && delegate.equals(type.delegate, ignoreRecursionPoints);
+            if (index == type.index && expectedIndex == type.expectedIndex) {
+                if (!checkIndex) {
+                    return true;
+                }
+                if (delegate.equals(type.delegate, ignoreRecursionPoints, checkIndex)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override

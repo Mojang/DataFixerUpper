@@ -162,7 +162,7 @@ public final class Sum implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<Either<F, G>, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<Either<F, G>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             return mergeViews(first.rewriteOrNop(rule), second.rewriteOrNop(rule));
         }
 
@@ -231,12 +231,12 @@ public final class Sum implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (!(obj instanceof SumType<?, ?>)) {
                 return false;
             }
             final SumType<?, ?> that = (SumType<?, ?>) obj;
-            return first.equals(that.first, ignoreRecursionPoints) && second.equals(that.second, ignoreRecursionPoints);
+            return first.equals(that.first, ignoreRecursionPoints, checkIndex) && second.equals(that.second, ignoreRecursionPoints, checkIndex);
         }
 
         @Override

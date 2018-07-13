@@ -1,7 +1,6 @@
 package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.DSL;
-import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
@@ -23,7 +22,7 @@ final class Comp<A, B, C> extends PointFreeFunction<A, C> {
 
     @Override
     public C eval(final DynamicOps<?> ops, final A input) {
-        return first.eval().apply(ops).apply(second.eval().apply(ops).apply(input));
+        return first.evalCached().apply(ops).apply(second.evalCached().apply(ops).apply(input));
     }
 
     @Override

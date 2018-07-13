@@ -8,6 +8,7 @@ import com.mojang.datafixers.kinds.IdF;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
 import com.mojang.datafixers.kinds.Representable;
+import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Procompose;
 import com.mojang.datafixers.optics.Wander;
@@ -71,12 +72,7 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
 
         @Override
         public <A, B, C, D> FunctionType<App2<FunctionType.Mu, A, B>, App2<FunctionType.Mu, C, D>> dimap(final Function<C, A> g, final Function<B, D> h) {
-            return f -> create(s -> {
-                final A a = g.apply(s);
-                final B b = Optics.getFunc(f).apply(a);
-                final D d = h.apply(b);
-                return d;
-            });
+            return f -> create(h.compose(Optics.getFunc(f)).compose(g));
         }
 
         @Override

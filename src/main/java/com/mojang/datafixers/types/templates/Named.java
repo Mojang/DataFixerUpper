@@ -104,7 +104,7 @@ public final class Named implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<Pair<String, A>, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<Pair<String, A>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             final RewriteResult<A, ?> elementView = element.rewriteOrNop(rule);
             return fix(this, elementView);
         }
@@ -162,7 +162,7 @@ public final class Named implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (this == obj) {
                 return true;
             }
@@ -170,7 +170,7 @@ public final class Named implements TypeTemplate {
                 return false;
             }
             final NamedType<?> other = (NamedType<?>) obj;
-            return Objects.equals(name, other.name) && element.equals(other.element, ignoreRecursionPoints);
+            return Objects.equals(name, other.name) && element.equals(other.element, ignoreRecursionPoints, checkIndex);
         }
 
         @Override

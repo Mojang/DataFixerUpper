@@ -109,7 +109,7 @@ public final class CompoundList implements TypeTemplate {
         }
 
         @Override
-        public RewriteResult<List<Pair<K, V>>, ?> all(final TypeRewriteRule rule, final boolean recurse) {
+        public RewriteResult<List<Pair<K, V>>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             return mergeViews(key.rewriteOrNop(rule), element.rewriteOrNop(rule));
         }
 
@@ -201,12 +201,12 @@ public final class CompoundList implements TypeTemplate {
         }
 
         @Override
-        public boolean equals(final Object obj, final boolean ignoreRecursionPoints) {
+        public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             if (!(obj instanceof CompoundListType<?, ?>)) {
                 return false;
             }
             final CompoundListType<?, ?> that = (CompoundListType<?, ?>) obj;
-            return key.equals(that.key, ignoreRecursionPoints) && element.equals(that.element, ignoreRecursionPoints);
+            return key.equals(that.key, ignoreRecursionPoints, checkIndex) && element.equals(that.element, ignoreRecursionPoints, checkIndex);
         }
 
         @Override

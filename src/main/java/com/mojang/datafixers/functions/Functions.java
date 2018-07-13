@@ -25,7 +25,7 @@ public abstract class Functions {
         return new Comp<>(middleType, f1, f2);
     }
 
-    public static <A, B> PointFree<Function<A, B>> fun(final String name, final Function<DynamicOps<?>, FunctionType<A, B>> fun) {
+    public static <A, B> PointFree<Function<A, B>> fun(final String name, final Function<DynamicOps<?>, Function<A, B>> fun) {
         return new FunctionWrapper<>(name, fun);
     }
 
