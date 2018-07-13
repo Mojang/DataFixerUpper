@@ -30,7 +30,7 @@ public abstract class DataFix {
 
     @SuppressWarnings("unchecked")
     protected <A, B> TypeRewriteRule convertUnchecked(final String name, final Type<A> type, final Type<B> newType) {
-        return fixTypeEverywhere(name, type, newType, ops -> (FunctionType<A, B>) Function.identity(), new BitSet());
+        return fixTypeEverywhere(name, type, newType, ops -> (Function<A, B>) Function.identity(), new BitSet());
     }
 
     protected TypeRewriteRule writeAndRead(final String name, final Type<?> type, final Type<?> newType) {
