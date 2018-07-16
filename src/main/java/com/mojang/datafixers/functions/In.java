@@ -4,17 +4,13 @@ import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 
 import java.util.Objects;
+import java.util.function.Function;
 
-final class In<A> extends PointFreeFunction<A, A> {
+final class In<A> extends PointFree<Function<A, A>> {
     protected final RecursivePoint.RecursivePointType<A> type;
 
     public In(final RecursivePoint.RecursivePointType<A> type) {
         this.type = type;
-    }
-
-    @Override
-    A eval(final DynamicOps<?> ops, final A input) {
-        return input;
     }
 
     @Override
@@ -33,5 +29,10 @@ final class In<A> extends PointFreeFunction<A, A> {
     @Override
     public int hashCode() {
         return Objects.hash(type);
+    }
+
+    @Override
+    public Function<DynamicOps<?>, Function<A, A>> eval() {
+        return ops -> Function.identity();
     }
 }

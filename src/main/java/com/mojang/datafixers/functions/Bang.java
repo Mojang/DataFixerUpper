@@ -2,13 +2,10 @@ package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.types.DynamicOps;
 
-final class Bang<A> extends PointFreeFunction<A, Void> {
-    Bang() {
-    }
+import java.util.function.Function;
 
-    @Override
-    public Void eval(final DynamicOps<?> ops, final A input) {
-        return null;
+final class Bang<A> extends PointFree<Function<A, Void>> {
+    Bang() {
     }
 
     @Override
@@ -24,5 +21,10 @@ final class Bang<A> extends PointFreeFunction<A, Void> {
     @Override
     public int hashCode() {
         return Bang.class.hashCode();
+    }
+
+    @Override
+    public Function<DynamicOps<?>, Function<A, Void>> eval() {
+        return ops -> a -> null;
     }
 }
