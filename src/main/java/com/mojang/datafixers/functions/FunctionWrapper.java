@@ -5,23 +5,13 @@ import com.mojang.datafixers.types.DynamicOps;
 import java.util.Objects;
 import java.util.function.Function;
 
-final class FunctionWrapper<A, B> extends PointFreeFunction<A, B> {
+final class FunctionWrapper<A, B> extends PointFree<Function<A, B>> {
     private final String name;
     protected final Function<DynamicOps<?>, Function<A, B>> fun;
 
     FunctionWrapper(final String name, final Function<DynamicOps<?>, Function<A, B>> fun) {
         this.name = name;
         this.fun = fun;
-    }
-
-    @Override
-    public B eval(final DynamicOps<?> ops, final A input) {
-        return fun.apply(ops).apply(input);
-    }
-
-    @Override
-    public Function<DynamicOps<?>, Function<A, B>> eval() {
-        return fun;
     }
 
     @Override
@@ -44,5 +34,10 @@ final class FunctionWrapper<A, B> extends PointFreeFunction<A, B> {
     @Override
     public int hashCode() {
         return Objects.hash(fun);
+    }
+
+    @Override
+    public Function<DynamicOps<?>, Function<A, B>> eval() {
+        return fun;
     }
 }

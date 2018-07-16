@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-final class Comp<A, B, C> extends PointFreeFunction<A, C> {
+final class Comp<A, B, C> extends PointFree<Function<A, C>> {
     protected final Type<B> middleType;
     protected final PointFree<Function<B, C>> first;
     protected final PointFree<Function<A, B>> second;
@@ -18,11 +18,6 @@ final class Comp<A, B, C> extends PointFreeFunction<A, C> {
         this.middleType = middleType;
         this.first = first;
         this.second = second;
-    }
-
-    @Override
-    public C eval(final DynamicOps<?> ops, final A input) {
-        return first.evalCached().apply(ops).apply(second.evalCached().apply(ops).apply(input));
     }
 
     @Override
@@ -62,5 +57,14 @@ final class Comp<A, B, C> extends PointFreeFunction<A, C> {
     @Override
     public int hashCode() {
         return Objects.hash(first, second);
+    }
+
+    @Override
+    public Function<DynamicOps<?>, Function<A, C>> eval() {
+        return ops -> input -> {
+            final Function<A, B> s = second.evalCached().apply(ops);
+            final Function<B, C> f = first.evalCached().apply(ops);
+            return f.apply(s.apply(input));
+        };
     }
 }

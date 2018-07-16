@@ -378,7 +378,54 @@ public interface PointFreeRule {
         }
     }
 
-    enum CataFuse implements CompRewrite {
+    enum CataFuseSame implements CompRewrite {
+        INSTANCE;
+
+        // (fold g ◦ in) ◦ fold (f ◦ in) -> fold ( g ◦ f ◦ in), <== g ◦ in ◦ fold (f ◦ in) ◦ out == in ◦ fold (f ◦ in) ◦ out ◦ g <== g doesn't touch fold's index
+        @SuppressWarnings("unchecked")
+        @Override
+        public <A> Optional<? extends PointFree<?>> doRewrite(final Type<A> type, final Type<?> middleType, final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
+            if (first instanceof Fold<?, ?> && second instanceof Fold<?, ?>) {
+                // fold (_) ◦ fold (_)
+                final Fold<?, ?> firstFold = (Fold<?, ?>) first;
+                final Fold<?, ?> secondFold = (Fold<?, ?>) second;
+                final RecursiveTypeFamily family = firstFold.aType.family();
+                if (Objects.equals(family, secondFold.aType.family()) && firstFold.index == secondFold.index) {
+                    // same fold
+                    final List<RewriteResult<?, ?>> newAlgebra = Lists.newArrayList();
+
+                    // merge where both are touching, id where neither is
+
+                    boolean foundOne = false;
+                    for (int i = 0; i < family.size(); i++) {
+                        final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
+                        final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
+                        final boolean firstId = Objects.equals(CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function(), Functions.id());
+                        final boolean secondId = Objects.equals(secondAlgFunc.view().function(), Functions.id());
+
+                        if (firstId && secondId) {
+                            newAlgebra.add(firstFold.algebra.apply(i));
+                        } else if (!foundOne && !firstId && !secondId) {
+                            newAlgebra.add(getCompose(firstAlgFunc, secondAlgFunc));
+                            foundOne = true;
+                        } else {
+                            return Optional.empty();
+                        }
+                    }
+                    final Algebra algebra = new ListAlgebra("FusedSame", newAlgebra);
+                    return Optional.of((PointFree<A>) family.fold(algebra).apply(firstFold.index).view().function());
+                }
+            }
+            return Optional.empty();
+        }
+
+        @SuppressWarnings("unchecked")
+        private <B> RewriteResult<?, ?> getCompose(final RewriteResult<B, ?> firstAlgFunc, final RewriteResult<?, ?> secondAlgFunc) {
+            return firstAlgFunc.compose(((RewriteResult<?, B>) secondAlgFunc));
+        }
+    }
+
+    enum CataFuseDifferent implements CompRewrite {
         INSTANCE;
 
         // (fold g ◦ in) ◦ fold (f ◦ in) -> fold ( g ◦ f ◦ in), <== g ◦ in ◦ fold (f ◦ in) ◦ out == in ◦ fold (f ◦ in) ◦ out ◦ g <== g doesn't touch fold's index
@@ -432,17 +479,11 @@ public interface PointFreeRule {
                     }
                     // have new algebra - make a new fold
 
-                    final Algebra algebra = new ListAlgebra("Fused", newAlgebra);
+                    final Algebra algebra = new ListAlgebra("FusedDifferent", newAlgebra);
                     return Optional.of((PointFree<A>) family.fold(algebra).apply(firstFold.index).view().function());
                 }
             }
             return Optional.empty();
-        }
-
-        @SuppressWarnings("unchecked")
-        private <A, B, C> RewriteResult<A, C> getNewAlgFunc(final PointFree<?> firstFunc, final Type<C> newType, final BitSet newSet, final View<A, B> view) {
-            final PointFree<Function<A, C>> comp = Functions.comp(view.newType(), (PointFree<Function<B, C>>) firstFunc, view.function());
-            return new RewriteResult<>(View.create(view.type(), newType, comp), newSet);
         }
     }
 

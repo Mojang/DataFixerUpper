@@ -2,13 +2,10 @@ package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.types.DynamicOps;
 
-final class Id<A> extends PointFreeFunction<A, A> {
-    public Id() {
-    }
+import java.util.function.Function;
 
-    @Override
-    public A eval(final DynamicOps<?> ops, final A input) {
-        return input;
+final class Id<A> extends PointFree<Function<A, A>> {
+    public Id() {
     }
 
     @Override
@@ -24,5 +21,10 @@ final class Id<A> extends PointFreeFunction<A, A> {
     @Override
     public String toString(final int level) {
         return "id";
+    }
+
+    @Override
+    public Function<DynamicOps<?>, Function<A, A>> eval() {
+        return ops -> Function.identity();
     }
 }

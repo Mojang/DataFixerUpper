@@ -21,7 +21,7 @@ final class Apply<A, B> extends PointFree<B> {
 
     @Override
     public Function<DynamicOps<?>, B> eval() {
-        return ops -> func.eval().apply(ops).apply(arg.eval().apply(ops));
+        return ops -> func.evalCached().apply(ops).apply(arg.evalCached().apply(ops));
     }
 
     @Override
