@@ -12,16 +12,11 @@ public final class ListTraversal<A, B> implements Traversal<List<A>, List<B>, A,
     @Override
     public <F extends K1> FunctionType<List<A>, App<F, List<B>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
         return as -> {
-            App<F, List<B>> result = applicative.point(ImmutableList.of());
+            App<F, ImmutableList.Builder<B>> result = applicative.point(ImmutableList.builder());
             for (final A a : as) {
-                result = applicative.ap2((bs, b) -> {
-                    final ImmutableList.Builder<B> builder = ImmutableList.builder();
-                    builder.addAll(bs);
-                    builder.add(b);
-                    return builder.build();
-                }, result, input.apply(a));
+                result = applicative.ap2(ImmutableList.Builder::add, result, input.apply(a));
             }
-            return result;
+            return applicative.map(ImmutableList.Builder::build, result);
         };
     }
 
