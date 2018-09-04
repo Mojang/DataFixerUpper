@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.schemas.Schema;
@@ -67,7 +68,7 @@ public class DataFixerUpper implements DataFixer {
     private final Int2ObjectSortedMap<Schema> schemas;
     private final List<DataFix> globalList;
     private final IntSortedSet fixerVersions;
-    private final Long2ObjectMap<TypeRewriteRule> rules = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<TypeRewriteRule> rules = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
 
     protected DataFixerUpper(final Int2ObjectSortedMap<Schema> schemas, final List<DataFix> globalList, final IntSortedSet fixerVersions) {
         this.schemas = schemas;
@@ -127,7 +128,7 @@ public class DataFixerUpper implements DataFixer {
         final int expandedDataVersion = DataFixUtils.makeKey(dataVersion);
 
         final long key = (long) expandedVersion << 32 | expandedDataVersion;
-        if (!rules.containsKey(key)) {
+        return rules.computeIfAbsent(key, k -> {
             final List<TypeRewriteRule> rules = Lists.newArrayList();
             for (final DataFix fix : globalList) {
                 final int fixVersion = fix.getVersionKey();
@@ -139,9 +140,9 @@ public class DataFixerUpper implements DataFixer {
                     rules.add(fixRule);
                 }
             }
-            this.rules.put(key, TypeRewriteRule.seq(rules));
-        }
-        return rules.get(key);
+
+            return TypeRewriteRule.seq(rules);
+        });
     }
 
     protected IntSortedSet fixerVersions() {

@@ -4,8 +4,6 @@ package com.mojang.datafixers.schemas;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.types.Type;
@@ -14,6 +12,9 @@ import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Schema {
-    protected final Object2IntMap<String> RECURSIVE_TYPES = new Object2IntOpenHashMap<>();
-    private final Map<String, Supplier<TypeTemplate>> TYPE_TEMPLATES = Maps.newHashMap();
+    protected final Object2IntMap<String> RECURSIVE_TYPES = Object2IntMaps.synchronize(new Object2IntOpenHashMap<>());
+    private final Map<String, Supplier<TypeTemplate>> TYPE_TEMPLATES = Maps.newConcurrentMap();
     private final Map<String, Type<?>> TYPES;
     private final int versionKey;
     private final String name;
@@ -39,25 +40,30 @@ public class Schema {
     }
 
     protected Map<String, Type<?>> buildTypes() {
-        final Map<String, Type<?>> types = Maps.newHashMap();
+        final Map<String, Type<?>> types = Maps.newConcurrentMap();
 
         final List<TypeTemplate> templates = Lists.newArrayList();
 
-        for (final Object2IntMap.Entry<String> entry : RECURSIVE_TYPES.object2IntEntrySet()) {
-            templates.add(DSL.check(entry.getKey(), entry.getIntValue(), getTemplate(entry.getKey())));
+        synchronized (RECURSIVE_TYPES) {
+            for (final Object2IntMap.Entry<String> entry : RECURSIVE_TYPES.object2IntEntrySet()) {
+                templates.add(DSL.check(entry.getKey(), entry.getIntValue(), getTemplate(entry.getKey())));
+            }
         }
 
         final TypeTemplate choice = templates.stream().reduce(DSL::or).get();
         final TypeFamily family = new RecursiveTypeFamily(name, choice);
 
-        for (final String name : TYPE_TEMPLATES.keySet()) {
-            final Type<?> type;
-            if (RECURSIVE_TYPES.containsKey(name)) {
-                type = family.apply(RECURSIVE_TYPES.getInt(name));
-            } else {
-                type = getTemplate(name).apply(family).apply(-1);
+        synchronized (TYPE_TEMPLATES) {
+            for (final String name : TYPE_TEMPLATES.keySet()) {
+                final Type<?> type;
+                int recurseId = RECURSIVE_TYPES.getOrDefault(name, -1);
+                if (recurseId != -1) {
+                    type = family.apply(recurseId);
+                } else {
+                    type = getTemplate(name).apply(family).apply(-1);
+                }
+                types.put(name, type);
             }
-            types.put(name, type);
         }
         return types;
     }
@@ -91,8 +97,9 @@ public class Schema {
     }
 
     public TypeTemplate id(final String name) {
-        if (RECURSIVE_TYPES.containsKey(name)) {
-            return DSL.id(RECURSIVE_TYPES.get(name));
+        int id = RECURSIVE_TYPES.getOrDefault(name, -1);
+        if (id != -1) {
+            return DSL.id(id);
         }
         return getTemplate(name);
     }
@@ -140,8 +147,10 @@ public class Schema {
     public void registerType(final boolean recursive, final DSL.TypeReference type, final Supplier<TypeTemplate> template) {
         TYPE_TEMPLATES.put(type.typeName(), template);
         // TODO: calculate recursiveness instead of hardcoding
-        if (recursive && !RECURSIVE_TYPES.containsKey(type.typeName())) {
-            RECURSIVE_TYPES.put(type.typeName(), RECURSIVE_TYPES.size());
+        synchronized (RECURSIVE_TYPES) {
+            if (recursive && !RECURSIVE_TYPES.containsKey(type.typeName())) {
+                RECURSIVE_TYPES.put(type.typeName(), RECURSIVE_TYPES.size());
+            }
         }
     }
 

@@ -73,8 +73,8 @@ final class NamedChoiceFinder<FT> implements OpticFinder<FT> {
             }*/
             if (targetType instanceof TaggedChoice.TaggedChoiceType<?>) {
                 final TaggedChoice.TaggedChoiceType<?> choiceType = (TaggedChoice.TaggedChoiceType<?>) targetType;
-                if (choiceType.types().containsKey(name)) {
-                    final Type<?> elementType = choiceType.types().get(name);
+                final Type<?> elementType = choiceType.types().get(name);
+                if (elementType != null) {
                     if (!Objects.equals(type, elementType)) {
                         return Either.right(new Type.FieldNotFoundException(String.format("Type error for choice type \"%s\": expected type: %s, actual type: %s)", name, targetType, elementType)));
                     }

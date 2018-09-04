@@ -189,17 +189,22 @@ public final class TaggedChoice<K> implements TypeTemplate {
             if (values.isPresent()) {
                 final Map<T, T> map = values.get();
                 final T nameObject = ops.createString(name);
-                if (map.containsKey(nameObject)) {
-                    final Optional<K> key = keyType.read(ops, map.get(nameObject)).getSecond();
-                    if (!key.isPresent() || !types.containsKey(key.get())) {
+                T mapValue = map.get(nameObject);
+                if (mapValue != null) {
+                    final Optional<K> key = keyType.read(ops, mapValue).getSecond();
+                    //noinspection OptionalIsPresent
+                    K keyValue = key.isPresent() ? key.get() : null;
+                    Type<?> type = keyValue != null ? types.get(keyValue) : null;
+                    if (type == null) {
                         if (DataFixerUpper.ERRORS_ARE_FATAL) {
-                            throw new IllegalArgumentException("Unsupported key: " + key.get() + " in " + this);
+                            throw new IllegalArgumentException("Unsupported key: " + keyValue + " in " + this);
                         } else {
-                            LOGGER.warn("Unsupported key: {} in {}", key.get(), this);
+                            LOGGER.warn("Unsupported key: {} in {}", keyValue, this);
                             return Pair.of(input, Optional.empty());
                         }
                     }
-                    return types.get(key.get()).read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(key.get(), v)));
+
+                    return type.read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(keyValue, v)));
                 }
             }
             return Pair.of(input, Optional.empty());
@@ -207,12 +212,12 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public <T> T write(final DynamicOps<T> ops, final T rest, final Pair<K, ?> value) {
-            if (!types.containsKey(value.getFirst())) {
+            final Type<?> type = types.get(value.getFirst());
+            if (type == null) {
                 // TODO: better error handling?
                 // TODO: See todo in read method
                 throw new IllegalArgumentException("Unsupported key: " + value.getFirst() + " in " + this);
             }
-            final Type<?> type = types.get(value.getFirst());
             return capWrite(ops, type, value.getFirst(), value.getSecond(), rest);
         }
 

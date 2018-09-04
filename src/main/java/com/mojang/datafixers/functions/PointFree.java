@@ -16,7 +16,7 @@ public abstract class PointFree<T> {
     private Function<DynamicOps<?>, T> value;
 
     @SuppressWarnings("ConstantConditions")
-    public Function<DynamicOps<?>, T> evalCached() {
+    public synchronized Function<DynamicOps<?>, T> evalCached() {
         if (!initialized) {
             initialized = true;
             value = eval();
