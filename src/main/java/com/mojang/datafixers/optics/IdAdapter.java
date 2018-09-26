@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
 package com.mojang.datafixers.optics;
 
 class IdAdapter<S, T> implements Adapter<S, T, S, T> {

@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
 package com.mojang.datafixers;
 
 import com.google.common.collect.ImmutableMap;
