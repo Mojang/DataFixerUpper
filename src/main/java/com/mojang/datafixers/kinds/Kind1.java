@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
 package com.mojang.datafixers.kinds;
 
 public interface Kind1<F extends K1, Mu extends Kind1.Mu> extends App<Mu, F> {

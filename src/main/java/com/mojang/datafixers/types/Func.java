@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
 package com.mojang.datafixers.types;
 
 import com.mojang.datafixers.util.Pair;
