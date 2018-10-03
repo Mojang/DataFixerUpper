@@ -9,6 +9,7 @@ import com.mojang.datafixers.kinds.Traversable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
@@ -33,6 +34,17 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
         @Override
         public <T> T map(final Function<? super L, ? extends T> l, final Function<? super R, ? extends T> r) {
             return l.apply(value);
+        }
+
+        @Override
+        public Either<L, R> ifLeft(Consumer<? super L> consumer) {
+            consumer.accept(value);
+            return this;
+        }
+
+        @Override
+        public Either<L, R> ifRight(Consumer<? super R> consumer) {
+            return this;
         }
 
         @Override
@@ -86,6 +98,17 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
         }
 
         @Override
+        public Either<L, R> ifLeft(Consumer<? super L> consumer) {
+            return this;
+        }
+
+        @Override
+        public Either<L, R> ifRight(Consumer<? super R> consumer) {
+            consumer.accept(value);
+            return this;
+        }
+
+        @Override
         public Optional<L> left() {
             return Optional.empty();
         }
@@ -124,6 +147,10 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
     public abstract <C, D> Either<C, D> mapBoth(final Function<? super L, ? extends C> f1, final Function<? super R, ? extends D> f2);
 
     public abstract <T> T map(final Function<? super L, ? extends T> l, Function<? super R, ? extends T> r);
+
+    public abstract Either<L, R> ifLeft(final Consumer<? super L> consumer);
+
+    public abstract Either<L, R> ifRight(final Consumer<? super R> consumer);
 
     public abstract Optional<L> left();
 
