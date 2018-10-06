@@ -48,21 +48,21 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 # References
 ## Optimizing functions
-  Cunha, A., & Pinto, J. S. (2005). Point-free program transformation
+  Cunha, A., & Pinto, J. S. (2005). Point-free program transformation. http://hdl.handle.net/1822/2202  
   Lämmel, R., Visser, E., & Visser, J. (2002). The essence of strategic programming
 
 ## How to handle recursive types
-  Cunha, A., & Pacheco, H. (2011). Algebraic specialization of generic functions for recursive types
-  Yakushev, A. R., Holdermans, S., Löh, A., & Jeuring, J. (2009, August). Generic programming with fixed points for mutually recursive datatypes
-  Magalhães, J. P., & Löh, A. (2012). A formal comparison of approaches to datatype-generic programming
+  Cunha, A., & Pacheco, H. (2011). Algebraic specialization of generic functions for recursive types. http://hdl.handle.net/1822/14888  
+  Yakushev, A. R., Holdermans, S., Löh, A., & Jeuring, J. (2009, August). Generic programming with fixed points for mutually recursive datatypes  
+  Magalhães, J. P., & Löh, A. (2012). A formal comparison of approaches to datatype-generic programming. https://arxiv.org/abs/1202.2920v1
 
 ## Optics
-  Pickering, M., Gibbons, J., & Wu, N. (2017). Profunctor Optics: Modular Data Accessors
-  Pacheco, H., & Cunha, A. (2010, June). Generic point-free lenses
+  Pickering, M., Gibbons, J., & Wu, N. (2017). Profunctor Optics: Modular Data Accessors. https://arxiv.org/abs/1703.10857v1  
+  Pacheco, H., & Cunha, A. (2010, June). Generic point-free lenses. http://hdl.handle.net/1822/38994
 
 ## Tying it together
-  Cunha, A., Oliveira, J. N., & Visser, J. (2006, August). Type-safe two-level data transformation
-  Cunha, A., & Visser, J. (2011). Transformation of structure-shy programs with application to XPath queries and strategic functions
-  Pacheco, H., & Cunha, A. (2011, January). Calculating with lenses: optimising bidirectional transformations
+  Cunha, A., Oliveira, J. N., & Visser, J. (2006, August). Type-safe two-level data transformation. http://hdl.handle.net/1822/5618  
+  Cunha, A., & Visser, J. (2011). Transformation of structure-shy programs with application to XPath queries and strategic functions. http://hdl.handle.net/1822/14886  
+  Pacheco, H., & Cunha, A. (2011, January). Calculating with lenses: optimising bidirectional transformations. http://hdl.handle.net/1822/15297
 
 ![GitHub forks](https://img.shields.io/github/forks/Mojang/DataFixerUpper.svg?style=social&label=Fork) ![GitHub stars](https://img.shields.io/github/stars/Mojang/DataFixerUpper.svg?style=social&label=Stars)
