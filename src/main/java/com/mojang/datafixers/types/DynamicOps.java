@@ -152,10 +152,7 @@ public interface DynamicOps<T> {
     }
 
     default Optional<T> getGeneric(final T input, final T key) {
-        return getMapValues(input).flatMap(map -> {
-            T value = map.get(key);
-            return value != null ? Optional.of(value) : Optional.empty();
-        });
+        return getMapValues(input).flatMap(map -> Optional.ofNullable(map.get(key)));
     }
 
     default T set(final T input, final String key, final T value) {
