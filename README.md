@@ -34,7 +34,7 @@ And then use this library (change `(the latest version)` to the latest version!)
 ```
 
 # Usage
-Core data types are Schema and DataFix: Schema is a set of type definitions specifying what data types the system is interested in and how they relate to each other, DataFix is a rewrite rule between types (see [references](#references) below). DataFixerBuilder takes a list of schemas and fixes converting between those schemas, and creates an optimized converter between the types describes in those schemas. DSL is a class with building blocks used to create schemas and fixes.
+Core data types are Schema and DataFix. Schema is a set of type definitions specifying what data types the system is interested in and how they relate to each other. DataFix is a rewrite rule between types (see [references](#references) below). DataFixerBuilder takes a list of schemas and fixes converting between those schemas, and creates an optimized converter between the types describes in those schemas. DSL is a class with building blocks used to create schemas and fixes.
 
 # Contributing
 Contributions are welcome!
