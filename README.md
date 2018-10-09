@@ -1,5 +1,5 @@
 # DataFixerUpper [![Latest release](https://img.shields.io/github/release/Mojang/DataFixerUpper.svg)](https://github.com/Mojang/DataFixerUpper/releases/latest) [![License](https://img.shields.io/github/license/Mojang/DataFixerUpper.svg)](https://github.com/Mojang/DataFixerUpper/blob/master/LICENSE)
-A set of utilities designed for incremental building, merging and optimization of data transformations. Created for converting the game data for Minecraft: Java Edition between different versions of the game.
+A set of utilities designed for incremental building, merging, and optimization of data transformations. Created for converting the game data for Minecraft: Java Edition between different versions of the game.
 
 ## Gradle
 First include our repository:
