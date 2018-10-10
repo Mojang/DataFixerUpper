@@ -16,7 +16,6 @@ import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
-import org.apache.commons.lang3.ObjectUtils;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
@@ -83,7 +82,7 @@ public final class RecursivePoint implements TypeTemplate {
         }
         final RecursivePointType<S> sType = (RecursivePointType<S>) sourceType;
         final RecursivePointType<T> tType = sType.family().buildMuType(result.view().newType(), null);
-        final BitSet bitSet = ObjectUtils.clone(result.recData());
+        final BitSet bitSet = (BitSet) result.recData().clone();
         bitSet.set(index);
         return RewriteResult.create(View.create(sType, tType, result.view().function()), bitSet);
     }

@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types;
 
-import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
@@ -23,15 +22,16 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
-import org.apache.commons.lang3.tuple.Triple;
+import com.mojang.datafixers.util.Triple;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class Type<A> implements App<Type.Mu, A> {
-    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
+    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = new ConcurrentHashMap<>();
 
     public static class Mu implements K1 {}
 

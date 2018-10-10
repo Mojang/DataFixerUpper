@@ -3,7 +3,6 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -14,6 +13,7 @@ import com.mojang.datafixers.types.Type;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,7 +128,7 @@ public class DataFixerUpper implements DataFixer {
 
         final long key = (long) expandedVersion << 32 | expandedDataVersion;
         if (!rules.containsKey(key)) {
-            final List<TypeRewriteRule> rules = Lists.newArrayList();
+            final List<TypeRewriteRule> rules = new ArrayList<>();
             for (final DataFix fix : globalList) {
                 final int fixVersion = fix.getVersionKey();
                 if (fixVersion > expandedVersion && fixVersion <= expandedDataVersion) {

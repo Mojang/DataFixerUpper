@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
@@ -23,7 +22,7 @@ public class DataFixerBuilder {
 
     private final int dataVersion;
     private final Int2ObjectSortedMap<Schema> schemas = new Int2ObjectAVLTreeMap<>();
-    private final List<DataFix> globalList = Lists.newArrayList();
+    private final List<DataFix> globalList = new ArrayList<>();
     private final IntSortedSet fixerVersions = new IntAVLTreeSet();
 
     public DataFixerBuilder(final int dataVersion) {

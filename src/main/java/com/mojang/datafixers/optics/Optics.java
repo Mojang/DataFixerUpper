@@ -23,32 +23,32 @@ import java.util.function.Supplier;
 
 public abstract class Optics {
     public static <S, T, A, B> Adapter<S, T, A, B> toAdapter(final Optic<? super Profunctor.Mu, S, T, A, B> optic) {
-        final Function<App2<Adapter.Mu<A, B>, A, B>, App2<Adapter.Mu<A, B>, S, T>> eval = optic.eval(new Adapter.Instance<A, B>());
+        final Function<App2<Adapter.Mu<A, B>, A, B>, App2<Adapter.Mu<A, B>, S, T>> eval = optic.eval(new Adapter.Instance<>());
         return Adapter.unbox(eval.apply(adapter(Function.identity(), Function.identity())));
     }
 
     public static <S, T, A, B> Lens<S, T, A, B> toLens(final Optic<? super Cartesian.Mu, S, T, A, B> optic) {
-        final Function<App2<Lens.Mu<A, B>, A, B>, App2<Lens.Mu<A, B>, S, T>> eval = optic.eval(new Lens.Instance<A, B>());
+        final Function<App2<Lens.Mu<A, B>, A, B>, App2<Lens.Mu<A, B>, S, T>> eval = optic.eval(new Lens.Instance<>());
         return Lens.unbox(eval.apply(lens(Function.identity(), (b, a) -> b)));
     }
 
     public static <S, T, A, B> Prism<S, T, A, B> toPrism(final Optic<? super Cocartesian.Mu, S, T, A, B> optic) {
-        final Function<App2<Prism.Mu<A, B>, A, B>, App2<Prism.Mu<A, B>, S, T>> eval = optic.eval(new Prism.Instance<A, B>());
+        final Function<App2<Prism.Mu<A, B>, A, B>, App2<Prism.Mu<A, B>, S, T>> eval = optic.eval(new Prism.Instance<>());
         return Prism.unbox(eval.apply(prism(Either::right, Function.identity())));
     }
 
     public static <S, T, A, B> Affine<S, T, A, B> toAffine(final Optic<? super AffineP.Mu, S, T, A, B> optic) {
-        final Function<App2<Affine.Mu<A, B>, A, B>, App2<Affine.Mu<A, B>, S, T>> eval = optic.eval(new Affine.Instance<A, B>());
+        final Function<App2<Affine.Mu<A, B>, A, B>, App2<Affine.Mu<A, B>, S, T>> eval = optic.eval(new Affine.Instance<>());
         return Affine.unbox(eval.apply(affine(Either::right, (b, a) -> b)));
     }
 
     public static <S, T, A, B> Getter<S, T, A, B> toGetter(final Optic<? super GetterP.Mu, S, T, A, B> optic) {
-        final Function<App2<Getter.Mu<A, B>, A, B>, App2<Getter.Mu<A, B>, S, T>> eval = optic.eval(new Getter.Instance<A, B>());
+        final Function<App2<Getter.Mu<A, B>, A, B>, App2<Getter.Mu<A, B>, S, T>> eval = optic.eval(new Getter.Instance<>());
         return Getter.unbox(eval.apply(getter(Function.identity())));
     }
 
     public static <S, T, A, B> Traversal<S, T, A, B> toTraversal(final Optic<? super TraversalP.Mu, S, T, A, B> optic) {
-        final Function<App2<Traversal.Mu<A, B>, A, B>, App2<Traversal.Mu<A, B>, S, T>> eval = optic.eval(new Traversal.Instance<A, B>());
+        final Function<App2<Traversal.Mu<A, B>, A, B>, App2<Traversal.Mu<A, B>, S, T>> eval = optic.eval(new Traversal.Instance<>());
         return Traversal.unbox(eval.apply(new Traversal<A, B, A, B>() {
             @Override
             public <F extends K1> FunctionType<A, App<F, B>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {

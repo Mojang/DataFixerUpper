@@ -54,12 +54,12 @@ public interface TraversalP<P extends K2, Mu extends TraversalP.Mu> extends Affi
 
     @Override
     default <A, B, C> App2<P, Pair<A, C>, Pair<B, C>> first(final App2<P, A, B> input) {
-        return dimap(traverse(new Pair.Instance<C>(), input), box -> box, Pair::unbox);
+        return dimap(traverse(new Pair.Instance<>(), input), box -> box, Pair::unbox);
     }
 
     @Override
     default <A, B, C> App2<P, Either<A, C>, Either<B, C>> left(final App2<P, A, B> input) {
-        return dimap(traverse(new Either.Instance<C>(), input), box -> box, Either::unbox);
+        return dimap(traverse(new Either.Instance<>(), input), box -> box, Either::unbox);
     }
 
     default FunctorProfunctor<Traversable.Mu, P, FunctorProfunctor.Mu<Traversable.Mu>> toFP3() {

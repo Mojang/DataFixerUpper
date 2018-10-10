@@ -10,7 +10,6 @@ import com.mojang.datafixers.kinds.IdF;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
 import com.mojang.datafixers.kinds.Representable;
-import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Procompose;
 import com.mojang.datafixers.optics.Wander;

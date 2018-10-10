@@ -3,7 +3,6 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
@@ -27,6 +26,7 @@ import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -204,7 +204,7 @@ public final class TypedOptic<S, T, A, B> {
         if (!Objects.equals(sType.types().get(key), aType)) {
             throw new IllegalArgumentException("Focused type doesn't match.");
         }
-        final Map<K, Type<?>> newTypes = Maps.newHashMap(sType.types());
+        final Map<K, Type<?>> newTypes = new HashMap<>(sType.types());
         newTypes.put(key, bType);
         final Type<Pair<K, ?>> pairType = DSL.taggedChoiceType(sType.getName(), sType.getKeyType(), newTypes);
         return new TypedOptic<>(

@@ -165,7 +165,7 @@ public final class Typed<A> {
 
     public <FT> List<Typed<FT>> getAllTyped(final OpticFinder<FT> optic) {
         final TypedOptic<A, ?, FT, ?> field = optic.findType(type, optic.type(), false).orThrow();
-        return getAll(field).stream().map(ft -> new Typed<FT>(optic.type(), ops, ft)).collect(Collectors.toList());
+        return getAll(field).stream().map(ft -> new Typed<>(optic.type(), ops, ft)).collect(Collectors.toList());
     }
 
     public <FT> List<FT> getAll(final TypedOptic<A, ?, FT, ?> field) {

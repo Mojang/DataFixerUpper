@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
-import com.google.common.collect.Maps;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.View;
 import com.mojang.datafixers.types.DynamicOps;
@@ -11,14 +10,15 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.util.Pair;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
 final class Fold<A, B> extends PointFree<Function<A, B>> {
-    private static final Map<Pair<RecursiveTypeFamily, Algebra>, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = Maps.newConcurrentMap();
-    private static final Map<Pair<IntFunction<RewriteResult<?, ?>>, Integer>, RewriteResult<?, ?>> HMAP_APPLY_CACHE = Maps.newConcurrentMap();
+    private static final Map<Pair<RecursiveTypeFamily, Algebra>, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = new HashMap<>();
+    private static final Map<Pair<IntFunction<RewriteResult<?, ?>>, Integer>, RewriteResult<?, ?>> HMAP_APPLY_CACHE = new HashMap<>();
 
     protected final RecursivePoint.RecursivePointType<A> aType;
     protected final RewriteResult<?, B> function;

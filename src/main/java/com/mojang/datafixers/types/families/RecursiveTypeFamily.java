@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.families;
 
-import com.google.common.collect.Lists;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.OpticParts;
@@ -22,6 +21,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
@@ -111,7 +111,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
     public <A, B> Either<TypedOptic<?, ?, A, B>, Type.FieldNotFoundException> findType(final int index, final Type<A> aType, final Type<B> bType, final Type.TypeMatcher<A, B> matcher, final boolean recurse) {
         return apply(index).unfold().findType(aType, bType, matcher, false).flatMap(optic -> {
             final TypeTemplate nc = optic.tType().template();
-            final List<FamilyOptic<A, B>> fo = Lists.newArrayList();
+            final List<FamilyOptic<A, B>> fo = new ArrayList<>();
             final RecursiveTypeFamily newFamily = new RecursiveTypeFamily(name, nc);
 
             final RecursivePoint.RecursivePointType<?> sType = apply(index);
@@ -151,7 +151,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
         final RecursivePoint.RecursivePointType<?> newType = buildMuType(sourceView.view().newType(), null);
         final RecursiveTypeFamily newFamily = newType.family();
 
-        final List<RewriteResult<?, ?>> views = Lists.newArrayList();
+        final List<RewriteResult<?, ?>> views = new ArrayList<>();
         boolean foundAny = false;
         // FB -> B
         for (int i = 0; i < size; i++) {

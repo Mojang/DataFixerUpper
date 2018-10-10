@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.schemas;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import com.mojang.datafixers.DSL;
@@ -15,6 +13,8 @@ import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 public class Schema {
     protected final Object2IntMap<String> RECURSIVE_TYPES = new Object2IntOpenHashMap<>();
-    private final Map<String, Supplier<TypeTemplate>> TYPE_TEMPLATES = Maps.newHashMap();
+    private final Map<String, Supplier<TypeTemplate>> TYPE_TEMPLATES = new HashMap<>();
     private final Map<String, Type<?>> TYPES;
     private final int versionKey;
     private final String name;
@@ -39,9 +39,9 @@ public class Schema {
     }
 
     protected Map<String, Type<?>> buildTypes() {
-        final Map<String, Type<?>> types = Maps.newHashMap();
+        final Map<String, Type<?>> types = new HashMap<>();
 
-        final List<TypeTemplate> templates = Lists.newArrayList();
+        final List<TypeTemplate> templates = new ArrayList<>();
 
         for (final Object2IntMap.Entry<String> entry : RECURSIVE_TYPES.object2IntEntrySet()) {
             templates.add(DSL.check(entry.getKey(), entry.getIntValue(), getTemplate(entry.getKey())));

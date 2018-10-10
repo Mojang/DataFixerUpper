@@ -3,7 +3,6 @@
 package com.mojang.datafixers.optics;
 
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.K1;
