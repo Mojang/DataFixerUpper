@@ -45,7 +45,7 @@ public class Triple<F, S, T> {
 
     @Override
     public int hashCode() {
-        return com.google.common.base.Objects.hashCode(first, second, third);
+        return Objects.hash(first, second, third);
     }
 
     public static <F, S, T> Triple<F, S, T> of(final F first, final S second, T third) {

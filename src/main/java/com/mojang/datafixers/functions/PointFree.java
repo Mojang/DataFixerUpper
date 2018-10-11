@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.google.common.base.Strings;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -40,12 +40,7 @@ public abstract class PointFree<T> {
     }
 
     public static String indent(final int level) {
-        if (level > 0) {
-            char[] spaces = new char[level * 2];
-            Arrays.fill(spaces, ' ');
-            return new String(spaces);
-        }
-        return "";
+        return Strings.repeat("  ", level);
     }
 
     public abstract String toString(int level);
