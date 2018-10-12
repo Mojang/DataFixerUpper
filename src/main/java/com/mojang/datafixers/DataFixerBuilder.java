@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
@@ -62,16 +63,36 @@ public class DataFixerBuilder {
         final DataFixerUpper fixerUpper = new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
 
         executor.execute(() -> {
+            List<Runnable> allTasks = new ArrayList<>();
             final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
             while (iterator.hasNext()) {
                 final int versionKey = iterator.nextInt();
                 final Schema schema = schemas.get(versionKey);
                 for (final String typeName: schema.types()) {
-                    final Type<?> dataType = schema.getType(() -> typeName);
-                    final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
-                    dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
+                    allTasks.add(() -> {
+                        final Type<?> dataType = schema.getType(() -> typeName);
+                        final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
+                        dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
+                    });
                 }
             }
+
+            // Divide up into sets of tasks by number of CPU cores
+            // Some tasks are faster than others, randomize it to try to divide it more
+            Collections.shuffle(allTasks);
+            List<List<Runnable>> queueList = new ArrayList<>();
+            List<Runnable> current = new ArrayList<>();
+            queueList.add(current);
+            int maxTasks = (int) Math.max(1, Math.floor(allTasks.size() / (float)Math.min(6, Runtime.getRuntime().availableProcessors()-2)));
+            for (Runnable task : allTasks) {
+                if (current.size() >= maxTasks) {
+                    current = new ArrayList<>();
+                    queueList.add(current);
+                }
+                current.add(task);
+            }
+
+            queueList.forEach(queue -> executor.execute(() -> queue.forEach(Runnable::run)));
         });
 
         return fixerUpper;
