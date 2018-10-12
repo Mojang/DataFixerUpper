@@ -23,7 +23,6 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
-import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;
 import java.util.Map;
