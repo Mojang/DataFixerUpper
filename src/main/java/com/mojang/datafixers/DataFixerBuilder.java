@@ -63,7 +63,7 @@ public class DataFixerBuilder {
         final DataFixerUpper fixerUpper = new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
 
         executor.execute(() -> {
-            List<Runnable> allTasks = new ArrayList<>();
+            final List<Runnable> allTasks = new ArrayList<>();
             final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
             while (iterator.hasNext()) {
                 final int versionKey = iterator.nextInt();
@@ -79,12 +79,12 @@ public class DataFixerBuilder {
 
             // Divide up into sets of tasks by number of CPU cores
             // Some tasks are faster than others, randomize it to try to divide it more
+            final List<List<Runnable>> queueList = new ArrayList<>();
+            final int maxTasks = (int) Math.max(1, Math.floor(allTasks.size() / (float)Math.min(6, Runtime.getRuntime().availableProcessors()-2)));
             Collections.shuffle(allTasks);
-            List<List<Runnable>> queueList = new ArrayList<>();
             List<Runnable> current = new ArrayList<>();
             queueList.add(current);
-            int maxTasks = (int) Math.max(1, Math.floor(allTasks.size() / (float)Math.min(6, Runtime.getRuntime().availableProcessors()-2)));
-            for (Runnable task : allTasks) {
+            for (final Runnable task: allTasks) {
                 if (current.size() >= maxTasks) {
                     current = new ArrayList<>();
                     queueList.add(current);
