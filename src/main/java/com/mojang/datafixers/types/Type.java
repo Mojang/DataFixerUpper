@@ -32,8 +32,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class Type<A> implements App<Type.Mu, A> {
-    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
-    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
+    private final Map<Pair<TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<A, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
+    private final Map<Pair<TypeRewriteRule, PointFreeRule>, Optional<RewriteResult<A, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
 
     public static class Mu implements K1 {}
 
@@ -158,16 +158,16 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     @SuppressWarnings("unchecked")
     public Optional<RewriteResult<A, ?>> rewrite(final TypeRewriteRule rule, final PointFreeRule fRule) {
-        final Triple<Type<?>, TypeRewriteRule, PointFreeRule> key = Triple.of(this, rule, fRule);
+        final Pair<TypeRewriteRule, PointFreeRule> key = Pair.of(rule, fRule);
         // This code under contention would generate multiple rewrites, so we use CompletableFuture for pending rewrites.
         // We can not use computeIfAbsent because this is a recursive call that will block server startup
         // during the Bootstrap phrase that's trying to pre cache these rewrites.
-        Optional<? extends RewriteResult<?, ?>> rewrite = REWRITE_CACHE.get(key);
+        Optional<RewriteResult<A, ?>> rewrite = REWRITE_CACHE.get(key);
         //noinspection OptionalAssignedToNull
         if (rewrite != null) {
-            return (Optional<RewriteResult<A, ?>>) rewrite;
+            return rewrite;
         }
-        CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending;
+        CompletableFuture<Optional<? extends RewriteResult<A, ?>>> pending;
         boolean needsCreate;
         synchronized (PENDING_REWRITE_CACHE) {
             pending = PENDING_REWRITE_CACHE.get(key);
