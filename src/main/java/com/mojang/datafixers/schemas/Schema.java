@@ -52,7 +52,7 @@ public class Schema {
 
         for (final String name : TYPE_TEMPLATES.keySet()) {
             final Type<?> type;
-            int recurseId = RECURSIVE_TYPES.getOrDefault(name, -1);
+            final int recurseId = RECURSIVE_TYPES.getOrDefault(name, -1);
             if (recurseId != -1) {
                 type = family.apply(recurseId);
             } else {
@@ -92,7 +92,7 @@ public class Schema {
     }
 
     public TypeTemplate id(final String name) {
-        int id = RECURSIVE_TYPES.getOrDefault(name, -1);
+        final int id = RECURSIVE_TYPES.getOrDefault(name, -1);
         if (id != -1) {
             return DSL.id(id);
         }

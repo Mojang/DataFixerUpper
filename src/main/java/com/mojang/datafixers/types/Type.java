@@ -162,13 +162,13 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         // This code under contention would generate multiple rewrites, so we use CompletableFuture for pending rewrites.
         // We can not use computeIfAbsent because this is a recursive call that will block server startup
         // during the Bootstrap phrase that's trying to pre cache these rewrites.
-        Optional<? extends RewriteResult<?, ?>> rewrite = REWRITE_CACHE.get(key);
+        final Optional<? extends RewriteResult<?, ?>> rewrite = REWRITE_CACHE.get(key);
         //noinspection OptionalAssignedToNull
         if (rewrite != null) {
             return (Optional<RewriteResult<A, ?>>) rewrite;
         }
         CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending;
-        boolean needsCreate;
+        final boolean needsCreate;
         synchronized (PENDING_REWRITE_CACHE) {
             pending = PENDING_REWRITE_CACHE.get(key);
             needsCreate = pending == null;

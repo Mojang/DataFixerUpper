@@ -189,12 +189,12 @@ public final class TaggedChoice<K> implements TypeTemplate {
             if (values.isPresent()) {
                 final Map<T, T> map = values.get();
                 final T nameObject = ops.createString(name);
-                T mapValue = map.get(nameObject);
+                final T mapValue = map.get(nameObject);
                 if (mapValue != null) {
                     final Optional<K> key = keyType.read(ops, mapValue).getSecond();
                     //noinspection OptionalIsPresent
-                    K keyValue = key.isPresent() ? key.get() : null;
-                    Type<?> type = keyValue != null ? types.get(keyValue) : null;
+                    final K keyValue = key.isPresent() ? key.get() : null;
+                    final Type<?> type = keyValue != null ? types.get(keyValue) : null;
                     if (type == null) {
                         if (DataFixerUpper.ERRORS_ARE_FATAL) {
                             throw new IllegalArgumentException("Unsupported key: " + keyValue + " in " + this);
