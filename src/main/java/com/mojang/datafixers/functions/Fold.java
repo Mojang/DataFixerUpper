@@ -10,15 +10,15 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.util.Pair;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
 final class Fold<A, B> extends PointFree<Function<A, B>> {
-    private static final Map<Pair<RecursiveTypeFamily, Algebra>, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = new HashMap<>();
-    private static final Map<Pair<IntFunction<RewriteResult<?, ?>>, Integer>, RewriteResult<?, ?>> HMAP_APPLY_CACHE = new HashMap<>();
+    private static final Map<Pair<RecursiveTypeFamily, Algebra>, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Pair<IntFunction<RewriteResult<?, ?>>, Integer>, RewriteResult<?, ?>> HMAP_APPLY_CACHE = new ConcurrentHashMap<>();
 
     protected final RecursivePoint.RecursivePointType<A> aType;
     protected final RewriteResult<?, B> function;
