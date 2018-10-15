@@ -3,8 +3,6 @@
 package com.mojang.datafixers.types;
 
 import com.google.common.collect.Maps;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.Dynamic;
@@ -23,6 +21,8 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;
@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class Type<A> implements App<Type.Mu, A> {
     private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
@@ -163,29 +164,25 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         // We can not use computeIfAbsent because this is a recursive call that will block server startup
         // during the Bootstrap phrase that's trying to pre cache these rewrites.
         final Optional<? extends RewriteResult<?, ?>> rewrite = REWRITE_CACHE.get(key);
-        //noinspection OptionalAssignedToNull
         if (rewrite != null) {
             return (Optional<RewriteResult<A, ?>>) rewrite;
         }
-        CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending;
-        final boolean needsCreate;
-        synchronized (PENDING_REWRITE_CACHE) {
-            pending = PENDING_REWRITE_CACHE.get(key);
-            needsCreate = pending == null;
-            if (pending == null) {
-                pending = new CompletableFuture<>();
-                PENDING_REWRITE_CACHE.put(key, pending);
-            }
-        }
-        if (needsCreate) {
+        final AtomicReference<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new AtomicReference<>();
+
+        final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending = PENDING_REWRITE_CACHE.computeIfAbsent(key, k -> {
+            final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> value = new CompletableFuture<>();
+            ref.set(value);
+            return value;
+        });
+
+        if (ref.get() != null) {
             Optional<RewriteResult<A, ?>> result = rule.rewrite(this).flatMap(r -> r.view().rewrite(fRule).map(view -> RewriteResult.create(view, r.recData())));
             REWRITE_CACHE.put(key, result);
             pending.complete(result);
             PENDING_REWRITE_CACHE.remove(key);
             return result;
-        } else {
-            return (Optional<RewriteResult<A, ?>>) pending.join();
         }
+        return (Optional<RewriteResult<A, ?>>) pending.join();
     }
 
     public <FT, FR> Type<?> getSetType(final OpticFinder<FT> optic, final Type<FR> newType) {
