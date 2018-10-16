@@ -3,13 +3,13 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.Lists;
+import com.mojang.datafixers.schemas.Schema;
+import com.mojang.datafixers.types.Type;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
-import com.mojang.datafixers.schemas.Schema;
-import com.mojang.datafixers.types.Type;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -61,18 +61,18 @@ public class DataFixerBuilder {
     public DataFixer build(final Executor executor) {
         final DataFixerUpper fixerUpper = new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
 
-        executor.execute(() -> {
-            final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
-            while (iterator.hasNext()) {
-                final int versionKey = iterator.nextInt();
-                final Schema schema = schemas.get(versionKey);
-                for (final String typeName: schema.types()) {
+        final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
+        while (iterator.hasNext()) {
+            final int versionKey = iterator.nextInt();
+            final Schema schema = schemas.get(versionKey);
+            for (final String typeName : schema.types()) {
+                executor.execute(() -> {
                     final Type<?> dataType = schema.getType(() -> typeName);
                     final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
                     dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
-                }
+                });
             }
-        });
+        }
 
         return fixerUpper;
     }
