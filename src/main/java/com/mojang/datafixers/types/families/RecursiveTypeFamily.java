@@ -19,6 +19,7 @@ import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.annotation.Nullable;
@@ -34,7 +35,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
     private final TypeTemplate template;
     private final int size;
 
-    private final Int2ObjectMap<RecursivePoint.RecursivePointType<?>> types = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<RecursivePoint.RecursivePointType<?>> types = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
     private final int hashCode;
 
     public RecursiveTypeFamily(final String name, final TypeTemplate template) {

@@ -11,15 +11,19 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public abstract class PointFree<T> {
-    private boolean initialized;
+    private volatile boolean initialized;
     @Nullable
     private Function<DynamicOps<?>, T> value;
 
     @SuppressWarnings("ConstantConditions")
     public Function<DynamicOps<?>, T> evalCached() {
         if (!initialized) {
-            initialized = true;
-            value = eval();
+            synchronized (this) {
+                if (!initialized) {
+                    value = eval();
+                    initialized = true;
+                }
+            }
         }
         return value;
     }

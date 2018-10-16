@@ -175,8 +175,8 @@ public final class Tag implements TypeTemplate {
         public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
             final Optional<Map<T, T>> map = ops.getMapValues(input);
             final T nameObject = ops.createString(name);
-            if (map.isPresent() && map.get().containsKey(nameObject)) {
-                final T elementValue = map.get().get(nameObject);
+            final T elementValue;
+            if (map.isPresent() && (elementValue = map.get().get(nameObject)) != null) {
                 final Optional<A> value = element.read(ops, elementValue).getSecond();
                 if (value.isPresent()) {
                     return Pair.of(ops.createMap(map.get().entrySet().stream().filter(e -> !Objects.equals(e.getKey(), nameObject)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))), value);
