@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.schemas;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.types.Type;
@@ -12,6 +10,8 @@ import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,8 +52,9 @@ public class Schema {
 
         for (final String name : TYPE_TEMPLATES.keySet()) {
             final Type<?> type;
-            if (RECURSIVE_TYPES.containsKey(name)) {
-                type = family.apply(RECURSIVE_TYPES.getInt(name));
+            final int recurseId = RECURSIVE_TYPES.getOrDefault(name, -1);
+            if (recurseId != -1) {
+                type = family.apply(recurseId);
             } else {
                 type = getTemplate(name).apply(family).apply(-1);
             }
@@ -91,8 +92,9 @@ public class Schema {
     }
 
     public TypeTemplate id(final String name) {
-        if (RECURSIVE_TYPES.containsKey(name)) {
-            return DSL.id(RECURSIVE_TYPES.get(name));
+        final int id = RECURSIVE_TYPES.getOrDefault(name, -1);
+        if (id != -1) {
+            return DSL.id(id);
         }
         return getTemplate(name);
     }
