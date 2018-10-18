@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 
@@ -66,10 +67,14 @@ public class DataFixerBuilder {
             final int versionKey = iterator.nextInt();
             final Schema schema = schemas.get(versionKey);
             for (final String typeName : schema.types()) {
-                executor.execute(() -> {
+                CompletableFuture.runAsync(() -> {
                     final Type<?> dataType = schema.getType(() -> typeName);
                     final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
                     dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
+                }, executor).exceptionally(e -> {
+                    LOGGER.error("Unable to build datafixers", e);
+                    Runtime.getRuntime().exit(1);
+                    return null;
                 });
             }
         }
