@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
+import com.google.common.collect.ObjectArrays;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Triple;
@@ -33,7 +34,6 @@ import com.mojang.datafixers.types.templates.Tag;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -167,9 +167,7 @@ public interface DSL {
     }
 
     static TypeTemplate allWithRemainder(final TypeTemplate first, final TypeTemplate... rest) {
-        TypeTemplate[] templates = Arrays.copyOf(rest, rest.length + 1);
-        templates[rest.length] = remainder();
-        return and(first, templates);
+        return and(first, ObjectArrays.concat(rest, remainder()));
     }
 
     static <F, G> Type<Pair<F, G>> and(final Type<F> first, final Type<G> second) {
