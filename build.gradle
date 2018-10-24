@@ -39,6 +39,7 @@ dependencies {
     compile 'com.google.guava:guava:21.0'
     compile 'org.apache.commons:commons-lang3:3.5'
     compile 'it.unimi.dsi:fastutil:7.1.0'
+    testCompile 'junit:junit:4.12'
 }
 
 task sourcesJar(type: Jar) {
