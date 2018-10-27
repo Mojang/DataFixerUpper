@@ -40,7 +40,7 @@ Core data types are Schema and DataFix. Schema is a set of type definitions spec
 Contributions are welcome!
 
 Most contributions will require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to,
-and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
+and actually do, grant us the rights to use your contribution. For details, please visit https://cla.microsoft.com.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
@@ -66,4 +66,4 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
   - [Cunha, A., & Visser, J. (2011). Transformation of structure-shy programs with application to XPath queries and strategic functions](https://scholar.google.com/scholar?q=Cunha%2C%20A.%2C%20%26%20Visser%2C%20J.%20%282011%29.%20Transformation%20of%20structure-shy%20programs%20with%20application%20to%20XPath%20queries%20and%20strategic%20functions)
   - [Pacheco, H., & Cunha, A. (2011, January). Calculating with lenses: optimising bidirectional transformations](https://scholar.google.com/scholar?q=Pacheco%2C%20H.%2C%20%26%20Cunha%2C%20A.%20%282011%2C%20January%29.%20Calculating%20with%20lenses%3A%20optimising%20bidirectional%20transformations)
 
-![GitHub forks](https://img.shields.io/github/forks/Mojang/DataFixerUpper.svg?style=social&label=Fork) ![GitHub stars](https://img.shields.io/github/stars/Mojang/DataFixerUpper.svg?style=social&label=Stars)
+![GitHub forks](https://img.shields.io/github/forks/Mojang/DataFixerUpper.svg?style=social&label=Forks) ![GitHub stars](https://img.shields.io/github/stars/Mojang/DataFixerUpper.svg?style=social&label=Stars)
