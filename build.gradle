@@ -8,8 +8,8 @@ apply plugin: 'maven-publish'
 group = 'com.mojang'
 version = project.hasProperty('buildNumber') ? "${project.majorMinor}.${project.buildNumber}" : "${project.majorMinor}.0-SNAPSHOT"
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.0'
+wrapper {
+    gradleVersion = '4.10.2'
 }
 
 buildscript {
@@ -33,12 +33,12 @@ repositories {
 }
 
 dependencies {
-    compile 'com.google.code.findbugs:jsr305:2.0.1'
-    compile 'com.google.code.gson:gson:2.8.0'
-    compile 'org.apache.logging.log4j:log4j-api:2.8.1'
-    compile 'com.google.guava:guava:21.0'
-    compile 'org.apache.commons:commons-lang3:3.5'
-    compile 'it.unimi.dsi:fastutil:7.1.0'
+    implementation 'com.google.code.findbugs:jsr305:2.0.1'
+    implementation 'com.google.code.gson:gson:2.8.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.8.1'
+    implementation 'com.google.guava:guava:21.0'
+    implementation 'org.apache.commons:commons-lang3:3.5'
+    implementation 'it.unimi.dsi:fastutil:7.1.0'
 }
 
 task sourcesJar(type: Jar) {
