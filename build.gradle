@@ -93,6 +93,10 @@ task report {
     }
 }
 
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
 def publishDir = file("$buildDir/repo")
 
 
