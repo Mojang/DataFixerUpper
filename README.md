@@ -11,7 +11,7 @@ maven {
 
 And then use this library (change `(the latest version)` to the latest version!):
 ```groovy
-compile 'com.mojang:datafixerupper:(the latest version)'
+implementation 'com.mojang:datafixerupper:(the latest version)'
 ```
 
 ## Maven
