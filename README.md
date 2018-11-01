@@ -1,5 +1,5 @@
 # DataFixerUpper [![Latest release](https://img.shields.io/github/release/Mojang/DataFixerUpper.svg)](https://github.com/Mojang/DataFixerUpper/releases/latest) [![License](https://img.shields.io/github/license/Mojang/DataFixerUpper.svg)](https://github.com/Mojang/DataFixerUpper/blob/master/LICENSE)
-A set of utilities designed for incremental building, merging, and optimization of data transformations. Created for converting the game data for Minecraft: Java Edition between different versions of the game.
+A set of utilities designed for incremental building, merging, and optimisation of data transformations. Created for converting the game data for Minecraft: Java Edition between different versions of the game.
 
 ## Gradle
 First include our repository:
@@ -34,7 +34,7 @@ And then use this library (change `(the latest version)` to the latest version!)
 ```
 
 # Usage
-Core data types are Schema and DataFix. Schema is a set of type definitions specifying what data types the system is interested in and how they relate to each other. DataFix is a rewrite rule between types (see [references](#references) below). DataFixerBuilder takes a list of schemas and fixes converting between those schemas, and creates an optimized converter between the types describes in those schemas. DSL is a class with building blocks used to create schemas and fixes.
+Core data types are Schema and DataFix. Schema is a set of type definitions specifying what data types the system is interested in and how they relate to each other. DataFix is a rewrite rule between types (see [references](#references) below). DataFixerBuilder takes a list of schemas and fixes converting between those schemas, and creates an optimised converter between the types describes in those schemas. DSL is a class with building blocks used to create schemas and fixes.
 
 # Contributing
 Contributions are welcome!
@@ -47,7 +47,7 @@ For more information see the [Code of Conduct FAQ](https://opensource.microsoft.
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 # References
-## Optimizing functions
+## Optimising functions
   - [Cunha, A., & Pinto, J. S. (2005). Point-free program transformation](https://scholar.google.com/scholar?q=Cunha%2C%20A.%2C%20%26%20Pinto%2C%20J.%20S.%20%282005%29.%20Point-free%20program%20transformation)
   - [Lämmel, R., Visser, E., & Visser, J. (2002). The essence of strategic programming](https://scholar.google.com/scholar?q=L%C3%A4mmel%2C%20R.%2C%20Visser%2C%20E.%2C%20%26%20Visser%2C%20J.%20%282002%29.%20The%20essence%20of%20strategic%20programming)
 
