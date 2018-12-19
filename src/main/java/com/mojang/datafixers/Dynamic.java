@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
@@ -45,16 +46,20 @@ public class Dynamic<T> {
         return new Dynamic<>(ops, function.apply(value));
     }
 
-    public Optional<Number> getNumberValue() {
+    public Optional<Number> asNumber() {
         return ops.getNumberValue(value);
     }
 
-    public Number getNumberValue(final Number defaultValue) {
-        return getNumberValue().orElse(defaultValue);
+    public Number asNumber(final Number defaultValue) {
+        return asNumber().orElse(defaultValue);
     }
 
-    public Optional<String> getStringValue() {
+    public Optional<String> asString() {
         return ops.getStringValue(value);
+    }
+
+    public String asString(final String defaultValue) {
+        return asString().orElse(defaultValue);
     }
 
     @SuppressWarnings("unchecked")
@@ -102,32 +107,48 @@ public class Dynamic<T> {
         }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))).map(this::createMap), this);
     }
 
-    public Optional<Stream<Dynamic<T>>> getStream() {
+    public Optional<Stream<Dynamic<T>>> asStreamOpt() {
         return ops.getStream(value).map(s -> s.map(e -> new Dynamic<>(ops, e)));
+    }
+
+    public Stream<Dynamic<T>> asStream() {
+        return asStreamOpt().orElseGet(Stream::empty);
     }
 
     public Dynamic<T> createList(final Stream<? extends Dynamic<?>> input) {
         return new Dynamic<>(ops, ops.createList(input.map(element -> element.cast(ops))));
     }
 
-    public Optional<ByteBuffer> getByteBuffer() {
+    public Optional<ByteBuffer> asByteBufferOpt() {
         return ops.getByteBuffer(value);
+    }
+
+    public ByteBuffer asByteBuffer() {
+        return asByteBufferOpt().orElseGet(() -> ByteBuffer.wrap(new byte[0]));
     }
 
     public Dynamic<?> createByteList(final ByteBuffer input) {
         return new Dynamic<>(ops, ops.createByteList(input));
     }
 
-    public Optional<IntStream> getIntStream() {
+    public Optional<IntStream> asIntStreamOpt() {
         return ops.getIntStream(value);
+    }
+
+    public IntStream asIntStream() {
+        return asIntStreamOpt().orElseGet(IntStream::empty);
     }
 
     public Dynamic<?> createIntList(final IntStream input) {
         return new Dynamic<>(ops, ops.createIntList(input));
     }
 
-    public Optional<LongStream> getLongStream() {
+    public Optional<LongStream> asLongStreamOpt() {
         return ops.getLongStream(value);
+    }
+
+    public LongStream asLongStream() {
+        return asLongStreamOpt().orElseGet(LongStream::empty);
     }
 
     public Dynamic<?> createLongList(final LongStream input) {
@@ -139,7 +160,7 @@ public class Dynamic<T> {
     }
 
     public OptionalDynamic<T> get(final String key) {
-        return new OptionalDynamic<>(ops.get(value, key).map(v -> new Dynamic<>(ops, v)));
+        return new OptionalDynamic<>(ops, ops.get(value, key).map(v -> new Dynamic<>(ops, v)));
     }
 
     public Optional<T> getGeneric(final T key) {
@@ -158,114 +179,6 @@ public class Dynamic<T> {
         return map(v -> ops.updateGeneric(v, key, function));
     }
 
-    public Dynamic<T> createNumeric(final Number i) {
-        return new Dynamic<>(ops, ops.createNumeric(i));
-    }
-
-    public Dynamic<T> createByte(final byte value) {
-        return new Dynamic<>(ops, ops.createByte(value));
-    }
-
-    public Dynamic<T> createShort(final short value) {
-        return new Dynamic<>(ops, ops.createShort(value));
-    }
-
-    public Dynamic<T> createInt(final int value) {
-        return new Dynamic<>(ops, ops.createInt(value));
-    }
-
-    public Dynamic<T> createLong(final long value) {
-        return new Dynamic<>(ops, ops.createLong(value));
-    }
-
-    public Dynamic<T> createFloat(final float value) {
-        return new Dynamic<>(ops, ops.createFloat(value));
-    }
-
-    public Dynamic<T> createDouble(final double value) {
-        return new Dynamic<>(ops, ops.createDouble(value));
-    }
-
-    public Dynamic<T> createBoolean(final boolean value) {
-        return new Dynamic<>(ops, ops.createBoolean(value));
-    }
-
-    public Dynamic<T> createString(final String value) {
-        return new Dynamic<>(ops, ops.createString(value));
-    }
-
-    public int getInt(final String key) {
-        return getNumber(key, 0).intValue();
-    }
-
-    public long getLong(final String key) {
-        return getNumber(key, 0).longValue();
-    }
-
-    public float getFloat(final String key) {
-        return getNumber(key, 0).floatValue();
-    }
-
-    public double getDouble(final String key) {
-        return getNumber(key, 0).doubleValue();
-    }
-
-    public byte getByte(final String key) {
-        return getNumber(key, 0).byteValue();
-    }
-
-    public short getShort(final String key) {
-        return getNumber(key, 0).shortValue();
-    }
-
-    public boolean getBoolean(final String key) {
-        return getNumber(key, 0).intValue() != 0;
-    }
-
-    public String getString(final String key) {
-        return getElement(key).flatMap(ops::getStringValue).orElse("");
-    }
-
-    public int getInt(final String key, final int defaultValue) {
-        return getNumber(key, defaultValue).intValue();
-    }
-
-    public long getLong(final String key, final long defaultValue) {
-        return getNumber(key, defaultValue).longValue();
-    }
-
-    public float getFloat(final String key, final float defaultValue) {
-        return getNumber(key, defaultValue).floatValue();
-    }
-
-    public double getDouble(final String key, final double defaultValue) {
-        return getNumber(key, defaultValue).doubleValue();
-    }
-
-    public byte getByte(final String key, final byte defaultValue) {
-        return getNumber(key, defaultValue).byteValue();
-    }
-
-    public short getShort(final String key, final short defaultValue) {
-        return getNumber(key, defaultValue).shortValue();
-    }
-
-    public boolean getBoolean(final String key, final boolean defaultValue) {
-        return getNumber(key, defaultValue ? 1 : 0).intValue() != 0;
-    }
-
-    public String getString(final String key, final String defaultValue) {
-        return getElement(key).flatMap(ops::getStringValue).orElse(defaultValue);
-    }
-
-    public Number getNumber(final String key, final Number defaultValue) {
-        return getNumber(key).orElse(defaultValue);
-    }
-
-    public Optional<Number> getNumber(final String key) {
-        return getElement(key).flatMap(ops::getNumberValue);
-    }
-
     public T getElement(final String key, final T defaultValue) {
         return getElement(key).orElse(defaultValue);
     }
@@ -282,8 +195,26 @@ public class Dynamic<T> {
         return ops.getMapValues(value).flatMap(m -> Optional.ofNullable(m.get(key)));
     }
 
-    public <U> List<U> toList(final Function<Dynamic<T>, U> deserializer) {
-        return getStream().orElseGet(Stream::empty).map(deserializer).collect(Collectors.toList());
+    public <U> Optional<List<U>> asListOpt(final Function<Dynamic<T>, U> deserializer) {
+        return asStreamOpt().map(stream -> stream.map(deserializer).collect(Collectors.toList()));
+    }
+
+    public <U> List<U> asList(final Function<Dynamic<T>, U> deserializer) {
+        return asListOpt(deserializer).orElseGet(ImmutableList::of);
+    }
+
+    public <K, V> Optional<Map<K, V>> asMapOpt(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
+        return ops.getMapValues(value).map(map -> {
+            final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
+            for (final Map.Entry<T, T> entry : map.entrySet()) {
+                builder.put(keyDeserializer.apply(new Dynamic<>(ops, entry.getKey())), valueDeserializer.apply(new Dynamic<>(ops, entry.getValue())));
+            }
+            return builder.build();
+        });
+    }
+
+    public <K, V> Map<K, V> asMap(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
+        return asMapOpt(keyDeserializer, valueDeserializer).orElseGet(ImmutableMap::of);
     }
 
     @Override
@@ -371,5 +302,41 @@ public class Dynamic<T> {
 
     public Dynamic<T> emptyMap() {
         return new Dynamic<>(ops, ops.emptyMap());
+    }
+
+    public Dynamic<T> createNumeric(final Number i) {
+        return new Dynamic<>(ops, ops.createNumeric(i));
+    }
+
+    public Dynamic<T> createByte(final byte value) {
+        return new Dynamic<>(ops, ops.createByte(value));
+    }
+
+    public Dynamic<T> createShort(final short value) {
+        return new Dynamic<>(ops, ops.createShort(value));
+    }
+
+    public Dynamic<T> createInt(final int value) {
+        return new Dynamic<>(ops, ops.createInt(value));
+    }
+
+    public Dynamic<T> createLong(final long value) {
+        return new Dynamic<>(ops, ops.createLong(value));
+    }
+
+    public Dynamic<T> createFloat(final float value) {
+        return new Dynamic<>(ops, ops.createFloat(value));
+    }
+
+    public Dynamic<T> createDouble(final double value) {
+        return new Dynamic<>(ops, ops.createDouble(value));
+    }
+
+    public Dynamic<T> createBoolean(final boolean value) {
+        return new Dynamic<>(ops, ops.createBoolean(value));
+    }
+
+    public Dynamic<T> createString(final String value) {
+        return new Dynamic<>(ops, ops.createString(value));
     }
 }
