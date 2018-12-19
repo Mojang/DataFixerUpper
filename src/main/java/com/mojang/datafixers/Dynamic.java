@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
@@ -21,8 +20,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
-public class Dynamic<T> {
-    private final DynamicOps<T> ops;
+public class Dynamic<T> extends DynamicLike<T> {
     private final T value;
 
     public Dynamic(final DynamicOps<T> ops) {
@@ -30,12 +28,8 @@ public class Dynamic<T> {
     }
 
     public Dynamic(final DynamicOps<T> ops, @Nullable final T value) {
-        this.ops = ops;
+        super(ops);
         this.value = value == null ? ops.empty() : value;
-    }
-
-    public DynamicOps<T> getOps() {
-        return ops;
     }
 
     public T getValue() {
@@ -44,22 +38,6 @@ public class Dynamic<T> {
 
     public Dynamic<T> map(final Function<? super T, ? extends T> function) {
         return new Dynamic<>(ops, function.apply(value));
-    }
-
-    public Optional<Number> asNumber() {
-        return ops.getNumberValue(value);
-    }
-
-    public Number asNumber(final Number defaultValue) {
-        return asNumber().orElse(defaultValue);
-    }
-
-    public Optional<String> asString() {
-        return ops.getStringValue(value);
-    }
-
-    public String asString(final String defaultValue) {
-        return asString().orElse(defaultValue);
     }
 
     @SuppressWarnings("unchecked")
@@ -92,14 +70,6 @@ public class Dynamic<T> {
         });
     }
 
-    public Dynamic<T> createMap(final Map<? extends Dynamic<?>, ? extends Dynamic<?>> map) {
-        final ImmutableMap.Builder<T, T> builder = ImmutableMap.builder();
-        for (final Map.Entry<? extends Dynamic<?>, ? extends Dynamic<?>> entry : map.entrySet()) {
-            builder.put(entry.getKey().cast(ops), entry.getValue().cast(ops));
-        }
-        return new Dynamic<>(ops, ops.createMap(builder.build()));
-    }
-
     public Dynamic<T> updateMapValues(final Function<Pair<Dynamic<?>, Dynamic<?>>, Pair<Dynamic<?>, Dynamic<?>>> updater) {
         return DataFixUtils.orElse(getMapValues().map(map -> map.entrySet().stream().map(e -> {
             final Pair<Dynamic<?>, Dynamic<?>> pair = updater.apply(Pair.of(e.getKey(), e.getValue()));
@@ -107,64 +77,48 @@ public class Dynamic<T> {
         }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))).map(this::createMap), this);
     }
 
+    @Override
+    public Optional<Number> asNumber() {
+        return ops.getNumberValue(value);
+    }
+
+    @Override
+    public Optional<String> asString() {
+        return ops.getStringValue(value);
+    }
+
+    @Override
     public Optional<Stream<Dynamic<T>>> asStreamOpt() {
         return ops.getStream(value).map(s -> s.map(e -> new Dynamic<>(ops, e)));
     }
 
-    public Stream<Dynamic<T>> asStream() {
-        return asStreamOpt().orElseGet(Stream::empty);
-    }
-
-    public Dynamic<T> createList(final Stream<? extends Dynamic<?>> input) {
-        return new Dynamic<>(ops, ops.createList(input.map(element -> element.cast(ops))));
-    }
-
+    @Override
     public Optional<ByteBuffer> asByteBufferOpt() {
         return ops.getByteBuffer(value);
     }
 
-    public ByteBuffer asByteBuffer() {
-        return asByteBufferOpt().orElseGet(() -> ByteBuffer.wrap(new byte[0]));
-    }
-
-    public Dynamic<?> createByteList(final ByteBuffer input) {
-        return new Dynamic<>(ops, ops.createByteList(input));
-    }
-
+    @Override
     public Optional<IntStream> asIntStreamOpt() {
         return ops.getIntStream(value);
     }
 
-    public IntStream asIntStream() {
-        return asIntStreamOpt().orElseGet(IntStream::empty);
-    }
-
-    public Dynamic<?> createIntList(final IntStream input) {
-        return new Dynamic<>(ops, ops.createIntList(input));
-    }
-
+    @Override
     public Optional<LongStream> asLongStreamOpt() {
         return ops.getLongStream(value);
     }
 
-    public LongStream asLongStream() {
-        return asLongStreamOpt().orElseGet(LongStream::empty);
-    }
-
-    public Dynamic<?> createLongList(final LongStream input) {
-        return new Dynamic<>(ops, ops.createLongList(input));
-    }
-
-    public Dynamic<T> remove(final String key) {
-        return map(v -> ops.remove(v, key));
-    }
-
+    @Override
     public OptionalDynamic<T> get(final String key) {
         return new OptionalDynamic<>(ops, ops.get(value, key).map(v -> new Dynamic<>(ops, v)));
     }
 
+    @Override
     public Optional<T> getGeneric(final T key) {
         return ops.getGeneric(value, key);
+    }
+
+    public Dynamic<T> remove(final String key) {
+        return map(v -> ops.remove(v, key));
     }
 
     public Dynamic<T> set(final String key, final Dynamic<?> value) {
@@ -179,30 +133,22 @@ public class Dynamic<T> {
         return map(v -> ops.updateGeneric(v, key, function));
     }
 
-    public T getElement(final String key, final T defaultValue) {
-        return getElement(key).orElse(defaultValue);
-    }
-
+    @Override
     public Optional<T> getElement(final String key) {
         return getElementGeneric(ops.createString(key));
     }
 
-    public T getElementGeneric(final T key, final T defaultValue) {
-        return getElementGeneric(key).orElse(defaultValue);
-    }
-
+    @Override
     public Optional<T> getElementGeneric(final T key) {
         return ops.getMapValues(value).flatMap(m -> Optional.ofNullable(m.get(key)));
     }
 
+    @Override
     public <U> Optional<List<U>> asListOpt(final Function<Dynamic<T>, U> deserializer) {
         return asStreamOpt().map(stream -> stream.map(deserializer).collect(Collectors.toList()));
     }
 
-    public <U> List<U> asList(final Function<Dynamic<T>, U> deserializer) {
-        return asListOpt(deserializer).orElseGet(ImmutableList::of);
-    }
-
+    @Override
     public <K, V> Optional<Map<K, V>> asMapOpt(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
         return ops.getMapValues(value).map(map -> {
             final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
@@ -211,10 +157,6 @@ public class Dynamic<T> {
             }
             return builder.build();
         });
-    }
-
-    public <K, V> Map<K, V> asMap(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
-        return asMapOpt(keyDeserializer, valueDeserializer).orElseGet(ImmutableMap::of);
     }
 
     @Override
@@ -294,49 +236,5 @@ public class Dynamic<T> {
             ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
         }
         throw new IllegalStateException("Could not convert value of type " + type);
-    }
-
-    public Dynamic<T> emptyList() {
-        return new Dynamic<>(ops, ops.emptyList());
-    }
-
-    public Dynamic<T> emptyMap() {
-        return new Dynamic<>(ops, ops.emptyMap());
-    }
-
-    public Dynamic<T> createNumeric(final Number i) {
-        return new Dynamic<>(ops, ops.createNumeric(i));
-    }
-
-    public Dynamic<T> createByte(final byte value) {
-        return new Dynamic<>(ops, ops.createByte(value));
-    }
-
-    public Dynamic<T> createShort(final short value) {
-        return new Dynamic<>(ops, ops.createShort(value));
-    }
-
-    public Dynamic<T> createInt(final int value) {
-        return new Dynamic<>(ops, ops.createInt(value));
-    }
-
-    public Dynamic<T> createLong(final long value) {
-        return new Dynamic<>(ops, ops.createLong(value));
-    }
-
-    public Dynamic<T> createFloat(final float value) {
-        return new Dynamic<>(ops, ops.createFloat(value));
-    }
-
-    public Dynamic<T> createDouble(final double value) {
-        return new Dynamic<>(ops, ops.createDouble(value));
-    }
-
-    public Dynamic<T> createBoolean(final boolean value) {
-        return new Dynamic<>(ops, ops.createBoolean(value));
-    }
-
-    public Dynamic<T> createString(final String value) {
-        return new Dynamic<>(ops, ops.createString(value));
     }
 }
