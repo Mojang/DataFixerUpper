@@ -9,6 +9,7 @@ import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -137,8 +138,8 @@ public class Dynamic<T> {
         return map(v -> ops.remove(v, key));
     }
 
-    public Optional<Dynamic<T>> get(final String key) {
-        return ops.get(value, key).map(v -> new Dynamic<>(ops, v));
+    public OptionalDynamic<T> get(final String key) {
+        return new OptionalDynamic<>(ops.get(value, key).map(v -> new Dynamic<>(ops, v)));
     }
 
     public Optional<T> getGeneric(final T key) {
@@ -156,7 +157,6 @@ public class Dynamic<T> {
     public Dynamic<T> updateGeneric(final T key, final Function<T, T> function) {
         return map(v -> ops.updateGeneric(v, key, function));
     }
-
 
     public Dynamic<T> createNumeric(final Number i) {
         return new Dynamic<>(ops, ops.createNumeric(i));
@@ -280,6 +280,10 @@ public class Dynamic<T> {
 
     public Optional<T> getElementGeneric(final T key) {
         return ops.getMapValues(value).flatMap(m -> Optional.ofNullable(m.get(key)));
+    }
+
+    public <U> List<U> toList(final Function<Dynamic<T>, U> deserializer) {
+        return getStream().orElseGet(Stream::empty).map(deserializer).collect(Collectors.toList());
     }
 
     @Override
