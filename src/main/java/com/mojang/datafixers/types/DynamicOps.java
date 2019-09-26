@@ -67,6 +67,10 @@ public interface DynamicOps<T> {
         return createNumeric(value);
     }
 
+    default Optional<Boolean> getBooleanValue(final T input) {
+        return getNumberValue(input).map(number -> number.byteValue() != 0);
+    }
+
     default T createBoolean(final boolean value) {
         return createByte((byte) (value ? 1 : 0));
     }

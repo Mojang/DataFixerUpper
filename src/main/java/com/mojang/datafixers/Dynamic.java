@@ -213,7 +213,7 @@ public class Dynamic<T> extends DynamicLike<T> {
             return outOps.createDouble(inOps.getNumberValue(input, 0).doubleValue());
         }
         if (Objects.equals(type, DSL.bool())) {
-            return outOps.createBoolean(inOps.getNumberValue(input, 0).byteValue() != 0);
+            return outOps.createBoolean(inOps.getBooleanValue(input).orElse(false));
         }
         if (Objects.equals(type, DSL.string())) {
             return outOps.createString(inOps.getStringValue(input).orElse(""));
