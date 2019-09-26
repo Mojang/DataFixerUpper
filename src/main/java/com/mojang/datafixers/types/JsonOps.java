@@ -87,6 +87,14 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
+    public Optional<Boolean> getBooleanValue(final JsonElement input) {
+        if (input.isJsonPrimitive() && input.getAsJsonPrimitive().isBoolean()) {
+            return Optional.of(input.getAsBoolean());
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public JsonElement createBoolean(final boolean value) {
         return new JsonPrimitive(value);
     }
