@@ -88,8 +88,12 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
     @Override
     public Optional<Boolean> getBooleanValue(final JsonElement input) {
-        if (input.isJsonPrimitive() && input.getAsJsonPrimitive().isBoolean()) {
-            return Optional.of(input.getAsBoolean());
+        if (input.isJsonPrimitive()) {
+            if (input.getAsJsonPrimitive().isBoolean()) {
+                return Optional.of(input.getAsBoolean());
+            } else if (input.getAsJsonPrimitive().isNumber()) {
+                return Optional.of(input.getAsNumber().byteValue() != 0);
+            }
         }
         return Optional.empty();
     }
