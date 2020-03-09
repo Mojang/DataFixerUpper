@@ -4,6 +4,7 @@ package com.mojang.datafixers.types;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.Objects;
 import java.util.Optional;

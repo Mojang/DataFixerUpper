@@ -5,7 +5,7 @@ package com.mojang.datafixers.types;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
-import com.mojang.datafixers.Dynamic;
+import com.mojang.serialization.Dynamic;
 import com.mojang.datafixers.FieldFinder;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.OpticFinder;
@@ -23,6 +23,7 @@ import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DynamicOps;
 import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;

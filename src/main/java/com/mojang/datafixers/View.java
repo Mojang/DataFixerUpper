@@ -7,7 +7,7 @@ import com.mojang.datafixers.functions.PointFree;
 import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.K2;
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 
 import java.util.Objects;
