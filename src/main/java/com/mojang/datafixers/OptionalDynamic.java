@@ -99,4 +99,8 @@ public final class OptionalDynamic<T> extends DynamicLike<T> {
     public Dynamic<T> orElseEmptyList() {
         return delegate.orElseGet(this::emptyList);
     }
+
+    public <V> Optional<V> into(final Function<? super Dynamic<T>, ? extends V> action) {
+        return get().map(action);
+    }
 }
