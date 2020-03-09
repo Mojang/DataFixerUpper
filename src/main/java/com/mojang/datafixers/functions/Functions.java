@@ -5,7 +5,7 @@ package com.mojang.datafixers.functions;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.optics.Optic;
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.templates.RecursivePoint;

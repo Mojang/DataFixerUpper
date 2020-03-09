@@ -1,6 +1,4 @@
-package com.mojang.datafixers;
-
-import com.mojang.datafixers.types.DynamicOps;
+package com.mojang.serialization;
 
 import java.nio.ByteBuffer;
 import java.util.List;

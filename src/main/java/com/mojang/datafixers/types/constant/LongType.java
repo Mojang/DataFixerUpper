@@ -3,7 +3,7 @@
 package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.util.Pair;
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.templates.Const;
 
 import java.util.Optional;

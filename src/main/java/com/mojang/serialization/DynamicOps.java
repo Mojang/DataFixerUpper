@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-package com.mojang.datafixers.types;
+package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.datafixers.Dynamic;
+import com.mojang.datafixers.types.Type;
 
 import java.nio.ByteBuffer;
 import java.util.List;

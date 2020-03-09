@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 
 import java.util.Objects;

@@ -17,7 +17,7 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;

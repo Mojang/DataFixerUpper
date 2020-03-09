@@ -1,8 +1,7 @@
-package com.mojang.datafixers;
+package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.mojang.datafixers.types.DynamicOps;
 
 import java.nio.ByteBuffer;
 import java.util.List;
