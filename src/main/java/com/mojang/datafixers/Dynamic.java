@@ -185,6 +185,10 @@ public class Dynamic<T> extends DynamicLike<T> {
         return new Dynamic<>(outOps, convert(ops, outOps, value));
     }
 
+    public <V> V into(final Function<? super Dynamic<T>, ? extends V> action) {
+        return action.apply(this);
+    }
+
     @SuppressWarnings("unchecked")
     public static <S, T> T convert(final DynamicOps<S> inOps, final DynamicOps<T> outOps, final S input) {
         if (Objects.equals(inOps, outOps)) {
