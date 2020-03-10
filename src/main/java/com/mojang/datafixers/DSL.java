@@ -16,8 +16,8 @@ import com.mojang.datafixers.types.constant.FloatType;
 import com.mojang.datafixers.types.constant.IntType;
 import com.mojang.datafixers.types.constant.LongType;
 import com.mojang.datafixers.types.constant.NamespacedStringType;
-import com.mojang.datafixers.types.constant.NilDrop;
-import com.mojang.datafixers.types.constant.NilSave;
+import com.mojang.datafixers.types.constant.EmptyPart;
+import com.mojang.datafixers.types.constant.EmptyPartSaving;
 import com.mojang.datafixers.types.constant.ShortType;
 import com.mojang.datafixers.types.constant.StringType;
 import com.mojang.datafixers.types.templates.Check;
@@ -88,12 +88,12 @@ public interface DSL {
         return Instances.NAMESPACED_STRING_TYPE;
     }
 
-    static TypeTemplate nil() {
-        return constType(Instances.NIL_DROP);
+    static TypeTemplate emptyPart() {
+        return constType(Instances.EMPTY_PART);
     }
 
-    static Type<Unit> nilType() {
-        return Instances.NIL_DROP;
+    static Type<Unit> emptyPartType() {
+        return Instances.EMPTY_PART;
     }
 
     static TypeTemplate remainder() {
@@ -223,11 +223,11 @@ public interface DSL {
     // Helpers
 
     static <A> Type<Either<A, Unit>> optional(final Type<A> type) {
-        return or(type, nilType());
+        return or(type, emptyPartType());
     }
 
     static TypeTemplate optional(final TypeTemplate value) {
-        return or(value, nil());
+        return or(value, emptyPart());
     }
 
     static TypeTemplate fields(
@@ -456,8 +456,8 @@ public interface DSL {
         private static final Type<Double> DOUBLE_TYPE = new DoubleType();
         private static final Type<String> STRING_TYPE = new StringType();
         private static final Type<String> NAMESPACED_STRING_TYPE = new NamespacedStringType();
-        private static final Type<Unit> NIL_DROP = new NilDrop();
-        private static final Type<Dynamic<?>> NIL_SAVE = new NilSave();
+        private static final Type<Unit> EMPTY_PART = new EmptyPart();
+        private static final Type<Dynamic<?>> NIL_SAVE = new EmptyPartSaving();
 
         private static final OpticFinder<Dynamic<?>> REMAINDER_FINDER = remainderType().finder();
 

@@ -21,7 +21,7 @@ public interface TypeTemplate {
         return apply(new TypeFamily() {
             @Override
             public Type<?> apply(final int index) {
-                return DSL.nilType();
+                return DSL.emptyPartType();
             }
 
             /*@Override

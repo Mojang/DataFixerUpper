@@ -17,12 +17,14 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -168,9 +170,25 @@ public final class List implements TypeTemplate {
             }).orElseGet(() -> Pair.of(input, Optional.empty()));
         }
 
+        /**
+         * Will write `ops.empty()` value into the partial result if the element failed to serialize
+         */
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final java.util.List<A> value) {
-            return ops.merge(rest, ops.createList(value.stream().map(a -> element.write(ops, ops.empty(), a))));
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final java.util.List<A> value) {
+            final java.util.List<T> list = new ArrayList<>(value.size());
+            DataResult<java.util.List<T>> result = DataResult.success(list);
+
+            for (final A a : value) {
+                result = result.flatMap(t -> {
+                    final DataResult<T> written = element.write(ops, ops.empty(), a);
+                    return written.map(e -> {
+                        list.add(e);
+                        return list;
+                    });
+                });
+            }
+
+            return result.flatMap(l -> ops.mergeInto(rest, l));
         }
 
         @Override

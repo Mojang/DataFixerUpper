@@ -4,6 +4,7 @@ package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.util.Either;
@@ -20,6 +21,7 @@ import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -177,24 +179,41 @@ public final class CompoundList implements TypeTemplate {
             return ops.getMapValues(input).map(map -> {
                 final ImmutableList.Builder<Pair<K, V>> builder = ImmutableList.builder();
                 final ImmutableMap.Builder<T, T> restBuilder = ImmutableMap.builder();
-                for (final Map.Entry<T, T> entry : map.entrySet()) {
-                    final Pair<T, Optional<K>> keyValue = key.read(ops, entry.getKey());
-                    final Pair<T, Optional<V>> elementValue = element.read(ops, entry.getValue());
+                map.forEach(entry -> {
+                    final Pair<T, Optional<K>> keyValue = key.read(ops, entry.getFirst());
+                    final Pair<T, Optional<V>> elementValue = element.read(ops, entry.getSecond());
                     if (keyValue.getSecond().isPresent() && elementValue.getSecond().isPresent()) {
                         builder.add(Pair.of(keyValue.getSecond().get(), elementValue.getSecond().get()));
                     } else {
-                        restBuilder.put(entry);
+                        restBuilder.put(entry.getFirst(), entry.getSecond());
                     }
-                }
+                });
                 return Pair.of(ops.createMap(restBuilder.build()), Optional.of((List<Pair<K, V>>) builder.build()));
             }).orElseGet(() -> Pair.of(input, Optional.empty()));
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final List<Pair<K, V>> value) {
-            final ImmutableMap.Builder<T, T> builder = ImmutableMap.builder();
-            value.forEach(pair -> builder.put(key.write(ops, ops.empty(), pair.getFirst()), element.write(ops, ops.empty(), pair.getSecond())));
-            return ops.merge(rest, ops.createMap(builder.build()));
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final List<Pair<K, V>> value) {
+            final Map<T, T> map = Maps.newHashMap();
+
+            DataResult<Map<T, T>> result = DataResult.success(map);
+
+            for (final Pair<K, V> pair : value) {
+                result = result.flatMap(m -> {
+                    final DataResult<T> element = this.element.write(ops, ops.empty(), pair.getSecond());
+                    final DataResult<Pair<T, T>> entry = element.flatMap(e -> key.write(ops, ops.empty(), pair.getFirst()).map(k -> Pair.of(k, e)));
+                    return entry.flatMap(e -> {
+                        final T key = e.getFirst();
+                        if (m.containsKey(key)) {
+                            return DataResult.error("Duplicate key: " + key, m);
+                        }
+                        m.put(key, e.getSecond());
+                        return DataResult.success(m);
+                    });
+                });
+            }
+
+            return result.flatMap(m -> ops.mergeInto(rest, m));
         }
 
         @Override

@@ -11,6 +11,7 @@ import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.functions.Functions;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -127,7 +128,7 @@ public final class Check implements TypeTemplate {
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final A value) {
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
             return delegate.write(ops, rest, value);
         }
 

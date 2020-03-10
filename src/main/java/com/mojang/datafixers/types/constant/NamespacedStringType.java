@@ -3,13 +3,13 @@
 package com.mojang.datafixers.types.constant;
 
 import com.google.common.base.Function;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.templates.Const;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.Optional;
 
-public final class NamespacedStringType extends Const.ConstType<String> {
+public final class NamespacedStringType extends Const.PrimitiveType<String> {
     public static Function<String, String> ENSURE_NAMESPACE = s -> s;
 
     @Override
@@ -21,7 +21,7 @@ public final class NamespacedStringType extends Const.ConstType<String> {
     }
 
     @Override
-    public <T> T write(final DynamicOps<T> ops, final T rest, final String value) {
+    public <T> T doWrite(final DynamicOps<T> ops, final String value) {
         return ops.createString(value);
     }
 

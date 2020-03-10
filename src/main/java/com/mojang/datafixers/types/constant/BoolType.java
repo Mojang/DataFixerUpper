@@ -2,13 +2,13 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.constant;
 
+import com.mojang.datafixers.types.templates.Const;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.datafixers.types.templates.Const;
 
 import java.util.Optional;
 
-public final class BoolType extends Const.ConstType<Boolean> {
+public final class BoolType extends Const.PrimitiveType<Boolean> {
     @Override
     public <T> Pair<T, Optional<Boolean>> read(final DynamicOps<T> ops, final T input) {
         return ops
@@ -18,7 +18,7 @@ public final class BoolType extends Const.ConstType<Boolean> {
     }
 
     @Override
-    public <T> T write(final DynamicOps<T> ops, final T rest, final Boolean value) {
+    public <T> T doWrite(final DynamicOps<T> ops, final Boolean value) {
         return ops.createBoolean(value);
     }
 

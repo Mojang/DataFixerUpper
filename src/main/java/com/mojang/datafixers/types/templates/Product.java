@@ -21,6 +21,7 @@ import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -223,8 +224,8 @@ public final class Product implements TypeTemplate {
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Pair<F, G> value) {
-            return second.write(ops, first.write(ops, rest, value.getFirst()), value.getSecond());
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Pair<F, G> value) {
+            return first.write(ops, rest, value.getFirst()).flatMap(f -> second.write(ops, f, value.getSecond()));
         }
 
         @Override

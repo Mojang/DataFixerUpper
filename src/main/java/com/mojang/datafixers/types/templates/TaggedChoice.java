@@ -29,6 +29,7 @@ import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.AffineP;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -185,45 +186,49 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public <T> Pair<T, Optional<Pair<K, ?>>> read(final DynamicOps<T> ops, final T input) {
-            final Optional<Map<T, T>> values = ops.getMapValues(input);
-            if (values.isPresent()) {
-                final Map<T, T> map = values.get();
-                final T nameObject = ops.createString(name);
-                final T mapValue = map.get(nameObject);
-                if (mapValue != null) {
-                    final Optional<K> key = keyType.read(ops, mapValue).getSecond();
-                    //noinspection OptionalIsPresent
-                    final K keyValue = key.isPresent() ? key.get() : null;
-                    final Type<?> type = keyValue != null ? types.get(keyValue) : null;
-                    if (type == null) {
-                        if (DataFixerUpper.ERRORS_ARE_FATAL) {
-                            throw new IllegalArgumentException("Unsupported key: " + keyValue + " in " + this);
-                        } else {
-                            LOGGER.warn("Unsupported key: {} in {}", keyValue, this);
-                            return Pair.of(input, Optional.empty());
-                        }
-                    }
-
-                    return type.read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(keyValue, v)));
-                }
+            final Optional<Map<T, T>> values = ops.getMapValues(input).map(s -> s.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+            if (!values.isPresent()) {
+                return Pair.of(input, Optional.empty());
             }
-            return Pair.of(input, Optional.empty());
+
+            final Map<T, T> map = values.get();
+            final T nameObject = ops.createString(name);
+            final T mapValue = map.get(nameObject);
+            if (mapValue == null) {
+                return Pair.of(input, Optional.empty());
+            }
+
+            final Optional<K> key = keyType.read(ops, mapValue).getSecond();
+            final K keyValue = key.orElse(null);
+            final Type<?> type = keyValue != null ? types.get(keyValue) : null;
+            if (type != null) {
+                return type.read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(keyValue, v)));
+            }
+
+            if (DataFixerUpper.ERRORS_ARE_FATAL) {
+                throw new IllegalArgumentException("Unsupported key: " + keyValue + " in " + this);
+            } else {
+                LOGGER.warn("Unsupported key: {} in {}", keyValue, this);
+                return Pair.of(input, Optional.empty());
+            }
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Pair<K, ?> value) {
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Pair<K, ?> value) {
             final Type<?> type = types.get(value.getFirst());
             if (type == null) {
-                // TODO: better error handling?
-                // TODO: See todo in read method
-                throw new IllegalArgumentException("Unsupported key: " + value.getFirst() + " in " + this);
+                return DataResult.error("Unsupported key: " + value.getFirst() + " in " + this, rest);
             }
             return capWrite(ops, type, value.getFirst(), value.getSecond(), rest);
         }
 
         @SuppressWarnings("unchecked")
-        private <T, A> T capWrite(final DynamicOps<T> ops, final Type<A> type, final K key, final Object value, final T rest) {
-            return ops.mergeInto(type.write(ops, rest, (A) value), ops.createString(name), keyType.write(ops, ops.empty(), key));
+        private <T, A> DataResult<T> capWrite(final DynamicOps<T> ops, final Type<A> type, final K key, final Object value, final T rest) {
+            return keyType.write(ops, ops.empty(), key).flatMap(k ->
+                type.write(ops, rest, (A) value).flatMap(v ->
+                    ops.mergeInto(v, ops.createString(name), k)
+                )
+            );
         }
 
         @Override
