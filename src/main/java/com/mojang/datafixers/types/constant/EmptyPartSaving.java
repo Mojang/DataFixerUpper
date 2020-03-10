@@ -50,7 +50,7 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
             return DataResult.success(rest);
         }
 
-        final T casted = value.cast(ops);
+        final T casted = value.convert(ops).getValue();
         if (rest == ops.empty()) {
             // no need to merge anything, return the old value
             return DataResult.success(casted);
