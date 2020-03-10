@@ -5,6 +5,7 @@ package com.mojang.datafixers.types;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.datafixers.FieldFinder;
@@ -34,7 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class Type<A> implements App<Type.Mu, A> {
+public abstract class Type<A> implements App<Type.Mu, A>, Codec<A> {
     private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
     private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
 
@@ -115,6 +116,16 @@ public abstract class Type<A> implements App<Type.Mu, A> {
     public abstract <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input);
 
     public abstract <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value);
+
+    @Override
+    public final <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+        return read(ops, input);
+    }
+
+    @Override
+    public final <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+        return write(ops, prefix, input);
+    }
 
     public final <T> DataResult<T> write(final DynamicOps<T> ops, final A value) {
         return write(ops, ops.empty(), value);
