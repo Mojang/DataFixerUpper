@@ -108,11 +108,11 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         return Optional.empty();
     }
 
-    public final <T> Pair<Dynamic<T>, Optional<A>> read(final Dynamic<T> input) {
-        return read(input.getOps(), input.getValue()).mapFirst(v -> new Dynamic<>(input.getOps(), v));
+    public final <T> DataResult<Pair<A, Dynamic<T>>> read(final Dynamic<T> input) {
+        return read(input.getOps(), input.getValue()).map(v -> v.mapSecond(t -> new Dynamic<T>(input.getOps(), t)));
     }
 
-    public abstract <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input);
+    public abstract <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input);
 
     public abstract <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value);
 
@@ -124,16 +124,16 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         return write(ops, value).map(result -> new Dynamic<>(ops, result));
     }
 
-    public <T> Pair<T, Optional<Typed<A>>> readTyped(final Dynamic<T> input) {
+    public <T> DataResult<Pair<Typed<A>, T>> readTyped(final Dynamic<T> input) {
         return readTyped(input.getOps(), input.getValue());
     }
 
-    public <T> Pair<T, Optional<Typed<A>>> readTyped(final DynamicOps<T> ops, final T input) {
-        return read(ops, input).mapSecond(vo -> vo.map(v -> new Typed<>(this, ops, v)));
+    public <T> DataResult<Pair<Typed<A>, T>> readTyped(final DynamicOps<T> ops, final T input) {
+        return read(ops, input).map(vo -> vo.mapFirst(v -> new Typed<>(this, ops, v)));
     }
 
-    public <T> Pair<T, Optional<?>> read(final DynamicOps<T> ops, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
-        return read(ops, input).mapSecond(vo -> vo.map(v ->
+    public <T> DataResult<Pair<Optional<?>, T>> read(final DynamicOps<T> ops, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
+        return read(ops, input).map(vo -> vo.mapFirst(v ->
             rewrite(rule, fRule).map(r -> r.view().function().evalCached().apply(ops).apply(v)
             )
         ));
@@ -146,17 +146,14 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         }
         final View<A, ?> view = rewriteResult.get().view();
 
-        final Pair<T, Optional<A>> po = read(ops, input);
-        if (!po.getSecond().isPresent()) {
-            return DataResult.error("Could not parse input: " + input + " ", input);
-        }
-
-        return capWrite(ops, expectedType, po.getFirst(), po.getSecond().get(), view);
+        return read(ops, input).flatMap(pair ->
+            capWrite(ops, expectedType, pair.getSecond(), pair.getFirst(), view)
+        );
     }
 
     private <T, B> DataResult<T> capWrite(final DynamicOps<T> ops, final Type<?> expectedType, final T rest, final A value, final View<A, B> f) {
         if (!expectedType.equals(f.newType(), true, true)) {
-            throw new IllegalStateException("Rewritten type doesn't match.");
+            return DataResult.error("Rewritten type doesn't match");
         }
         return f.newType().write(ops, rest, f.function().evalCached().apply(ops).apply(value));
     }

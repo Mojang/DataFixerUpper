@@ -6,10 +6,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
-import com.mojang.datafixers.DataFixerUpper;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.RewriteResult;
@@ -29,13 +26,13 @@ import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.AffineP;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -47,10 +44,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class TaggedChoice<K> implements TypeTemplate {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     private final String name;
     private final Type<K> keyType;
     private final Map<K, TypeTemplate> templates;
@@ -185,32 +181,26 @@ public final class TaggedChoice<K> implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<Pair<K, ?>>> read(final DynamicOps<T> ops, final T input) {
-            final Optional<Map<T, T>> values = ops.getMapValues(input).map(s -> s.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+        public <T> DataResult<Pair<Pair<K, ?>, T>> read(final DynamicOps<T> ops, final T input) {
+            final Optional<Stream<Pair<T, T>>> values = ops.getMapValues(input);
             if (!values.isPresent()) {
-                return Pair.of(input, Optional.empty());
+                return DataResult.error("Input is not a map: " + input);
             }
 
-            final Map<T, T> map = values.get();
-            final T nameObject = ops.createString(name);
-            final T mapValue = map.get(nameObject);
-            if (mapValue == null) {
-                return Pair.of(input, Optional.empty());
+            final T nameString = ops.createString(name);
+            final Optional<Pair<T, T>> nameEntry = values.get().filter(v -> v.getFirst() == nameString).findFirst();
+            if (!nameEntry.isPresent()) {
+                return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
             }
 
-            final Optional<K> key = keyType.read(ops, mapValue).getSecond();
-            final K keyValue = key.orElse(null);
-            final Type<?> type = keyValue != null ? types.get(keyValue) : null;
-            if (type != null) {
-                return type.read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(keyValue, v)));
-            }
-
-            if (DataFixerUpper.ERRORS_ARE_FATAL) {
-                throw new IllegalArgumentException("Unsupported key: " + keyValue + " in " + this);
-            } else {
-                LOGGER.warn("Unsupported key: {} in {}", keyValue, this);
-                return Pair.of(input, Optional.empty());
-            }
+            return keyType.read(ops, nameEntry.get().getSecond()).flatMap(key -> {
+                final K keyValue = key.getFirst();
+                final Type<?> type = types.get(keyValue);
+                if (type != null) {
+                    return type.read(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(keyValue, v)));
+                }
+                return DataResult.error("Unsupported key: " + keyValue + " in " + this);
+            });
         }
 
         @Override

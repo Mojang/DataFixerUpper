@@ -18,12 +18,14 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class Tag implements TypeTemplate {
     private final String name;
@@ -173,17 +175,24 @@ public final class Tag implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
-            final Optional<Map<T, T>> map = ops.getMapValues(input).map(s -> s.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
-            final T nameObject = ops.createString(name);
-            final T elementValue;
-            if (map.isPresent() && (elementValue = map.get().get(nameObject)) != null) {
-                final Optional<A> value = element.read(ops, elementValue).getSecond();
-                if (value.isPresent()) {
-                    return Pair.of(ops.createMap(map.get().entrySet().stream().filter(e -> !Objects.equals(e.getKey(), nameObject)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))), value);
+        public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
+            return ops.getMapValues(input).<DataResult<Pair<A, T>>>map(map -> {
+                final T nameObject = ops.createString(name);
+
+                final Map<Boolean, List<Pair<T, T>>> partitioned = map.collect(Collectors.partitioningBy(p -> Objects.equals(p.getFirst(), nameObject)));
+                final List<Pair<T, T>> matched = partitioned.get(true);
+                final List<Pair<T, T>> rest = partitioned.get(false);
+                if (matched.isEmpty()) {
+                    return DataResult.error("No keys matched " + name);
                 }
-            }
-            return Pair.of(input, Optional.empty());
+                if (matched.size() != 1) {
+                    return DataResult.error("Too many keys matched " + name + ": " + matched);
+                }
+
+                return element.read(ops, matched.get(0).getSecond()).map(value ->
+                    Pair.of(value.getFirst(), ops.createMap(rest.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))))
+                );
+            }).orElseGet(() -> DataResult.error("Input is not a map: " + input));
         }
 
         @Override

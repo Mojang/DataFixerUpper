@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -159,15 +160,26 @@ public final class List implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<java.util.List<A>>> read(final DynamicOps<T> ops, final T input) {
-            // TODO: read the same way we read CompoundList? (as much elements as possible)
+        public <T> DataResult<Pair<java.util.List<A>, T>> read(final DynamicOps<T> ops, final T input) {
             return ops.getStream(input).map(stream -> {
-                final java.util.List<Optional<A>> list = stream.map(value -> element.read(ops, value).getSecond()).collect(Collectors.toList());
-                if (list.stream().anyMatch(o -> !o.isPresent())) {
-                    return Pair.of(input, Optional.<java.util.List<A>>empty());
-                }
-                return Pair.of(ops.empty(), Optional.of(list.stream().map(Optional::get).collect(Collectors.toList())));
-            }).orElseGet(() -> Pair.of(input, Optional.empty()));
+                final AtomicReference<DataResult<Pair<ImmutableList.Builder<A>, ImmutableList.Builder<T>>>> result =
+                    new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableList.builder())));
+
+                stream.forEach(t ->
+                    result.set(result.get().flatMap(pair -> {
+                        final DataResult<Pair<A, T>> read = element.read(ops, t);
+
+                        read.error().ifPresent(e -> pair.getSecond().add(t));
+
+                        return read.map(value -> {
+                            pair.getFirst().add(value.getFirst());
+                            return pair;
+                        });
+                    }))
+                );
+
+                return result.get().map(pair -> Pair.of((java.util.List<A>) pair.getFirst().build(), ops.createList(pair.getSecond().build().stream())));
+            }).orElseGet(() -> DataResult.error("Input is not a list " + input));
         }
 
         /**

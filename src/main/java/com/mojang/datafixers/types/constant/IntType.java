@@ -4,17 +4,16 @@ package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.types.templates.Const;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-
-import java.util.Optional;
 
 public final class IntType extends Const.PrimitiveType<Integer> {
     @Override
-    public <T> Pair<T, Optional<Integer>> read(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<Pair<Integer, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> Pair.of(ops.empty(), Optional.of(v.intValue())))
-            .orElseGet(() -> Pair.of(input, Optional.empty()));
+            .map(v -> DataResult.success(Pair.of(v.intValue(), ops.empty())))
+            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
     }
 
     @Override

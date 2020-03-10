@@ -139,8 +139,8 @@ public final class Named implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<Pair<String, A>>> read(final DynamicOps<T> ops, final T input) {
-            return element.read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(name, v)));
+        public <T> DataResult<Pair<Pair<String, A>, T>> read(final DynamicOps<T> ops, final T input) {
+            return element.read(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(name, v)));
         }
 
         @Override

@@ -8,7 +8,6 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 public final class Func<A, B> extends Type<Function<A, B>> {
@@ -26,8 +25,8 @@ public final class Func<A, B> extends Type<Function<A, B>> {
     }
 
     @Override
-    public <T> Pair<T, Optional<Function<A, B>>> read(final DynamicOps<T> ops, final T input) {
-        return Pair.of(input, Optional.empty());
+    public <T> DataResult<Pair<Function<A, B>, T>> read(final DynamicOps<T> ops, final T input) {
+        return DataResult.error("Cannot read a function");
     }
 
     @Override

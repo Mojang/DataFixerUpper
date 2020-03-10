@@ -109,7 +109,7 @@ public final class Hook implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
+        public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
             return delegate.read(ops, preRead.apply(ops, input));
         }
 

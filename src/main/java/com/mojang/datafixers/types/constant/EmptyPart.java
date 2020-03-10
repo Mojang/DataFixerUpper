@@ -33,8 +33,8 @@ public final class EmptyPart extends com.mojang.datafixers.types.Type<Unit> {
     }
 
     @Override
-    public <T> Pair<T, Optional<Unit>> read(final DynamicOps<T> ops, final T input) {
-        return Pair.of(input, point(ops));
+    public <T> DataResult<Pair<Unit, T>> read(final DynamicOps<T> ops, final T input) {
+        return DataResult.success(Pair.of(Unit.INSTANCE, input));
     }
 
     @Override

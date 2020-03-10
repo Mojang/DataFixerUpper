@@ -138,7 +138,7 @@ public final class RecursivePoint implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
+        public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
             return unfold().read(ops, input);
         }
 

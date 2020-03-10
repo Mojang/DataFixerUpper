@@ -120,9 +120,9 @@ public final class Check implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
+        public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
             if (index != expectedIndex) {
-                return Pair.of(input, Optional.empty());
+                return DataResult.error("Index mismatch: " + index + " != " + expectedIndex);
             }
             return delegate.read(ops, input);
         }
