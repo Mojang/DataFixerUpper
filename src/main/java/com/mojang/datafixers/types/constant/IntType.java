@@ -2,13 +2,13 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.constant;
 
+import com.mojang.datafixers.types.templates.Const;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.datafixers.types.templates.Const;
 
 import java.util.Optional;
 
-public final class IntType extends Const.ConstType<Integer> {
+public final class IntType extends Const.PrimitiveType<Integer> {
     @Override
     public <T> Pair<T, Optional<Integer>> read(final DynamicOps<T> ops, final T input) {
         return ops
@@ -18,7 +18,7 @@ public final class IntType extends Const.ConstType<Integer> {
     }
 
     @Override
-    public <T> T write(final DynamicOps<T> ops, final T rest, final Integer value) {
+    public <T> T doWrite(final DynamicOps<T> ops, final Integer value) {
         return ops.createInt(value);
     }
 

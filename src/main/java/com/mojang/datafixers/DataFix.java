@@ -3,6 +3,7 @@
 package com.mojang.datafixers;
 
 import com.mojang.datafixers.schemas.Schema;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
@@ -12,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 public abstract class DataFix {
@@ -41,9 +43,14 @@ public abstract class DataFix {
     }
 
     protected <A, B> TypeRewriteRule writeFixAndRead(final String name, final Type<A> type, final Type<B> newType, final Function<Dynamic<?>, Dynamic<?>> fix) {
-        return fixTypeEverywhere(name, type, newType, ops -> input ->
-            newType.readTyped(fix.apply(type.writeDynamic(ops, input))).getSecond().orElseThrow(() -> new IllegalStateException("Could not read new type in \"" + name + "\"")).getValue()
-        );
+        return fixTypeEverywhere(name, type, newType, ops -> input -> {
+            final Optional<? extends Dynamic<?>> written = type.writeDynamic(ops, input).resultOrPartial(LOGGER::error);
+            if (!written.isPresent()) {
+                throw new RuntimeException("Could not write the object");
+            }
+            final Optional<Typed<B>> read = newType.readTyped(fix.apply(written.get())).getSecond();
+            return read.orElseThrow(() -> new IllegalStateException("Could not read new type in \"" + name + "\"")).getValue();
+        });
     }
 
     protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function) {

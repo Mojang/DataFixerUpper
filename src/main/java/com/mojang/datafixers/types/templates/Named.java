@@ -15,6 +15,7 @@ import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -143,9 +144,9 @@ public final class Named implements TypeTemplate {
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Pair<String, A> value) {
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Pair<String, A> value) {
             if (!Objects.equals(value.getFirst(), name)) {
-                throw new IllegalStateException("Named type name doesn't match: expected: " + name + ", got: " + value.getFirst());
+                return DataResult.error("Named type name doesn't match: expected: " + name + ", got: " + value.getFirst(), rest);
             }
             return element.write(ops, rest, value.getSecond());
         }

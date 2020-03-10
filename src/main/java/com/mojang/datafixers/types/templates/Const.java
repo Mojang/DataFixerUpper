@@ -14,6 +14,8 @@ import com.mojang.datafixers.optics.profunctors.AffineP;
 import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -95,7 +97,7 @@ public final class Const implements TypeTemplate {
         return type;
     }
 
-    public abstract static class ConstType<A> extends Type<A> {
+    public abstract static class PrimitiveType<A> extends Type<A> {
         @Override
         public boolean equals(final Object o, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             return this == o;
@@ -105,5 +107,15 @@ public final class Const implements TypeTemplate {
         public TypeTemplate buildTemplate() {
             return DSL.constType(this);
         }
+
+        @Override
+        public final <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
+            if (rest != ops.empty()) {
+                return DataResult.error("Do not know how to append a primitive value " + value + " to " + rest, doWrite(ops, value));
+            }
+            return DataResult.success(doWrite(ops, value));
+        }
+
+        protected abstract <T> T doWrite(final DynamicOps<T> ops, final A value);
     }
 }

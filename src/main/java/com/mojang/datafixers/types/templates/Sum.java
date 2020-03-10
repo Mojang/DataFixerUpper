@@ -20,6 +20,7 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -220,7 +221,7 @@ public final class Sum implements TypeTemplate {
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Either<F, G> value) {
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Either<F, G> value) {
             return value.map(
                 value1 -> first.write(ops, rest, value1),
                 value2 -> second.write(ops, rest, value2)

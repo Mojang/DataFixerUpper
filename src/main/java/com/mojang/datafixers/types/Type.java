@@ -5,6 +5,7 @@ package com.mojang.datafixers.types;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.datafixers.FieldFinder;
 import com.mojang.datafixers.FunctionType;
@@ -113,18 +114,14 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     public abstract <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input);
 
-    public abstract <T> T write(final DynamicOps<T> ops, final T rest, final A value);
+    public abstract <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value);
 
-    public final <T> T write(final DynamicOps<T> ops, final A value) {
+    public final <T> DataResult<T> write(final DynamicOps<T> ops, final A value) {
         return write(ops, ops.empty(), value);
     }
 
-    public final <T> Dynamic<T> writeDynamic(final DynamicOps<T> ops, final T rest, final A value) {
-        return new Dynamic<>(ops, write(ops, rest, value));
-    }
-
-    public final <T> Dynamic<T> writeDynamic(final DynamicOps<T> ops, final A value) {
-        return new Dynamic<>(ops, write(ops, value));
+    public final <T> DataResult<Dynamic<T>> writeDynamic(final DynamicOps<T> ops, final A value) {
+        return write(ops, value).map(result -> new Dynamic<>(ops, result));
     }
 
     public <T> Pair<T, Optional<Typed<A>>> readTyped(final Dynamic<T> input) {
@@ -142,16 +139,22 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         ));
     }
 
-    public <T> Optional<T> readAndWrite(final DynamicOps<T> ops, final Type<?> expectedType, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
+    public <T> DataResult<T> readAndWrite(final DynamicOps<T> ops, final Type<?> expectedType, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
+        final Optional<RewriteResult<A, ?>> rewriteResult = rewrite(rule, fRule);
+        if (!rewriteResult.isPresent()) {
+            return DataResult.error("Could not build a rewrite rule: " + rule + " " + fRule, input);
+        }
+        final View<A, ?> view = rewriteResult.get().view();
+
         final Pair<T, Optional<A>> po = read(ops, input);
-        return po.getSecond().flatMap(v ->
-            rewrite(rule, fRule).map(r ->
-                capWrite(ops, expectedType, po.getFirst(), v, r.view())
-            )
-        );
+        if (!po.getSecond().isPresent()) {
+            return DataResult.error("Could not parse input: " + input + " ", input);
+        }
+
+        return capWrite(ops, expectedType, po.getFirst(), po.getSecond().get(), view);
     }
 
-    public <T, B> T capWrite(final DynamicOps<T> ops, final Type<?> expectedType, final T rest, final A value, final View<A, B> f) {
+    private <T, B> DataResult<T> capWrite(final DynamicOps<T> ops, final Type<?> expectedType, final T rest, final A value, final View<A, B> f) {
         if (!expectedType.equals(f.newType(), true, true)) {
             throw new IllegalStateException("Rewritten type doesn't match.");
         }

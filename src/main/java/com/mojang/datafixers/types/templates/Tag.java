@@ -11,6 +11,7 @@ import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.View;
 import com.mojang.datafixers.functions.Functions;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -173,7 +174,7 @@ public final class Tag implements TypeTemplate {
 
         @Override
         public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
-            final Optional<Map<T, T>> map = ops.getMapValues(input);
+            final Optional<Map<T, T>> map = ops.getMapValues(input).map(s -> s.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
             final T nameObject = ops.createString(name);
             final T elementValue;
             if (map.isPresent() && (elementValue = map.get().get(nameObject)) != null) {
@@ -186,8 +187,8 @@ public final class Tag implements TypeTemplate {
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final A value) {
-            return ops.mergeInto(rest, ops.createString(name), element.write(ops, ops.empty(), value));
+        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
+            return element.write(ops, ops.empty(), value).flatMap(result -> ops.mergeInto(rest, ops.createString(name), result));
         }
 
         @Override

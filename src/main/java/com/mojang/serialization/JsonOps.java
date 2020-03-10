@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -12,10 +13,10 @@ import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.util.Pair;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -39,7 +40,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
             return DSL.list(DSL.remainderType());
         }
         if (input.isJsonNull()) {
-            return DSL.nilType();
+            return DSL.emptyPartType();
         }
         final JsonPrimitive primitive = input.getAsJsonPrimitive();
         if (primitive.isString()) {
@@ -118,79 +119,77 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public JsonElement mergeInto(final JsonElement input, final JsonElement value) {
-        final JsonArray result;
-        if (value.isJsonNull()) {
-            return input;
+    public DataResult<JsonElement> mergeInto(final JsonElement list, final JsonElement value) {
+        if (!list.isJsonArray()) {
+            return DataResult.error("mergeInto called with not a list: " + list, list);
         }
-        if (input.isJsonObject()) {
-            if (value.isJsonObject()) {
-                final JsonObject resultObject = new JsonObject();
-                final JsonObject first = input.getAsJsonObject();
-                for (final Map.Entry<String, JsonElement> entry : first.entrySet()) {
-                    resultObject.add(entry.getKey(), entry.getValue());
-                }
-                final JsonObject second = value.getAsJsonObject();
-                for (final Map.Entry<String, JsonElement> entry : second.entrySet()) {
-                    resultObject.add(entry.getKey(), entry.getValue());
-                }
-                return resultObject;
-            }
-            return input;
-        } else if (input.isJsonNull()) {
-            throw new IllegalArgumentException("mergeInto called with null input.");
-        } else if (input.isJsonArray()) {
-            result = new JsonArray();
-            StreamSupport.stream(input.getAsJsonArray().spliterator(), false).forEach(result::add);
-        } else {
-            return input;
-        }
+
+        final JsonArray result = new JsonArray();
+        result.addAll(list.getAsJsonArray());
         result.add(value);
-        return result;
+        return DataResult.success(result);
     }
 
     @Override
-    public JsonElement mergeInto(final JsonElement input, final JsonElement key, final JsonElement value) {
-        final JsonObject output;
-        if (input.isJsonNull()) {
-            output = new JsonObject();
-        } else if (input.isJsonObject()) {
-            output = new JsonObject();
-            input.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
-        } else {
-            return input;
+    public DataResult<JsonElement> mergeInto(final JsonElement list, final List<JsonElement> values) {
+        if (!list.isJsonArray()) {
+            return DataResult.error("mergeInto called with not a list: " + list, list);
         }
+
+        final JsonArray result = new JsonArray();
+        result.addAll(list.getAsJsonArray());
+        values.forEach(result::add);
+        return DataResult.success(result);
+    }
+
+    @Override
+    public DataResult<JsonElement> mergeInto(final JsonElement map, final JsonElement key, final JsonElement value) {
+        if (!map.isJsonObject()) {
+            return DataResult.error("mergeInto called with not a map: " + map, map);
+        }
+        if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString()) {
+            return DataResult.error("key is not a string: " + key, map);
+        }
+
+        final JsonObject output = new JsonObject();
+        map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
         output.add(key.getAsString(), value);
-        return output;
+
+        return DataResult.success(output);
     }
 
     @Override
-    public JsonElement merge(final JsonElement first, final JsonElement second) {
-        if (first.isJsonNull()) {
-            return second;
+    public DataResult<JsonElement> mergeInto(final JsonElement map, final Map<JsonElement, JsonElement> values) {
+        if (!map.isJsonObject()) {
+            return DataResult.error("mergeInto called with not a map: " + map, map);
         }
-        if (second.isJsonNull()) {
-            return first;
+
+        final JsonObject output = new JsonObject();
+        map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
+
+        final List<JsonElement> missed = Lists.newArrayList();
+
+        for (final Map.Entry<JsonElement, JsonElement> entry : values.entrySet()) {
+            final JsonElement key = entry.getKey();
+            if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString()) {
+                missed.add(key);
+                continue;
+            }
+
+            output.add(key.getAsString(), entry.getValue());
         }
-        if (first.isJsonObject() && second.isJsonObject()) {
-            JsonObject result = new JsonObject();
-            first.getAsJsonObject().entrySet().forEach(entry -> result.add(entry.getKey(), entry.getValue()));
-            second.getAsJsonObject().entrySet().forEach(entry -> result.add(entry.getKey(), entry.getValue()));
-            return result;
+
+        if (!missed.isEmpty()) {
+            return DataResult.error("some keys are not strings: " + missed, output);
         }
-        if (first.isJsonArray() && second.isJsonArray()) {
-            JsonArray result = new JsonArray();
-            first.getAsJsonArray().forEach(result::add);
-            second.getAsJsonArray().forEach(result::add);
-            return result;
-        }
-        throw new IllegalArgumentException("Could not merge " + first + " and " + second);
+
+        return DataResult.success(output);
     }
 
     @Override
-    public Optional<Map<JsonElement, JsonElement>> getMapValues(final JsonElement input) {
+    public Optional<Stream<Pair<JsonElement, JsonElement>>> getMapValues(final JsonElement input) {
         if (input.isJsonObject()) {
-            return Optional.of(input.getAsJsonObject().entrySet().stream().map(entry -> Pair.of(new JsonPrimitive(entry.getKey()), entry.getValue())).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+            return Optional.of(input.getAsJsonObject().entrySet().stream().map(entry -> Pair.of(new JsonPrimitive(entry.getKey()), entry.getValue())));
         }
         return Optional.empty();
     }

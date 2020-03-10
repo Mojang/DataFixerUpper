@@ -53,20 +53,20 @@ public class Dynamic<T> extends DynamicLike<T> {
         return castTyped(ops).getValue();
     }
 
-    public Dynamic<T> merge(final Dynamic<?> value) {
-        return map(v -> ops.mergeInto(v, value.cast(ops)));
+    public OptionalDynamic<T> merge(final Dynamic<?> value) {
+        final DataResult<T> merged = ops.mergeInto(this.value, value.cast(ops));
+        return new OptionalDynamic<>(ops, merged.map(m -> new Dynamic<>(ops, m)));
     }
 
-    public Dynamic<T> merge(final Dynamic<?> key, final Dynamic<?> value) {
-        return map(v -> ops.mergeInto(v, key.cast(ops), value.cast(ops)));
+    public OptionalDynamic<T> merge(final Dynamic<?> key, final Dynamic<?> value) {
+        final DataResult<T> merged = ops.mergeInto(this.value, key.cast(ops), value.cast(ops));
+        return new OptionalDynamic<>(ops, merged.map(m -> new Dynamic<>(ops, m)));
     }
 
     public Optional<Map<Dynamic<T>, Dynamic<T>>> getMapValues() {
         return ops.getMapValues(value).map(map -> {
             final ImmutableMap.Builder<Dynamic<T>, Dynamic<T>> builder = ImmutableMap.builder();
-            for (final Map.Entry<T, T> entry : map.entrySet()) {
-                builder.put(new Dynamic<>(ops, entry.getKey()), new Dynamic<>(ops, entry.getValue()));
-            }
+            map.forEach(entry -> builder.put(new Dynamic<>(ops, entry.getFirst()), new Dynamic<>(ops, entry.getSecond())));
             return builder.build();
         });
     }
@@ -110,7 +110,16 @@ public class Dynamic<T> extends DynamicLike<T> {
 
     @Override
     public OptionalDynamic<T> get(final String key) {
-        return new OptionalDynamic<>(ops, ops.get(value, key).map(v -> new Dynamic<>(ops, v)));
+        final Optional<Stream<Pair<T, T>>> map = ops.getMapValues(value);
+        if (!map.isPresent()) {
+            return new OptionalDynamic<>(ops, DataResult.error("not a map: " + value));
+        }
+        final T keyString = ops.createString(key);
+        final Optional<T> value = map.get().filter(p -> Objects.equals(keyString, p.getFirst())).map(Pair::getSecond).findFirst();
+        if (!value.isPresent()) {
+            return new OptionalDynamic<>(ops, DataResult.error("key missing: " + key + " in " + this.value));
+        }
+        return new OptionalDynamic<T>(ops, DataResult.success(new Dynamic<>(ops, value.get())));
     }
 
     @Override
@@ -141,7 +150,7 @@ public class Dynamic<T> extends DynamicLike<T> {
 
     @Override
     public Optional<T> getElementGeneric(final T key) {
-        return ops.getMapValues(value).flatMap(m -> Optional.ofNullable(m.get(key)));
+        return ops.getGeneric(value, key);
     }
 
     @Override
@@ -153,9 +162,9 @@ public class Dynamic<T> extends DynamicLike<T> {
     public <K, V> Optional<Map<K, V>> asMapOpt(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
         return ops.getMapValues(value).map(map -> {
             final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
-            for (final Map.Entry<T, T> entry : map.entrySet()) {
-                builder.put(keyDeserializer.apply(new Dynamic<>(ops, entry.getKey())), valueDeserializer.apply(new Dynamic<>(ops, entry.getValue())));
-            }
+            map.forEach(entry ->
+                builder.put(keyDeserializer.apply(new Dynamic<>(ops, entry.getFirst())), valueDeserializer.apply(new Dynamic<>(ops, entry.getSecond())))
+            );
             return builder.build();
         });
     }
@@ -196,7 +205,7 @@ public class Dynamic<T> extends DynamicLike<T> {
             return (T) input;
         }
         final Type<?> type = inOps.getType(input);
-        if (Objects.equals(type, DSL.nilType())) {
+        if (Objects.equals(type, DSL.emptyPartType())) {
             return outOps.empty();
         }
         if (Objects.equals(type, DSL.byteType())) {
@@ -236,8 +245,8 @@ public class Dynamic<T> extends DynamicLike<T> {
             return outOps.createList(inOps.getStream(input).orElse(Stream.empty()).map(e -> convert(inOps, outOps, e)));
         }
         if (Objects.equals(type, DSL.compoundList(DSL.remainderType(), DSL.remainderType()))) {
-            return outOps.createMap(inOps.getMapValues(input).orElse(ImmutableMap.of()).entrySet().stream().map(e ->
-                Pair.of(convert(inOps, outOps, e.getKey()), convert(inOps, outOps, e.getValue()))
+            return outOps.createMap(inOps.getMapValues(input).orElse(Stream.empty()).map(e ->
+                Pair.of(convert(inOps, outOps, e.getFirst()), convert(inOps, outOps, e.getSecond()))
             ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
         }
         throw new IllegalStateException("Could not convert value of type " + type);

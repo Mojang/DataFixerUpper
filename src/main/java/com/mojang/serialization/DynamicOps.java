@@ -4,10 +4,13 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.types.Type;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -80,21 +83,36 @@ public interface DynamicOps<T> {
     T createString(String value);
 
     /**
-     * keeps input unchanged if it's not list-like
+     * Only successful if first argument is a list/array
+     * @return
      */
-    T mergeInto(T input, T value);
+    DataResult<T> mergeInto(T list, T value);
+
+    default DataResult<T> mergeInto(final T list, final List<T> values) {
+        DataResult<T> result = DataResult.success(list);
+
+        for (final T value : values) {
+            result = result.flatMap(r -> mergeInto(r, value));
+        }
+        return result;
+    }
 
     /**
-     * keeps input unchanged if it's not map-like
+     * Only successful if first argument is a map
+     * @return
      */
-    T mergeInto(T input, T key, T value);
+    DataResult<T> mergeInto(T map, T key, T value);
 
-    /**
-     * merges 2 values together, if possible (list + list, map + map, empty + anything)
-     */
-    T merge(T first, T second);
+    default DataResult<T> mergeInto(final T map, final Map<T, T> values) {
+        DataResult<T> result = DataResult.success(map);
 
-    Optional<Map<T, T>> getMapValues(T input);
+        for (final Map.Entry<T, T> entry : values.entrySet()) {
+            result = result.flatMap(r -> mergeInto(r, entry.getKey(), entry.getValue()));
+        }
+        return result;
+    }
+
+    Optional<Stream<Pair<T, T>>> getMapValues(T input);
 
     T createMap(Map<T, T> map);
 
@@ -156,18 +174,20 @@ public interface DynamicOps<T> {
     }
 
     default Optional<T> getGeneric(final T input, final T key) {
-        return getMapValues(input).flatMap(map -> Optional.ofNullable(map.get(key)));
+        return getMapValues(input).flatMap(map -> map.filter(p -> Objects.equals(key, p.getFirst())).map(Pair::getSecond).findFirst());
     }
 
+    // TODO: eats error if input is not a map
     default T set(final T input, final String key, final T value) {
-        return mergeInto(input, createString(key), value);
+        return mergeInto(input, createString(key), value).result().orElse(input);
     }
 
+    // TODO: eats error if input is not a map
     default T update(final T input, final String key, final Function<T, T> function) {
         return get(input, key).map(value -> set(input, key, function.apply(value))).orElse(input);
     }
 
     default T updateGeneric(final T input, final T key, final Function<T, T> function) {
-        return getGeneric(input, key).map(value -> mergeInto(input, key, function.apply(value))).orElse(input);
+        return getGeneric(input, key).flatMap(value -> mergeInto(input, key, function.apply(value)).result()).orElse(input);
     }
 }
