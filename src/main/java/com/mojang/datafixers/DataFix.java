@@ -3,6 +3,7 @@
 package com.mojang.datafixers;
 
 import com.mojang.datafixers.schemas.Schema;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
@@ -46,10 +47,13 @@ public abstract class DataFix {
         return fixTypeEverywhere(name, type, newType, ops -> input -> {
             final Optional<? extends Dynamic<?>> written = type.writeDynamic(ops, input).resultOrPartial(LOGGER::error);
             if (!written.isPresent()) {
-                throw new RuntimeException("Could not write the object");
+                throw new RuntimeException("Could not write the object in " + name);
             }
-            final Optional<Typed<B>> read = newType.readTyped(fix.apply(written.get())).getSecond();
-            return read.orElseThrow(() -> new IllegalStateException("Could not read new type in \"" + name + "\"")).getValue();
+            final Optional<? extends Pair<Typed<B>, ?>> read = newType.readTyped(fix.apply(written.get())).resultOrPartial(LOGGER::error);
+            if (!read.isPresent()) {
+                throw new RuntimeException("Could not read the new object in " + name);
+            }
+            return read.get().getFirst().getValue();
         });
     }
 

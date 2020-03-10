@@ -212,15 +212,12 @@ public final class Product implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<Pair<F, G>>> read(final DynamicOps<T> ops, final T input) {
-            final Pair<T, Optional<F>> first = this.first.read(ops, input);
-            if (first.getSecond().isPresent()) {
-                final Pair<T, Optional<G>> second = this.second.read(ops, first.getFirst());
-                if (second.getSecond().isPresent()) {
-                    return Pair.of(second.getFirst(), Optional.of(Pair.of(first.getSecond().get(), second.getSecond().get())));
-                }
-            }
-            return Pair.of(input, Optional.empty());
+        public <T> DataResult<Pair<Pair<F, G>, T>> read(final DynamicOps<T> ops, final T input) {
+            return first.read(ops, input).flatMap(p1 ->
+                second.read(ops, p1.getSecond()).map(p2 ->
+                    Pair.of(Pair.of(p1.getFirst(), p2.getFirst()), p2.getSecond())
+                )
+            );
         }
 
         @Override

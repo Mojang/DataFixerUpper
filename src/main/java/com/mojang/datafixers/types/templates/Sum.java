@@ -212,12 +212,12 @@ public final class Sum implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<Either<F, G>>> read(final DynamicOps<T> ops, final T input) {
-            final Pair<T, Optional<Either<F, G>>> firstRead = first.read(ops, input).mapSecond(vo -> vo.map(Either::<F, G>left));
-            if (firstRead.getSecond().isPresent()) {
+        public <T> DataResult<Pair<Either<F, G>, T>> read(final DynamicOps<T> ops, final T input) {
+            final DataResult<Pair<Either<F, G>, T>> firstRead = first.read(ops, input).map(vo -> vo.mapFirst(Either::left));
+            if (firstRead.result().isPresent()) {
                 return firstRead;
             }
-            return second.read(ops, input).mapSecond(vo -> vo.map(Either::<F, G>right));
+            return second.read(ops, input).map(vo -> vo.mapFirst(Either::right));
         }
 
         @Override

@@ -39,8 +39,8 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
     }
 
     @Override
-    public <T> Pair<T, Optional<Dynamic<?>>> read(final DynamicOps<T> ops, final T input) {
-        return Pair.of(ops.empty(), Optional.of(new Dynamic<>(ops, input)));
+    public <T> DataResult<Pair<Dynamic<?>, T>> read(final DynamicOps<T> ops, final T input) {
+        return DataResult.success(Pair.of(new Dynamic<>(ops, input), ops.empty()));
     }
 
     @Override

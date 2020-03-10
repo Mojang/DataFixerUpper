@@ -4,7 +4,6 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.types.Type;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 
 import java.nio.ByteBuffer;
@@ -30,13 +29,6 @@ public interface DynamicOps<T> {
     }
 
     Type<?> getType(final T input);
-
-    default <R> Optional<R> cast(final T input, final Type<R> type) {
-        if (type == getType(input)) {
-            return Optional.of(type.readTyped(new Dynamic<>(this, input)).getSecond().orElseThrow(() -> new IllegalStateException("Parse error during dynamic cast")).getValue());
-        }
-        return Optional.empty();
-    }
 
     Optional<Number> getNumberValue(T input);
 

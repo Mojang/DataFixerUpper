@@ -33,7 +33,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
+import java.util.stream.Stream;
 
 public final class CompoundList implements TypeTemplate {
     private final TypeTemplate key;
@@ -175,21 +177,30 @@ public final class CompoundList implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<List<Pair<K, V>>>> read(final DynamicOps<T> ops, final T input) {
+        public <T> DataResult<Pair<List<Pair<K, V>>, T>> read(final DynamicOps<T> ops, final T input) {
             return ops.getMapValues(input).map(map -> {
-                final ImmutableList.Builder<Pair<K, V>> builder = ImmutableList.builder();
-                final ImmutableMap.Builder<T, T> restBuilder = ImmutableMap.builder();
+                final AtomicReference<DataResult<Pair<ImmutableList.Builder<Pair<K, V>>, ImmutableMap.Builder<T, T>>>> result =
+                    new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableMap.builder())));
+
                 map.forEach(entry -> {
-                    final Pair<T, Optional<K>> keyValue = key.read(ops, entry.getFirst());
-                    final Pair<T, Optional<V>> elementValue = element.read(ops, entry.getSecond());
-                    if (keyValue.getSecond().isPresent() && elementValue.getSecond().isPresent()) {
-                        builder.add(Pair.of(keyValue.getSecond().get(), elementValue.getSecond().get()));
-                    } else {
-                        restBuilder.put(entry.getFirst(), entry.getSecond());
-                    }
+                    result.set(result.get().flatMap(pair -> {
+                        final DataResult<Pair<K, V>> readEntry = key.read(ops, entry.getFirst()).flatMap(keyValue ->
+                            element.read(ops, entry.getSecond()).map(elementValue ->
+                                Pair.of(keyValue.getFirst(), elementValue.getFirst())
+                            )
+                        );
+                        readEntry.error().ifPresent(e -> {
+                            pair.getSecond().put(entry.getFirst(), entry.getSecond());
+                        });
+                        return readEntry.map(r -> {
+                            pair.getFirst().add(r);
+                            return pair;
+                        });
+                    }));
                 });
-                return Pair.of(ops.createMap(restBuilder.build()), Optional.of((List<Pair<K, V>>) builder.build()));
-            }).orElseGet(() -> Pair.of(input, Optional.empty()));
+
+                return result.get().map(pair -> Pair.of((List<Pair<K, V>>) pair.getFirst().build(), ops.createMap(pair.getSecond().build())));
+            }).orElseGet(() -> DataResult.error("Input is not a map: " + input));
         }
 
         @Override

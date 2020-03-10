@@ -5,19 +5,19 @@ package com.mojang.datafixers.types.constant;
 import com.google.common.base.Function;
 import com.mojang.datafixers.types.templates.Const;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
-import java.util.Optional;
-
+// FIXME: move out of this project?
 public final class NamespacedStringType extends Const.PrimitiveType<String> {
     public static Function<String, String> ENSURE_NAMESPACE = s -> s;
 
     @Override
-    public <T> Pair<T, Optional<String>> read(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<Pair<String, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getStringValue(input)
-            .map(v -> Pair.of(ops.empty(), Optional.of(ENSURE_NAMESPACE.apply(v))))
-            .orElseGet(() -> Pair.of(input, Optional.empty()));
+            .map(v -> DataResult.success(Pair.of(ENSURE_NAMESPACE.apply(v), ops.empty())))
+            .orElseGet(() -> DataResult.error("Input is not a string: " + input));
     }
 
     @Override
