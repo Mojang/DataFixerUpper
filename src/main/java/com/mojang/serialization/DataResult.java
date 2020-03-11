@@ -5,7 +5,6 @@ package com.mojang.serialization;
 import com.mojang.datafixers.util.Either;
 
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -40,19 +39,25 @@ public class DataResult<R> {
         return result.left();
     }
 
-    public <T> T resultOrPartial(final Function<R, T> onSuccess, final BiFunction<String, Optional<R>, T> onFailure) {
-        return result.map(
-            onSuccess,
-            r -> onFailure.apply(r.message, r.partialResult)
-        );
-    }
-
     public Optional<R> resultOrPartial(final Consumer<String> onError) {
         return result.map(
             Optional::of,
             r -> {
                 onError.accept(r.message);
                 return r.partialResult;
+            }
+        );
+    }
+
+    public R getOrThrow(final boolean allowPartial, final Consumer<String> onError) {
+        return result.map(
+            l -> l,
+            r -> {
+                onError.accept(r.message);
+                if (allowPartial && r.partialResult.isPresent()) {
+                    return r.partialResult.get();
+                }
+                throw new RuntimeException(r.message);
             }
         );
     }
