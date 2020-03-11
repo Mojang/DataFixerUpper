@@ -75,7 +75,7 @@ public interface DynamicOps<T> {
     T createString(String value);
 
     /**
-     * Only successful if first argument is a list/array
+     * Only successful if first argument is a list/array or empty
      * @return
      */
     DataResult<T> mergeInto(T list, T value);
@@ -90,7 +90,7 @@ public interface DynamicOps<T> {
     }
 
     /**
-     * Only successful if first argument is a map
+     * Only successful if first argument is a map or empty
      * @return
      */
     DataResult<T> mergeInto(T map, T key, T value);
@@ -188,11 +188,11 @@ public interface DynamicOps<T> {
     }
 
     default DataResult<T> list(final Iterable<? extends Serializable> list) {
-        return list(list, empty());
+        return list(list, empty(), empty());
     }
 
-    default DataResult<T> list(final Iterable<? extends Serializable> list, final T prefix) {
-        return list(list, prefix, e -> e.serialize(this, empty()));
+    default DataResult<T> list(final Iterable<? extends Serializable> list, final T prefix, final T elementPrefix) {
+        return list(list, prefix, e -> e.serialize(this, elementPrefix));
     }
 
     default <E> DataResult<T> list(final Iterable<E> list, final T prefix, final Function<? super E, ? extends DataResult<T>> elementSerializer) {

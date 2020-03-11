@@ -120,31 +120,35 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
     @Override
     public DataResult<JsonElement> mergeInto(final JsonElement list, final JsonElement value) {
-        if (!list.isJsonArray()) {
+       if (!list.isJsonArray() && list != empty()) {
             return DataResult.error("mergeInto called with not a list: " + list, list);
         }
 
         final JsonArray result = new JsonArray();
-        result.addAll(list.getAsJsonArray());
+       if (list != empty()) {
+           result.addAll(list.getAsJsonArray());
+       }
         result.add(value);
         return DataResult.success(result);
     }
 
     @Override
     public DataResult<JsonElement> mergeInto(final JsonElement list, final List<JsonElement> values) {
-        if (!list.isJsonArray()) {
+        if (!list.isJsonArray() && list != empty()) {
             return DataResult.error("mergeInto called with not a list: " + list, list);
         }
 
         final JsonArray result = new JsonArray();
-        result.addAll(list.getAsJsonArray());
+        if (list != empty()) {
+            result.addAll(list.getAsJsonArray());
+        }
         values.forEach(result::add);
         return DataResult.success(result);
     }
 
     @Override
     public DataResult<JsonElement> mergeInto(final JsonElement map, final JsonElement key, final JsonElement value) {
-        if (!map.isJsonObject()) {
+        if (!map.isJsonObject() && map != empty()) {
             return DataResult.error("mergeInto called with not a map: " + map, map);
         }
         if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString()) {
@@ -152,7 +156,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
         }
 
         final JsonObject output = new JsonObject();
-        map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
+        if (map != empty()) {
+            map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
+        }
         output.add(key.getAsString(), value);
 
         return DataResult.success(output);
@@ -160,12 +166,14 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
     @Override
     public DataResult<JsonElement> mergeInto(final JsonElement map, final Map<JsonElement, JsonElement> values) {
-        if (!map.isJsonObject()) {
+        if (!map.isJsonObject() && map != empty()) {
             return DataResult.error("mergeInto called with not a map: " + map, map);
         }
 
         final JsonObject output = new JsonObject();
-        map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
+        if (map != empty()) {
+            map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
+        }
 
         final List<JsonElement> missed = Lists.newArrayList();
 
