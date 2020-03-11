@@ -21,11 +21,7 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
 
     @Override
     public Optional<Dynamic<?>> point(final DynamicOps<?> ops) {
-        return Optional.of(capEmpty(ops));
-    }
-
-    private <T> Dynamic<T> capEmpty(final DynamicOps<T> ops) {
-        return new Dynamic<>(ops, ops.emptyMap());
+        return Optional.of(new Dynamic<>(ops));
     }
 
     @Override
