@@ -232,4 +232,43 @@ public class JsonOps implements DynamicOps<JsonElement> {
     public String toString() {
         return "JSON";
     }
+
+    @Override
+    public ListBuilder<JsonElement> listBuilder() {
+        return new ArrayBuilder();
+    }
+
+    private static final class ArrayBuilder implements ListBuilder<JsonElement> {
+        private DataResult<JsonArray> builder = DataResult.success(new JsonArray());
+
+        @Override
+        public DynamicOps<JsonElement> ops() {
+            return INSTANCE;
+        }
+
+        @Override
+        public ListBuilder<JsonElement> add(final JsonElement value) {
+            builder = builder.map(b -> {
+                b.add(value);
+                return b;
+            });
+            return this;
+        }
+
+        @Override
+        public ListBuilder<JsonElement> add(final DataResult<JsonElement> value) {
+            builder = builder.flatMap(b -> value.map(element -> {
+                b.add(element);
+                return b;
+            }));
+            return this;
+        }
+
+        @Override
+        public DataResult<JsonElement> build(final JsonElement prefix) {
+            final DataResult<JsonElement> result = builder.flatMap(b -> INSTANCE.mergeInto(prefix, b));
+            builder = DataResult.success(new JsonArray());
+            return result;
+        }
+    }
 }

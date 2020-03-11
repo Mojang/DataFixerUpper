@@ -182,4 +182,36 @@ public interface DynamicOps<T> {
     default T updateGeneric(final T input, final T key, final Function<T, T> function) {
         return getGeneric(input, key).flatMap(value -> mergeInto(input, key, function.apply(value)).result()).orElse(input);
     }
+
+    default ListBuilder<T> listBuilder() {
+        return new ListBuilder.Builder<>(this);
+    }
+
+    default DataResult<T> list(final Iterable<? extends Serializable> list) {
+        return list(list, empty());
+    }
+
+    default DataResult<T> list(final Iterable<? extends Serializable> list, final T prefix) {
+        return list(list, prefix, e -> e.serialize(this, empty()));
+    }
+
+    default <E> DataResult<T> list(final Iterable<E> list, final T prefix, final Function<? super E, ? extends DataResult<T>> elementSerializer) {
+        final ListBuilder<T> builder = listBuilder();
+        list.forEach(element -> builder.add(elementSerializer.apply(element)));
+        return builder.build(prefix);
+    }
+
+    default RecordBuilder<T> mapBuilder() {
+        return new RecordBuilder.Builder<>(this);
+    }
+
+    default DataResult<T> map(final Map<String, ? extends Serializable> map, final T prefix) {
+        return map(map, prefix, Function.identity(), e -> e.serialize(this, empty()));
+    }
+
+    default <K, V> DataResult<T> map(final Map<K, V> map, final T prefix, final Function<? super K, ? extends String> keySerializer, final Function<? super V, ? extends DataResult<T>> elementSerializer) {
+        final RecordBuilder<T> builder = mapBuilder();
+        map.forEach((key, value) -> builder.add(keySerializer.apply(key), elementSerializer.apply(value)));
+        return builder.build(prefix);
+    }
 }
