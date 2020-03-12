@@ -12,8 +12,7 @@ public final class ByteType extends Const.PrimitiveType<Byte> {
     public <T> DataResult<Pair<Byte, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> DataResult.success(Pair.of(v.byteValue(), ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
+            .map(v -> Pair.of(v.byteValue(), ops.empty()));
     }
 
     @Override

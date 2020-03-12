@@ -12,8 +12,7 @@ public final class IntType extends Const.PrimitiveType<Integer> {
     public <T> DataResult<Pair<Integer, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> DataResult.success(Pair.of(v.intValue(), ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
+            .map(v -> Pair.of(v.intValue(), ops.empty()));
     }
 
     @Override

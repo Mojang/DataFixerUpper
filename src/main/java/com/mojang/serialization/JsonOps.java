@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -72,15 +71,15 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public Optional<Number> getNumberValue(final JsonElement input) {
+    public DataResult<Number> getNumberValue(final JsonElement input) {
         if (input.isJsonPrimitive()) {
             if (input.getAsJsonPrimitive().isNumber()) {
-                return Optional.of(input.getAsNumber());
+                return DataResult.success(input.getAsNumber());
             } else if (input.getAsJsonPrimitive().isBoolean()) {
-                return Optional.of(input.getAsBoolean() ? 1 : 0);
+                return DataResult.success(input.getAsBoolean() ? 1 : 0);
             }
         }
-        return Optional.empty();
+        return DataResult.error("Not a number: " + input);
     }
 
     @Override
@@ -89,15 +88,15 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public Optional<Boolean> getBooleanValue(final JsonElement input) {
+    public DataResult<Boolean> getBooleanValue(final JsonElement input) {
         if (input.isJsonPrimitive()) {
             if (input.getAsJsonPrimitive().isBoolean()) {
-                return Optional.of(input.getAsBoolean());
+                return DataResult.success(input.getAsBoolean());
             } else if (input.getAsJsonPrimitive().isNumber()) {
-                return Optional.of(input.getAsNumber().byteValue() != 0);
+                return DataResult.success(input.getAsNumber().byteValue() != 0);
             }
         }
-        return Optional.empty();
+        return DataResult.error("Not a boolean: " + input);
     }
 
     @Override
@@ -106,11 +105,11 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public Optional<String> getStringValue(final JsonElement input) {
+    public DataResult<String> getStringValue(final JsonElement input) {
         if (input.isJsonPrimitive() && input.getAsJsonPrimitive().isString()) {
-            return Optional.of(input.getAsString());
+            return DataResult.success(input.getAsString());
         }
-        return Optional.empty();
+        return DataResult.error("Not a string: " + input);
     }
 
     @Override
@@ -195,11 +194,11 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public Optional<Stream<Pair<JsonElement, JsonElement>>> getMapValues(final JsonElement input) {
+    public DataResult<Stream<Pair<JsonElement, JsonElement>>> getMapValues(final JsonElement input) {
         if (input.isJsonObject()) {
-            return Optional.of(input.getAsJsonObject().entrySet().stream().map(entry -> Pair.of(new JsonPrimitive(entry.getKey()), entry.getValue())));
+            return DataResult.success(input.getAsJsonObject().entrySet().stream().map(entry -> Pair.of(new JsonPrimitive(entry.getKey()), entry.getValue())));
         }
-        return Optional.empty();
+        return DataResult.error("Not a JSON object: " + input);
     }
 
     @Override
@@ -212,11 +211,11 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public Optional<Stream<JsonElement>> getStream(final JsonElement input) {
+    public DataResult<Stream<JsonElement>> getStream(final JsonElement input) {
         if (input.isJsonArray()) {
-            return Optional.of(StreamSupport.stream(input.getAsJsonArray().spliterator(), false));
+            return DataResult.success(StreamSupport.stream(input.getAsJsonArray().spliterator(), false));
         }
-        return Optional.empty();
+        return DataResult.error("Not a json array: " + input);
     }
 
     @Override

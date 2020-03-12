@@ -12,8 +12,7 @@ public final class LongType extends Const.PrimitiveType<Long> {
     public <T> DataResult<Pair<Long, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> DataResult.success(Pair.of(v.longValue(), ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
+            .map(v -> Pair.of(v.longValue(), ops.empty()));
     }
 
     @Override

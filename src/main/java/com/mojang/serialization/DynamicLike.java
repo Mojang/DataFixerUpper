@@ -10,7 +10,6 @@ import com.mojang.datafixers.util.Pair;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -29,25 +28,25 @@ public abstract class DynamicLike<T> {
         return ops;
     }
 
-    public abstract Optional<Number> asNumber();
-    public abstract Optional<String> asString();
-    public abstract Optional<Stream<Dynamic<T>>> asStreamOpt();
-    public abstract Optional<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt();
-    public abstract Optional<ByteBuffer> asByteBufferOpt();
-    public abstract Optional<IntStream> asIntStreamOpt();
-    public abstract Optional<LongStream> asLongStreamOpt();
+    public abstract DataResult<Number> asNumber();
+    public abstract DataResult<String> asString();
+    public abstract DataResult<Stream<Dynamic<T>>> asStreamOpt();
+    public abstract DataResult<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt();
+    public abstract DataResult<ByteBuffer> asByteBufferOpt();
+    public abstract DataResult<IntStream> asIntStreamOpt();
+    public abstract DataResult<LongStream> asLongStreamOpt();
     public abstract OptionalDynamic<T> get(String key);
-    public abstract Optional<T> getGeneric(T key);
-    public abstract Optional<T> getElement(String key);
-    public abstract Optional<T> getElementGeneric(T key);
+    public abstract DataResult<T> getGeneric(T key);
+    public abstract DataResult<T> getElement(String key);
+    public abstract DataResult<T> getElementGeneric(T key);
 
     public abstract <A> DataResult<Pair<A, T>> decode(final Decoder<? extends A> decoder);
 
-    public <U> Optional<List<U>> asListOpt(final Function<Dynamic<T>, U> deserializer) {
+    public <U> DataResult<List<U>> asListOpt(final Function<Dynamic<T>, U> deserializer) {
         return asStreamOpt().map(stream -> stream.map(deserializer).collect(Collectors.toList()));
     }
 
-    public <K, V> Optional<Map<K, V>> asMapOpt(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
+    public <K, V> DataResult<Map<K, V>> asMapOpt(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
         return asMapOpt().map(map -> {
             final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
             map.forEach(entry ->
@@ -62,17 +61,13 @@ public abstract class DynamicLike<T> {
     }
 
     public <E> DataResult<List<? extends E>> readList(final Decoder<? extends E> decoder) {
-        final DataResult<Stream<Dynamic<T>>> stream = asStreamOpt()
-            .map(DataResult::success)
-            .orElseGet(() -> DataResult.error("Not a list"));
-
-        return stream
+        return asStreamOpt()
             .map(s -> s.<DataResult<E>>map(d -> d.read(decoder)).collect(Collectors.toList()))
             .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
     }
 
     public Number asNumber(final Number defaultValue) {
-        return asNumber().orElse(defaultValue);
+        return asNumber().result().orElse(defaultValue);
     }
 
     public int asInt(final int defaultValue) {
@@ -104,39 +99,39 @@ public abstract class DynamicLike<T> {
     }
 
     public String asString(final String defaultValue) {
-        return asString().orElse(defaultValue);
+        return asString().result().orElse(defaultValue);
     }
 
     public Stream<Dynamic<T>> asStream() {
-        return asStreamOpt().orElseGet(Stream::empty);
+        return asStreamOpt().result().orElseGet(Stream::empty);
     }
 
     public ByteBuffer asByteBuffer() {
-        return asByteBufferOpt().orElseGet(() -> ByteBuffer.wrap(new byte[0]));
+        return asByteBufferOpt().result().orElseGet(() -> ByteBuffer.wrap(new byte[0]));
     }
 
     public IntStream asIntStream() {
-        return asIntStreamOpt().orElseGet(IntStream::empty);
+        return asIntStreamOpt().result().orElseGet(IntStream::empty);
     }
 
     public LongStream asLongStream() {
-        return asLongStreamOpt().orElseGet(LongStream::empty);
+        return asLongStreamOpt().result().orElseGet(LongStream::empty);
     }
 
     public <U> List<U> asList(final Function<Dynamic<T>, U> deserializer) {
-        return asListOpt(deserializer).orElseGet(ImmutableList::of);
+        return asListOpt(deserializer).result().orElseGet(ImmutableList::of);
     }
 
     public <K, V> Map<K, V> asMap(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
-        return asMapOpt(keyDeserializer, valueDeserializer).orElseGet(ImmutableMap::of);
+        return asMapOpt(keyDeserializer, valueDeserializer).result().orElseGet(ImmutableMap::of);
     }
 
     public T getElement(final String key, final T defaultValue) {
-        return getElement(key).orElse(defaultValue);
+        return getElement(key).result().orElse(defaultValue);
     }
 
     public T getElementGeneric(final T key, final T defaultValue) {
-        return getElementGeneric(key).orElse(defaultValue);
+        return getElementGeneric(key).result().orElse(defaultValue);
     }
 
     public Dynamic<T> emptyList() {

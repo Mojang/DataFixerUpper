@@ -28,47 +28,43 @@ public final class OptionalDynamic<T> extends DynamicLike<T> {
         return delegate.map(mapper);
     }
 
-    public <U> Optional<U> flatMapOpt(final Function<? super Dynamic<T>, Optional<U>> mapper) {
-        return result().flatMap(mapper);
-    }
-
     public <U> DataResult<U> flatMap(final Function<? super Dynamic<T>, ? extends DataResult<U>> mapper) {
         return delegate.flatMap(mapper);
     }
 
     @Override
-    public Optional<Number> asNumber() {
-        return flatMapOpt(DynamicLike::asNumber);
+    public DataResult<Number> asNumber() {
+        return flatMap(DynamicLike::asNumber);
     }
 
     @Override
-    public Optional<String> asString() {
-        return flatMapOpt(DynamicLike::asString);
+    public DataResult<String> asString() {
+        return flatMap(DynamicLike::asString);
     }
 
     @Override
-    public Optional<Stream<Dynamic<T>>> asStreamOpt() {
-        return flatMapOpt(DynamicLike::asStreamOpt);
+    public DataResult<Stream<Dynamic<T>>> asStreamOpt() {
+        return flatMap(DynamicLike::asStreamOpt);
     }
 
     @Override
-    public Optional<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt() {
-        return flatMapOpt(DynamicLike::asMapOpt);
+    public DataResult<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt() {
+        return flatMap(DynamicLike::asMapOpt);
     }
 
     @Override
-    public Optional<ByteBuffer> asByteBufferOpt() {
-        return flatMapOpt(DynamicLike::asByteBufferOpt);
+    public DataResult<ByteBuffer> asByteBufferOpt() {
+        return flatMap(DynamicLike::asByteBufferOpt);
     }
 
     @Override
-    public Optional<IntStream> asIntStreamOpt() {
-        return flatMapOpt(DynamicLike::asIntStreamOpt);
+    public DataResult<IntStream> asIntStreamOpt() {
+        return flatMap(DynamicLike::asIntStreamOpt);
     }
 
     @Override
-    public Optional<LongStream> asLongStreamOpt() {
-        return flatMapOpt(DynamicLike::asLongStreamOpt);
+    public DataResult<LongStream> asLongStreamOpt() {
+        return flatMap(DynamicLike::asLongStreamOpt);
     }
 
     @Override
@@ -77,18 +73,18 @@ public final class OptionalDynamic<T> extends DynamicLike<T> {
     }
 
     @Override
-    public Optional<T> getGeneric(final T key) {
-        return flatMapOpt(v -> v.getGeneric(key));
+    public DataResult<T> getGeneric(final T key) {
+        return flatMap(v -> v.getGeneric(key));
     }
 
     @Override
-    public Optional<T> getElement(final String key) {
-        return flatMapOpt(v -> v.getElement(key));
+    public DataResult<T> getElement(final String key) {
+        return flatMap(v -> v.getElement(key));
     }
 
     @Override
-    public Optional<T> getElementGeneric(final T key) {
-        return flatMapOpt(v -> v.getElementGeneric(key));
+    public DataResult<T> getElementGeneric(final T key) {
+        return flatMap(v -> v.getElementGeneric(key));
     }
 
     public Dynamic<T> orElseEmptyMap() {
@@ -99,8 +95,8 @@ public final class OptionalDynamic<T> extends DynamicLike<T> {
         return result().orElseGet(this::emptyList);
     }
 
-    public <V> Optional<V> into(final Function<? super Dynamic<T>, ? extends V> action) {
-        return result().map(action);
+    public <V> DataResult<V> into(final Function<? super Dynamic<T>, ? extends V> action) {
+        return delegate.map(action);
     }
 
     @Override
