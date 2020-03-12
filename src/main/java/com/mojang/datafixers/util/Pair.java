@@ -8,8 +8,11 @@ import com.mojang.datafixers.kinds.CartesianLike;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.Traversable;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class Pair<F, S> implements App<Pair.Mu<S>, F> {
     public static final class Mu<S> implements K1 {}
@@ -67,6 +70,10 @@ public class Pair<F, S> implements App<Pair.Mu<S>, F> {
 
     public static <F, S> Pair<F, S> of(final F first, final S second) {
         return new Pair<>(first, second);
+    }
+
+    public static <F, S> Collector<Pair<F, S>, ?, Map<F, S>> toMap() {
+        return Collectors.toMap(Pair::getFirst, Pair::getSecond);
     }
 
     public static final class Instance<S2> implements Traversable<Mu<S2>, Instance.Mu<S2>>, CartesianLike<Mu<S2>, S2, Instance.Mu<S2>> {

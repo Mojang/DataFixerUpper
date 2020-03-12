@@ -208,11 +208,11 @@ public interface DSL {
     }
 
     static <K> TaggedChoice<K> taggedChoiceLazy(final String name, final Type<K> keyType, final Map<K, Supplier<TypeTemplate>> templates) {
-        return taggedChoice(name, keyType, templates.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().get())).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+        return taggedChoice(name, keyType, templates.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().get())).collect(Pair.toMap()));
     }
 
     @SuppressWarnings("unchecked")
-    static <K> Type<Pair<K, ?>> taggedChoiceType(final String name, final Type<K> keyType, final Map<K, Type<?>> types) {
+    static <K> Type<Pair<K, ?>> taggedChoiceType(final String name, final Type<K> keyType, final Map<K, ? extends Type<?>> types) {
         return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getLeft(), (Type<K>) k.getMiddle(), (Map<K, Type<?>>) k.getRight()));
     }
 
@@ -461,6 +461,6 @@ public interface DSL {
 
         private static final OpticFinder<Dynamic<?>> REMAINDER_FINDER = remainderType().finder();
 
-        private static final Map<Triple<String, Type<?>, Map<?, Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = Maps.newConcurrentMap();
+        private static final Map<Triple<String, Type<?>, Map<?, ? extends Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = Maps.newConcurrentMap();
     }
 }

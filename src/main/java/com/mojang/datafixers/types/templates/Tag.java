@@ -190,7 +190,7 @@ public final class Tag implements TypeTemplate {
                 }
 
                 return element.read(ops, matched.get(0).getSecond()).map(value ->
-                    Pair.of(value.getFirst(), ops.createMap(rest.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))))
+                    Pair.of(value.getFirst(), ops.createMap(rest.stream().collect(Pair.toMap())))
                 );
             });
         }

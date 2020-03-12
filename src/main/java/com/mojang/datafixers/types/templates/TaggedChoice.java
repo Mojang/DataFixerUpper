@@ -68,7 +68,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
     @Override
     public TypeFamily apply(final TypeFamily family) {
         return index -> types.computeIfAbsent(Pair.of(family, index), key ->
-            DSL.taggedChoiceType(name, keyType, templates.entrySet().stream().map(e -> Pair.<K, Type<?>>of(e.getKey(), e.getValue().apply(key.getFirst()).apply(key.getSecond()))).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)))
+            DSL.taggedChoiceType(name, keyType, templates.entrySet().stream().map(e -> Pair.<K, Type<?>>of(e.getKey(), e.getValue().apply(key.getFirst()).apply(key.getSecond()))).collect(Pair.toMap()))
         );
     }
 
@@ -138,7 +138,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
             ).map(
                 Optional::get
             ).collect(
-                Collectors.toMap(Pair::getFirst, Pair::getSecond)
+                Pair.toMap()
             );
             if (results.isEmpty()) {
                 return RewriteResult.nop(this);
@@ -172,12 +172,12 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public Type<?> updateMu(final RecursiveTypeFamily newFamily) {
-            return DSL.taggedChoiceType(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().updateMu(newFamily))).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+            return DSL.taggedChoiceType(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().updateMu(newFamily))).collect(Pair.toMap()));
         }
 
         @Override
         public TypeTemplate buildTemplate() {
-            return DSL.taggedChoice(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().template())).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+            return DSL.taggedChoice(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().template())).collect(Pair.toMap()));
         }
 
         @Override
@@ -244,7 +244,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 e -> e.getSecond().left().isPresent()
             ).map(
                 e -> e.mapSecond(o -> o.left().get())
-            ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+            ).collect(Pair.toMap());
 
             if (optics.isEmpty()) {
                 return Either.right(new FieldNotFoundException("Not found in any choices"));
@@ -343,7 +343,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                     throw new IllegalStateException("Could not merge TaggedChoiceType optics, unknown bound: " + Arrays.toString(bounds.toArray()));
                 }
 
-                final Map<K, Type<?>> newTypes = types.entrySet().stream().map(e -> Pair.of(e.getKey(), optics.containsKey(e.getKey()) ? optics.get(e.getKey()).tType() : e.getValue())).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+                final Map<K, Type<?>> newTypes = types.entrySet().stream().map(e -> Pair.of(e.getKey(), optics.containsKey(e.getKey()) ? optics.get(e.getKey()).tType() : e.getValue())).collect(Pair.toMap());
 
                 return Either.left(new TypedOptic<>(
                     bound,
