@@ -12,8 +12,7 @@ public final class ShortType extends Const.PrimitiveType<Short> {
     public <T> DataResult<Pair<Short, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> DataResult.success(Pair.of(v.shortValue(), ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
+            .map(v -> Pair.of(v.shortValue(), ops.empty()));
     }
 
     @Override

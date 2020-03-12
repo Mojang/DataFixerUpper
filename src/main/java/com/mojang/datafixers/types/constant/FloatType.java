@@ -12,8 +12,7 @@ public final class FloatType extends Const.PrimitiveType<Float> {
     public <T> DataResult<Pair<Float, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> DataResult.success(Pair.of(v.floatValue(), ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
+            .map(v -> Pair.of(v.floatValue(), ops.empty()));
     }
 
     @Override

@@ -176,7 +176,7 @@ public final class Tag implements TypeTemplate {
 
         @Override
         public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
-            return ops.getMapValues(input).<DataResult<Pair<A, T>>>map(map -> {
+            return ops.getMapValues(input).flatMap(map -> {
                 final T nameObject = ops.createString(name);
 
                 final Map<Boolean, List<Pair<T, T>>> partitioned = map.collect(Collectors.partitioningBy(p -> Objects.equals(p.getFirst(), nameObject)));
@@ -192,7 +192,7 @@ public final class Tag implements TypeTemplate {
                 return element.read(ops, matched.get(0).getSecond()).map(value ->
                     Pair.of(value.getFirst(), ops.createMap(rest.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))))
                 );
-            }).orElseGet(() -> DataResult.error("Input is not a map: " + input));
+            });
         }
 
         @Override

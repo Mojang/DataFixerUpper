@@ -62,7 +62,7 @@ public class Dynamic<T> extends DynamicLike<T> {
         return new OptionalDynamic<>(ops, merged.map(m -> new Dynamic<>(ops, m)));
     }
 
-    public Optional<Map<Dynamic<T>, Dynamic<T>>> getMapValues() {
+    public DataResult<Map<Dynamic<T>, Dynamic<T>>> getMapValues() {
         return ops.getMapValues(value).map(map -> {
             final ImmutableMap.Builder<Dynamic<T>, Dynamic<T>> builder = ImmutableMap.builder();
             map.forEach(entry -> builder.put(new Dynamic<>(ops, entry.getFirst()), new Dynamic<>(ops, entry.getSecond())));
@@ -74,60 +74,58 @@ public class Dynamic<T> extends DynamicLike<T> {
         return DataFixUtils.orElse(getMapValues().map(map -> map.entrySet().stream().map(e -> {
             final Pair<Dynamic<?>, Dynamic<?>> pair = updater.apply(Pair.of(e.getKey(), e.getValue()));
             return Pair.of(pair.getFirst().castTyped(ops), pair.getSecond().castTyped(ops));
-        }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))).map(this::createMap), this);
+        }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))).map(this::createMap).result(), this);
     }
 
     @Override
-    public Optional<Number> asNumber() {
+    public DataResult<Number> asNumber() {
         return ops.getNumberValue(value);
     }
 
     @Override
-    public Optional<String> asString() {
+    public DataResult<String> asString() {
         return ops.getStringValue(value);
     }
 
     @Override
-    public Optional<Stream<Dynamic<T>>> asStreamOpt() {
+    public DataResult<Stream<Dynamic<T>>> asStreamOpt() {
         return ops.getStream(value).map(s -> s.map(e -> new Dynamic<>(ops, e)));
     }
 
     @Override
-    public Optional<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt() {
+    public DataResult<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt() {
         return ops.getMapValues(value).map(s -> s.map(p -> Pair.of(new Dynamic<>(ops, p.getFirst()), new Dynamic<>(ops, p.getSecond()))));
     }
 
     @Override
-    public Optional<ByteBuffer> asByteBufferOpt() {
+    public DataResult<ByteBuffer> asByteBufferOpt() {
         return ops.getByteBuffer(value);
     }
 
     @Override
-    public Optional<IntStream> asIntStreamOpt() {
+    public DataResult<IntStream> asIntStreamOpt() {
         return ops.getIntStream(value);
     }
 
     @Override
-    public Optional<LongStream> asLongStreamOpt() {
+    public DataResult<LongStream> asLongStreamOpt() {
         return ops.getLongStream(value);
     }
 
     @Override
     public OptionalDynamic<T> get(final String key) {
-        final Optional<Stream<Pair<T, T>>> map = ops.getMapValues(value);
-        if (!map.isPresent()) {
-            return new OptionalDynamic<>(ops, DataResult.error("not a map: " + value));
-        }
-        final T keyString = ops.createString(key);
-        final Optional<T> value = map.get().filter(p -> Objects.equals(keyString, p.getFirst())).map(Pair::getSecond).findFirst();
-        if (!value.isPresent()) {
-            return new OptionalDynamic<>(ops, DataResult.error("key missing: " + key + " in " + this.value));
-        }
-        return new OptionalDynamic<T>(ops, DataResult.success(new Dynamic<>(ops, value.get())));
+        return new OptionalDynamic<>(ops, ops.getMapValues(value).flatMap(m -> {
+            final T keyString = ops.createString(key);
+            final Optional<T> value = m.filter(p -> Objects.equals(keyString, p.getFirst())).map(Pair::getSecond).findFirst();
+            if (!value.isPresent()) {
+                return DataResult.error("key missing: " + key + " in " + this.value);
+            }
+            return DataResult.success(new Dynamic<>(ops, value.get()));
+        }));
     }
 
     @Override
-    public Optional<T> getGeneric(final T key) {
+    public DataResult<T> getGeneric(final T key) {
         return ops.getGeneric(value, key);
     }
 
@@ -148,12 +146,12 @@ public class Dynamic<T> extends DynamicLike<T> {
     }
 
     @Override
-    public Optional<T> getElement(final String key) {
+    public DataResult<T> getElement(final String key) {
         return getElementGeneric(ops.createString(key));
     }
 
     @Override
-    public Optional<T> getElementGeneric(final T key) {
+    public DataResult<T> getElementGeneric(final T key) {
         return ops.getGeneric(value, key);
     }
 
@@ -220,25 +218,25 @@ public class Dynamic<T> extends DynamicLike<T> {
             return outOps.createDouble(inOps.getNumberValue(input, 0).doubleValue());
         }
         if (Objects.equals(type, DSL.bool())) {
-            return outOps.createBoolean(inOps.getBooleanValue(input).orElse(false));
+            return outOps.createBoolean(inOps.getBooleanValue(input).result().orElse(false));
         }
         if (Objects.equals(type, DSL.string())) {
-            return outOps.createString(inOps.getStringValue(input).orElse(""));
+            return outOps.createString(inOps.getStringValue(input).result().orElse(""));
         }
         if (Objects.equals(type, DSL.list(DSL.byteType()))) {
-            return outOps.createByteList(inOps.getByteBuffer(input).orElse(ByteBuffer.wrap(new byte[0])));
+            return outOps.createByteList(inOps.getByteBuffer(input).result().orElse(ByteBuffer.wrap(new byte[0])));
         }
         if (Objects.equals(type, DSL.list(DSL.intType()))) {
-            return outOps.createIntList(inOps.getIntStream(input).orElse(IntStream.empty()));
+            return outOps.createIntList(inOps.getIntStream(input).result().orElse(IntStream.empty()));
         }
         if (Objects.equals(type, DSL.list(DSL.longType()))) {
-            return outOps.createLongList(inOps.getLongStream(input).orElse(LongStream.empty()));
+            return outOps.createLongList(inOps.getLongStream(input).result().orElse(LongStream.empty()));
         }
         if (Objects.equals(type, DSL.list(DSL.remainderType()))) {
-            return outOps.createList(inOps.getStream(input).orElse(Stream.empty()).map(e -> convert(inOps, outOps, e)));
+            return outOps.createList(inOps.getStream(input).result().orElse(Stream.empty()).map(e -> convert(inOps, outOps, e)));
         }
         if (Objects.equals(type, DSL.compoundList(DSL.remainderType(), DSL.remainderType()))) {
-            return outOps.createMap(inOps.getMapValues(input).orElse(Stream.empty()).map(e ->
+            return outOps.createMap(inOps.getMapValues(input).result().orElse(Stream.empty()).map(e ->
                 Pair.of(convert(inOps, outOps, e.getFirst()), convert(inOps, outOps, e.getSecond()))
             ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
         }

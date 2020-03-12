@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -30,10 +29,10 @@ public interface DynamicOps<T> {
 
     Type<?> getType(final T input);
 
-    Optional<Number> getNumberValue(T input);
+    DataResult<Number> getNumberValue(T input);
 
     default Number getNumberValue(final T input, final Number defaultValue) {
-        return getNumberValue(input).orElse(defaultValue);
+        return getNumberValue(input).result().orElse(defaultValue);
     }
 
     T createNumeric(Number i);
@@ -62,7 +61,7 @@ public interface DynamicOps<T> {
         return createNumeric(value);
     }
 
-    default Optional<Boolean> getBooleanValue(final T input) {
+    default DataResult<Boolean> getBooleanValue(final T input) {
         return getNumberValue(input).map(number -> number.byteValue() != 0);
     }
 
@@ -70,7 +69,7 @@ public interface DynamicOps<T> {
         return createByte((byte) (value ? 1 : 0));
     }
 
-    Optional<String> getStringValue(T input);
+    DataResult<String> getStringValue(T input);
 
     T createString(String value);
 
@@ -104,25 +103,25 @@ public interface DynamicOps<T> {
         return result;
     }
 
-    Optional<Stream<Pair<T, T>>> getMapValues(T input);
+    DataResult<Stream<Pair<T, T>>> getMapValues(T input);
 
     T createMap(Map<T, T> map);
 
-    Optional<Stream<T>> getStream(T input);
+    DataResult<Stream<T>> getStream(T input);
 
     T createList(Stream<T> input);
 
-    default Optional<ByteBuffer> getByteBuffer(final T input) {
+    default DataResult<ByteBuffer> getByteBuffer(final T input) {
         return getStream(input).flatMap(stream -> {
             final List<T> list = stream.collect(Collectors.toList());
-            if (list.stream().allMatch(element -> getNumberValue(element).isPresent())) {
+            if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
                 final ByteBuffer buffer = ByteBuffer.wrap(new byte[list.size()]);
                 for (int i = 0; i < list.size(); i++) {
-                    buffer.put(i, getNumberValue(list.get(i)).get().byteValue());
+                    buffer.put(i, getNumberValue(list.get(i)).result().get().byteValue());
                 }
-                return Optional.of(buffer);
+                return DataResult.success(buffer);
             }
-            return Optional.empty();
+            return DataResult.error("Some elements are not bytes: " + input);
         });
     }
 
@@ -131,13 +130,13 @@ public interface DynamicOps<T> {
         return createList(Stream.generate(() -> createByte(input.get(i[0]++))).limit(input.capacity()));
     }
 
-    default Optional<IntStream> getIntStream(final T input) {
+    default DataResult<IntStream> getIntStream(final T input) {
         return getStream(input).flatMap(stream -> {
             final List<T> list = stream.collect(Collectors.toList());
-            if (list.stream().allMatch(element -> getNumberValue(element).isPresent())) {
-                return Optional.of(list.stream().mapToInt(element -> getNumberValue(element).get().intValue()));
+            if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
+                return DataResult.success(list.stream().mapToInt(element -> getNumberValue(element).result().get().intValue()));
             }
-            return Optional.empty();
+            return DataResult.error("Some elements are not ints: " + input);
         });
     }
 
@@ -145,13 +144,13 @@ public interface DynamicOps<T> {
         return createList(input.mapToObj(this::createInt));
     }
 
-    default Optional<LongStream> getLongStream(final T input) {
+    default DataResult<LongStream> getLongStream(final T input) {
         return getStream(input).flatMap(stream -> {
             final List<T> list = stream.collect(Collectors.toList());
-            if (list.stream().allMatch(element -> getNumberValue(element).isPresent())) {
-                return Optional.of(list.stream().mapToLong(element -> getNumberValue(element).get().longValue()));
+            if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
+                return DataResult.success(list.stream().mapToLong(element -> getNumberValue(element).result().get().longValue()));
             }
-            return Optional.empty();
+            return DataResult.error("Some elements are not longs: " + input);
         });
     }
 
@@ -161,12 +160,18 @@ public interface DynamicOps<T> {
 
     T remove(T input, String key);
 
-    default Optional<T> get(final T input, final String key) {
+    default DataResult<T> get(final T input, final String key) {
         return getGeneric(input, createString(key));
     }
 
-    default Optional<T> getGeneric(final T input, final T key) {
-        return getMapValues(input).flatMap(map -> map.filter(p -> Objects.equals(key, p.getFirst())).map(Pair::getSecond).findFirst());
+    default DataResult<T> getGeneric(final T input, final T key) {
+        return getMapValues(input).<T>flatMap(map -> map
+            .filter(p -> Objects.equals(key, p.getFirst()))
+            .map(Pair::getSecond)
+            .findFirst()
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error("No element " + key + " in the map " + input))
+        );
     }
 
     // TODO: eats error if input is not a map
@@ -176,11 +181,11 @@ public interface DynamicOps<T> {
 
     // TODO: eats error if input is not a map
     default T update(final T input, final String key, final Function<T, T> function) {
-        return get(input, key).map(value -> set(input, key, function.apply(value))).orElse(input);
+        return get(input, key).map(value -> set(input, key, function.apply(value))).result().orElse(input);
     }
 
     default T updateGeneric(final T input, final T key, final Function<T, T> function) {
-        return getGeneric(input, key).flatMap(value -> mergeInto(input, key, function.apply(value)).result()).orElse(input);
+        return getGeneric(input, key).flatMap(value -> mergeInto(input, key, function.apply(value))).result().orElse(input);
     }
 
     default ListBuilder<T> listBuilder() {

@@ -12,8 +12,7 @@ public final class BoolType extends Const.PrimitiveType<Boolean> {
     public <T> DataResult<Pair<Boolean, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> DataResult.success(Pair.of(v.intValue() != 0, ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
+            .map(v -> Pair.of(v.intValue() != 0, ops.empty()));
     }
 
     @Override

@@ -12,8 +12,7 @@ public final class StringType extends Const.PrimitiveType<String> {
     public <T> DataResult<Pair<String, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getStringValue(input)
-            .map(v -> DataResult.success(Pair.of(v, ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a string: " + input));
+            .map(v -> Pair.of(v, ops.empty()));
     }
 
     @Override

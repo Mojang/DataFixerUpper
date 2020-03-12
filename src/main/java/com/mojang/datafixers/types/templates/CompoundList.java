@@ -178,7 +178,7 @@ public final class CompoundList implements TypeTemplate {
 
         @Override
         public <T> DataResult<Pair<List<Pair<K, V>>, T>> read(final DynamicOps<T> ops, final T input) {
-            return ops.getMapValues(input).map(map -> {
+            return ops.getMapValues(input).flatMap(map -> {
                 final AtomicReference<DataResult<Pair<ImmutableList.Builder<Pair<K, V>>, ImmutableMap.Builder<T, T>>>> result =
                     new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableMap.builder())));
 
@@ -200,7 +200,7 @@ public final class CompoundList implements TypeTemplate {
                 });
 
                 return result.get().map(pair -> Pair.of((List<Pair<K, V>>) pair.getFirst().build(), ops.createMap(pair.getSecond().build())));
-            }).orElseGet(() -> DataResult.error("Input is not a map: " + input));
+            });
         }
 
         @Override

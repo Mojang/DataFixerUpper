@@ -182,24 +182,22 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public <T> DataResult<Pair<Pair<K, ?>, T>> read(final DynamicOps<T> ops, final T input) {
-            final Optional<Stream<Pair<T, T>>> values = ops.getMapValues(input);
-            if (!values.isPresent()) {
-                return DataResult.error("Input is not a map: " + input);
-            }
-
-            final T nameString = ops.createString(name);
-            final Optional<Pair<T, T>> nameEntry = values.get().filter(v -> v.getFirst() == nameString).findFirst();
-            if (!nameEntry.isPresent()) {
-                return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
-            }
-
-            return keyType.read(ops, nameEntry.get().getSecond()).flatMap(key -> {
-                final K keyValue = key.getFirst();
-                final Type<?> type = types.get(keyValue);
-                if (type != null) {
-                    return type.read(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(keyValue, v)));
+            final DataResult<Stream<Pair<T, T>>> values = ops.getMapValues(input);
+            return values.flatMap(vs -> {
+                final T nameString = ops.createString(name);
+                final Optional<Pair<T, T>> nameEntry = vs.filter(v -> v.getFirst() == nameString).findFirst();
+                if (!nameEntry.isPresent()) {
+                    return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
                 }
-                return DataResult.error("Unsupported key: " + keyValue + " in " + this);
+
+                return keyType.read(ops, nameEntry.get().getSecond()).flatMap(key -> {
+                    final K keyValue = key.getFirst();
+                    final Type<?> type = types.get(keyValue);
+                    if (type != null) {
+                        return type.read(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(keyValue, v)));
+                    }
+                    return DataResult.error("Unsupported key: " + keyValue + " in " + this);
+                });
             });
         }
 

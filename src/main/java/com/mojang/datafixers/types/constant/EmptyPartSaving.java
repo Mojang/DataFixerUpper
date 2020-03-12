@@ -52,16 +52,12 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
             return DataResult.success(casted);
         }
 
-        final Optional<Stream<Pair<T, T>>> map = ops.getMapValues(casted);
-        if (map.isPresent()) {
-            return ops.mergeInto(rest, map.get().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
-        }
-
-        final Optional<Stream<T>> stream = ops.getStream(casted);
-        if (stream.isPresent()) {
-            return ops.mergeInto(rest, stream.get().collect(Collectors.toList()));
-        }
-
-        return DataResult.error("Don't know how to merge " + rest + " and " + casted, rest);
+        final DataResult<T> toMap = ops.getMapValues(casted).flatMap(map -> ops.mergeInto(rest, map.collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))));
+        return toMap.result().map(DataResult::success).orElseGet(() -> {
+            final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeInto(rest, stream.collect(Collectors.toList())));
+            return toList.result().map(DataResult::success).orElseGet(() ->
+                DataResult.error("Don't know how to merge " + rest + " and " + casted, rest)
+            );
+        });
     }
 }

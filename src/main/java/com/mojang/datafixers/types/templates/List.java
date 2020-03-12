@@ -5,8 +5,6 @@ package com.mojang.datafixers.types.templates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.OpticParts;
@@ -17,11 +15,13 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 public final class List implements TypeTemplate {
     private final TypeTemplate element;
@@ -161,7 +160,7 @@ public final class List implements TypeTemplate {
 
         @Override
         public <T> DataResult<Pair<java.util.List<A>, T>> read(final DynamicOps<T> ops, final T input) {
-            return ops.getStream(input).map(stream -> {
+            return ops.getStream(input).flatMap(stream -> {
                 final AtomicReference<DataResult<Pair<ImmutableList.Builder<A>, ImmutableList.Builder<T>>>> result =
                     new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableList.builder())));
 
@@ -179,7 +178,7 @@ public final class List implements TypeTemplate {
                 );
 
                 return result.get().map(pair -> Pair.of((java.util.List<A>) pair.getFirst().build(), ops.createList(pair.getSecond().build().stream())));
-            }).orElseGet(() -> DataResult.error("Input is not a list " + input));
+            });
         }
 
         /**

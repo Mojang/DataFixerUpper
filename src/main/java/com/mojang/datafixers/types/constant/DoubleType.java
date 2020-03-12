@@ -12,8 +12,7 @@ public final class DoubleType extends Const.PrimitiveType<Double> {
     public <T> DataResult<Pair<Double, T>> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> DataResult.success(Pair.of(v.doubleValue(), ops.empty())))
-            .orElseGet(() -> DataResult.error("Input is not a number: " + input));
+            .map(v -> Pair.of(v.doubleValue(), ops.empty()));
     }
 
     @Override
