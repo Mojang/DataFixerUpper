@@ -7,6 +7,7 @@ import com.mojang.datafixers.kinds.Applicative;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.util.Either;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -105,6 +106,28 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return Instance.INSTANCE;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final DataResult<?> that = (DataResult<?>) o;
+        return Objects.equals(result, that.result);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(result);
+    }
+
+    @Override
+    public String toString() {
+        return "DataResult[" + result + ']';
+    }
+
     public static class DynamicException<R> {
         private final String message;
         private final Optional<R> partialResult;
@@ -132,6 +155,28 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
         public String message() {
             return message;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final DynamicException<?> that = (DynamicException<?>) o;
+            return Objects.equals(message, that.message) && Objects.equals(partialResult, that.partialResult);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(message, partialResult);
+        }
+
+        @Override
+        public String toString() {
+            return "DynamicException[" + message + ' ' + partialResult + ']';
         }
     }
 
