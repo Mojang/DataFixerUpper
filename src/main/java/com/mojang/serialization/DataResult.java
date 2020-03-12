@@ -2,13 +2,23 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.mojang.datafixers.kinds.App;
+import com.mojang.datafixers.kinds.Applicative;
+import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.util.Either;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class DataResult<R> {
+public class DataResult<R> implements App<DataResult.Mu, R> {
+    public static final class Mu implements K1 {}
+
+    public static <R> DataResult<R> unbox(final App<DataResult.Mu, R> box) {
+        return (DataResult<R>) box;
+    }
+
     private final Either<R, DynamicException<R>> result;
 
     public static <R> DataResult<R> success(final R result) {
@@ -76,7 +86,7 @@ public class DataResult<R> {
     /**
      * Applies the function to either full or partial result, in case of partial concatenates errors.
      */
-    public <R2> DataResult<R2> flatMap(final Function<R, DataResult<R2>> function) {
+    public <R2> DataResult<R2> flatMap(final Function<? super R, ? extends DataResult<R2>> function) {
         return create(result.map(
             l -> function.apply(l).get(),
             r -> Either.right(r.partialResult
@@ -89,6 +99,10 @@ public class DataResult<R> {
                 )
             )
         ));
+    }
+
+    public static Instance instance() {
+        return Instance.INSTANCE;
     }
 
     public static class DynamicException<R> {
@@ -118,6 +132,32 @@ public class DataResult<R> {
 
         public String message() {
             return message;
+        }
+    }
+
+    public enum Instance implements Applicative<DataResult.Mu, DataResult.Instance.Mu> {
+        INSTANCE;
+
+        public static final class Mu implements Applicative.Mu {}
+
+        @Override
+        public <T, R> App<DataResult.Mu, R> map(final Function<? super T, ? extends R> func, final App<DataResult.Mu, T> ts) {
+            return DataResult.unbox(ts).map(func);
+        }
+
+        @Override
+        public <A> App<DataResult.Mu, A> point(final A a) {
+            return DataResult.success(a);
+        }
+
+        @Override
+        public <A, R> Function<App<DataResult.Mu, A>, App<DataResult.Mu, R>> lift1(final App<DataResult.Mu, Function<A, R>> function) {
+            return a -> DataResult.unbox(function).flatMap(f -> DataResult.unbox(a).map(f));
+        }
+
+        @Override
+        public <A, B, R> BiFunction<App<DataResult.Mu, A>, App<DataResult.Mu, B>, App<DataResult.Mu, R>> lift2(final App<DataResult.Mu, BiFunction<A, B, R>> function) {
+            return (a, b) -> DataResult.unbox(function).flatMap(f -> DataResult.unbox(a).flatMap(av -> DataResult.unbox(b).map(bv -> f.apply(av, bv))));
         }
     }
 }

@@ -4,4 +4,18 @@ package com.mojang.serialization;
 
 public interface Encoder<A> {
     <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input);
+
+    static <A extends Serializable> Encoder<A> of() {
+        return new Encoder<A>() {
+            @Override
+            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+                return input.serialize(ops, prefix);
+            }
+
+            @Override
+            public String toString() {
+                return "SerializableEncoder";
+            }
+        };
+    }
 }

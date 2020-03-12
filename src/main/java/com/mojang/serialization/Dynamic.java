@@ -10,7 +10,6 @@ import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -94,6 +93,11 @@ public class Dynamic<T> extends DynamicLike<T> {
     }
 
     @Override
+    public Optional<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt() {
+        return ops.getMapValues(value).map(s -> s.map(p -> Pair.of(new Dynamic<>(ops, p.getFirst()), new Dynamic<>(ops, p.getSecond()))));
+    }
+
+    @Override
     public Optional<ByteBuffer> asByteBufferOpt() {
         return ops.getByteBuffer(value);
     }
@@ -154,22 +158,6 @@ public class Dynamic<T> extends DynamicLike<T> {
     }
 
     @Override
-    public <U> Optional<List<U>> asListOpt(final Function<Dynamic<T>, U> deserializer) {
-        return asStreamOpt().map(stream -> stream.map(deserializer).collect(Collectors.toList()));
-    }
-
-    @Override
-    public <K, V> Optional<Map<K, V>> asMapOpt(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
-        return ops.getMapValues(value).map(map -> {
-            final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
-            map.forEach(entry ->
-                builder.put(keyDeserializer.apply(new Dynamic<>(ops, entry.getFirst())), valueDeserializer.apply(new Dynamic<>(ops, entry.getSecond())))
-            );
-            return builder.build();
-        });
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -197,6 +185,11 @@ public class Dynamic<T> extends DynamicLike<T> {
 
     public <V> V into(final Function<? super Dynamic<T>, ? extends V> action) {
         return action.apply(this);
+    }
+
+    @Override
+    public <A> DataResult<Pair<A, T>> decode(final Decoder<? extends A> decoder) {
+        return decoder.decode(ops, value).map(p -> p.mapFirst(Function.identity()));
     }
 
     @SuppressWarnings("unchecked")
