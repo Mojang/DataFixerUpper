@@ -74,7 +74,7 @@ public class Dynamic<T> extends DynamicLike<T> {
         return DataFixUtils.orElse(getMapValues().map(map -> map.entrySet().stream().map(e -> {
             final Pair<Dynamic<?>, Dynamic<?>> pair = updater.apply(Pair.of(e.getKey(), e.getValue()));
             return Pair.of(pair.getFirst().castTyped(ops), pair.getSecond().castTyped(ops));
-        }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))).map(this::createMap).result(), this);
+        }).collect(Pair.toMap())).map(this::createMap).result(), this);
     }
 
     @Override
@@ -238,7 +238,7 @@ public class Dynamic<T> extends DynamicLike<T> {
         if (Objects.equals(type, DSL.compoundList(DSL.remainderType(), DSL.remainderType()))) {
             return outOps.createMap(inOps.getMapValues(input).result().orElse(Stream.empty()).map(e ->
                 Pair.of(convert(inOps, outOps, e.getFirst()), convert(inOps, outOps, e.getSecond()))
-            ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+            ).collect(Pair.toMap()));
         }
         throw new IllegalStateException("Could not convert value of type " + type);
     }
