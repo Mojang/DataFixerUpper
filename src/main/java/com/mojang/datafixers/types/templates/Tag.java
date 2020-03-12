@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
@@ -11,21 +9,21 @@ import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.View;
 import com.mojang.datafixers.functions.Functions;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class Tag implements TypeTemplate {
     private final String name;
@@ -220,10 +218,6 @@ public final class Tag implements TypeTemplate {
         @Override
         public int hashCode() {
             return Objects.hash(name, element);
-        }
-
-        public <A2> TagType<A2> map(final Function<? super Type<A>, ? extends Type<A2>> function) {
-            return new TagType<>(name, function.apply(element));
         }
 
         @Override

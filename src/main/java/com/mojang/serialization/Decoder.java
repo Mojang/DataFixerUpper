@@ -4,6 +4,8 @@ package com.mojang.serialization;
 
 import com.mojang.datafixers.util.Pair;
 
+import java.util.function.Function;
+
 public interface Decoder<A> {
     <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input);
 
@@ -30,6 +32,28 @@ public interface Decoder<A> {
 
     default Simple<A> simple() {
         return this::parse;
+    }
+
+    default <B> Decoder<B> map(final Function<? super A, ? extends B> function) {
+        final Decoder<A> self = this;
+        return new Decoder<B>() {
+            @Override
+            public <T> DataResult<Pair<B, T>> decode(final DynamicOps<T> ops, final T input) {
+                return self.decode(ops, input).map(p -> p.mapFirst(function));
+            }
+        };
+    }
+
+    static <A> Decoder<A> ofTerminal(final Terminal<? extends A> terminal) {
+        return terminal.decoder().map(Function.identity());
+    }
+
+    static <A> Decoder<A> ofBoxed(final Boxed<? extends A> boxed) {
+        return boxed.decoder().map(Function.identity());
+    }
+
+    static <A> Decoder<A> ofSimple(final Simple<? extends A> simple) {
+        return simple.decoder().map(Function.identity());
     }
 
     interface Terminal<A> {
