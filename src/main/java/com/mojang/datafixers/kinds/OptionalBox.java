@@ -19,14 +19,14 @@ public final class OptionalBox<T> implements App<OptionalBox.Mu, T> {
 
     private final Optional<T> value;
 
-    OptionalBox(final Optional<T> value) {
+    private OptionalBox(final Optional<T> value) {
         this.value = value;
     }
 
-    public enum Instance implements Applicative<Mu, Instance.Mu> {
+    public enum Instance implements Applicative<Mu, Instance.Mu>, Traversable<Mu, Instance.Mu> {
         INSTANCE;
 
-        public static final class Mu implements Applicative.Mu {}
+        public static final class Mu implements Applicative.Mu, Traversable.Mu {}
 
         @Override
         public <T, R> App<OptionalBox.Mu, R> map(final Function<? super T, ? extends R> func, final App<OptionalBox.Mu, T> ts) {
@@ -46,6 +46,15 @@ public final class OptionalBox<T> implements App<OptionalBox.Mu, T> {
         @Override
         public <A, B, R> BiFunction<App<OptionalBox.Mu, A>, App<OptionalBox.Mu, B>, App<OptionalBox.Mu, R>> lift2(final App<OptionalBox.Mu, BiFunction<A, B, R>> function) {
             return (a, b) -> create(OptionalBox.unbox(function).flatMap(f -> OptionalBox.unbox(a).flatMap(av -> OptionalBox.unbox(b).map(bv -> f.apply(av, bv)))));
+        }
+
+        @Override
+        public <F extends K1, A, B> App<F, App<OptionalBox.Mu, B>> traverse(final Applicative<F, ?> applicative, final Function<A, App<F, B>> function, final App<OptionalBox.Mu, A> input) {
+            final Optional<App<F, B>> traversed = unbox(input).map(function);
+            if (traversed.isPresent()) {
+                return applicative.map(b -> OptionalBox.create(Optional.of(b)), traversed.get());
+            }
+            return applicative.point(OptionalBox.create(Optional.empty()));
         }
     }
 }

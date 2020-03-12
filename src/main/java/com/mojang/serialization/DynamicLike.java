@@ -4,12 +4,15 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.mojang.datafixers.kinds.ListBox;
+import com.mojang.datafixers.util.Pair;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -29,6 +32,7 @@ public abstract class DynamicLike<T> {
     public abstract Optional<Number> asNumber();
     public abstract Optional<String> asString();
     public abstract Optional<Stream<Dynamic<T>>> asStreamOpt();
+    public abstract Optional<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt();
     public abstract Optional<ByteBuffer> asByteBufferOpt();
     public abstract Optional<IntStream> asIntStreamOpt();
     public abstract Optional<LongStream> asLongStreamOpt();
@@ -36,8 +40,36 @@ public abstract class DynamicLike<T> {
     public abstract Optional<T> getGeneric(T key);
     public abstract Optional<T> getElement(String key);
     public abstract Optional<T> getElementGeneric(T key);
-    public abstract <U> Optional<List<U>> asListOpt(Function<Dynamic<T>, U> deserializer);
-    public abstract <K, V> Optional<Map<K, V>> asMapOpt(Function<Dynamic<T>, K> keyDeserializer, Function<Dynamic<T>, V> valueDeserializer);
+
+    public abstract <A> DataResult<Pair<A, T>> decode(final Decoder<? extends A> decoder);
+
+    public <U> Optional<List<U>> asListOpt(final Function<Dynamic<T>, U> deserializer) {
+        return asStreamOpt().map(stream -> stream.map(deserializer).collect(Collectors.toList()));
+    }
+
+    public <K, V> Optional<Map<K, V>> asMapOpt(final Function<Dynamic<T>, K> keyDeserializer, final Function<Dynamic<T>, V> valueDeserializer) {
+        return asMapOpt().map(map -> {
+            final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
+            map.forEach(entry ->
+                    builder.put(keyDeserializer.apply(entry.getFirst()), valueDeserializer.apply(entry.getSecond()))
+            );
+            return builder.build();
+        });
+    }
+
+    public <A> DataResult<A> read(final Decoder<? extends A> decoder) {
+        return decode(decoder).map(Pair::getFirst);
+    }
+
+    public <E> DataResult<List<? extends E>> readList(final Decoder<? extends E> decoder) {
+        final DataResult<Stream<Dynamic<T>>> stream = asStreamOpt()
+            .map(DataResult::success)
+            .orElseGet(() -> DataResult.error("Not a list"));
+
+        return stream
+            .map(s -> s.<DataResult<E>>map(d -> d.read(decoder)).collect(Collectors.toList()))
+            .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
+    }
 
     public Number asNumber(final Number defaultValue) {
         return asNumber().orElse(defaultValue);

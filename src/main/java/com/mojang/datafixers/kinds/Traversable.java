@@ -13,7 +13,7 @@ public interface Traversable<T extends K1, Mu extends Traversable.Mu> extends Fu
 
     <F extends K1, A, B> App<F, App<T, B>> traverse(final Applicative<F, ?> applicative, final Function<A, App<F, B>> function, final App<T, A> input);
 
-    default <F extends K1, A> App<F, App<T, A>> sequenceA(final Applicative<F, ?> applicative, final App<T, App<F, A>> input) {
+    default <F extends K1, A> App<F, App<T, A>> flip(final Applicative<F, ?> applicative, final App<T, App<F, A>> input) {
         return traverse(applicative, Function.identity(), input);
     }
 }
