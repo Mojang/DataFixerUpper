@@ -48,7 +48,8 @@ public abstract class Type<A> implements App<Type.Mu, A> {
     @Nullable
     private TypeTemplate template;
 
-    private final Codec<A> codec = buildCodec();
+    @Nullable
+    private Codec<A> codec;
 
     public RewriteResult<A, ?> rewriteOrNop(final TypeRewriteRule rule) {
         return DataFixUtils.orElseGet(rule.rewrite(this), () -> RewriteResult.nop(this));
@@ -116,6 +117,9 @@ public abstract class Type<A> implements App<Type.Mu, A> {
     }
 
     public final Codec<A> codec() {
+        if (codec == null) {
+            codec = buildCodec();
+        }
         return codec;
     }
 
