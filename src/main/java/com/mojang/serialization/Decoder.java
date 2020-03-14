@@ -5,6 +5,7 @@ package com.mojang.serialization;
 import com.mojang.datafixers.util.Pair;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public interface Decoder<A> {
     <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input);
@@ -66,6 +67,20 @@ public interface Decoder<A> {
             @Override
             public String toString() {
                 return "UnitDecoder[" + instance + "]";
+            }
+        };
+    }
+
+    static <A> Decoder<A> unit(final Supplier<A> instance) {
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return DataResult.success(Pair.of(instance.get(), input));
+            }
+
+            @Override
+            public String toString() {
+                return "UnitDecoder[" + instance.get() + "]";
             }
         };
     }
