@@ -6,9 +6,7 @@ import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.Decoder;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.Encoder;
 
 import java.util.Optional;
 
@@ -35,6 +33,6 @@ public final class EmptyPart extends com.mojang.datafixers.types.Type<Unit> {
 
     @Override
     protected Codec<Unit> buildCodec() {
-        return Codec.of(Encoder.empty(), Decoder.unit(Unit.INSTANCE));
+        return Codec.EMPTY;
     }
 }

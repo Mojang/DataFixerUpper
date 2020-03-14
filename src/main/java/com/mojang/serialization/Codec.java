@@ -4,6 +4,7 @@ package com.mojang.serialization;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.CompoundListCodec;
 import com.mojang.serialization.codecs.EitherCodec;
 import com.mojang.serialization.codecs.ListCodec;
@@ -11,6 +12,7 @@ import com.mojang.serialization.codecs.PairCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface Codec<A> extends Encoder<A>, Decoder<A> {
     static <A extends Serializable> Codec<A> of(final Decoder<A> decoder) {
@@ -202,4 +204,35 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
             return "Double";
         }
     };
+
+    Codec<Dynamic<?>> SAVING = new Codec<Dynamic<?>>() {
+        @Override
+        public <T> DataResult<Pair<Dynamic<?>, T>> decode(final DynamicOps<T> ops, final T input) {
+            return DataResult.success(Pair.of(new Dynamic<>(ops, input), ops.empty()));
+        }
+
+        @Override
+        public <T> DataResult<T> encode(final Dynamic<?> input, final DynamicOps<T> ops, final T prefix) {
+            if (input.getValue() == input.getOps().empty()) {
+                // nothing to merge, return rest
+                return DataResult.success(prefix);
+            }
+
+            final T casted = input.convert(ops).getValue();
+            if (prefix == ops.empty()) {
+                // no need to merge anything, return the old value
+                return DataResult.success(casted);
+            }
+
+            final DataResult<T> toMap = ops.getMapValues(casted).flatMap(map -> ops.mergeToMap(prefix, map.collect(Pair.toMap())));
+            return toMap.result().map(DataResult::success).orElseGet(() -> {
+                final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeToList(prefix, stream.collect(Collectors.toList())));
+                return toList.result().map(DataResult::success).orElseGet(() ->
+                    DataResult.error("Don't know how to merge " + prefix + " and " + casted, prefix)
+                );
+            });
+        }
+    };
+
+    Codec<Unit> EMPTY = Codec.of(Encoder.empty(), Decoder.unit(Unit.INSTANCE));
 }

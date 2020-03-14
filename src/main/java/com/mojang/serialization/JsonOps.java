@@ -8,8 +8,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.mojang.datafixers.DSL;
-import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.util.Pair;
 
 import java.math.BigDecimal;
@@ -31,42 +29,42 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public Type<?> getType(final JsonElement input) {
+    public Codec<?> getType(final JsonElement input) {
         if (input.isJsonObject()) {
-            return DSL.compoundList(DSL.remainderType(), DSL.remainderType());
+            return Codec.compoundList(Codec.SAVING, Codec.SAVING);
         }
         if (input.isJsonArray()) {
-            return DSL.list(DSL.remainderType());
+            return Codec.list(Codec.SAVING);
         }
         if (input.isJsonNull()) {
-            return DSL.emptyPartType();
+            return Codec.EMPTY;
         }
         final JsonPrimitive primitive = input.getAsJsonPrimitive();
         if (primitive.isString()) {
-            return DSL.string();
+            return Codec.STRING;
         }
         if (primitive.isBoolean()) {
-            return DSL.bool();
+            return Codec.BOOL;
         }
         final BigDecimal value = primitive.getAsBigDecimal();
         try {
             final long l = value.longValueExact();
             if ((byte) l == l) {
-                return DSL.byteType();
+                return Codec.BYTE;
             }
             if ((short) l == l) {
-                return DSL.shortType();
+                return Codec.SHORT;
             }
             if ((int) l == l) {
-                return DSL.intType();
+                return Codec.INT;
             }
-            return DSL.longType();
+            return Codec.LONG;
         } catch (final ArithmeticException e) {
             final double d = value.doubleValue();
             if ((float) d == d) {
-                return DSL.floatType();
+                return Codec.FLOAT;
             }
-            return DSL.doubleType();
+            return Codec.DOUBLE;
         }
     }
 
@@ -285,7 +283,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
                 array.addAll(b);
                 return DataResult.success(array);
             });
-            
+
             builder = DataResult.success(new JsonArray());
             return result;
         }
