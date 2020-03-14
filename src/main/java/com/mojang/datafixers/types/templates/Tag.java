@@ -195,7 +195,7 @@ public final class Tag implements TypeTemplate {
 
         @Override
         public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
-            return element.write(ops, ops.empty(), value).flatMap(result -> ops.mergeInto(rest, ops.createString(name), result));
+            return element.write(ops, ops.empty(), value).flatMap(result -> ops.mergeToMap(rest, ops.createString(name), result));
         }
 
         @Override

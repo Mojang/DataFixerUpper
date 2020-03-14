@@ -11,7 +11,6 @@ import com.mojang.serialization.DynamicOps;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dynamic<?>> {
     @Override
@@ -52,9 +51,9 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
             return DataResult.success(casted);
         }
 
-        final DataResult<T> toMap = ops.getMapValues(casted).flatMap(map -> ops.mergeInto(rest, map.collect(Pair.toMap())));
+        final DataResult<T> toMap = ops.getMapValues(casted).flatMap(map -> ops.mergeToMap(rest, map.collect(Pair.toMap())));
         return toMap.result().map(DataResult::success).orElseGet(() -> {
-            final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeInto(rest, stream.collect(Collectors.toList())));
+            final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeToList(rest, stream.collect(Collectors.toList())));
             return toList.result().map(DataResult::success).orElseGet(() ->
                 DataResult.error("Don't know how to merge " + rest + " and " + casted, rest)
             );

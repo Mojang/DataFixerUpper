@@ -43,7 +43,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class TaggedChoice<K> implements TypeTemplate {
@@ -214,7 +213,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
         private <T, A> DataResult<T> capWrite(final DynamicOps<T> ops, final Type<A> type, final K key, final Object value, final T rest) {
             return keyType.write(ops, ops.empty(), key).flatMap(k ->
                 type.write(ops, rest, (A) value).flatMap(v ->
-                    ops.mergeInto(v, ops.createString(name), k)
+                    ops.mergeToMap(v, ops.createString(name), k)
                 )
             );
         }

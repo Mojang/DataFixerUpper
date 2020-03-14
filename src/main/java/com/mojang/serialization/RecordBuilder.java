@@ -64,7 +64,7 @@ public interface RecordBuilder<T> {
 
         @Override
         public DataResult<T> build(final T prefix) {
-            final DataResult<T> result = builder.flatMap(b -> ops.mergeInto(prefix, b.build()));
+            final DataResult<T> result = builder.flatMap(b -> ops.mergeToMap(prefix, b.build()));
             builder = DataResult.success(ImmutableMap.builder());
             return result;
         }

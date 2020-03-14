@@ -75,32 +75,40 @@ public interface DynamicOps<T> {
 
     /**
      * Only successful if first argument is a list/array or empty
-     * @return
      */
-    DataResult<T> mergeInto(T list, T value);
+    DataResult<T> mergeToList(T list, T value);
 
-    default DataResult<T> mergeInto(final T list, final List<T> values) {
+    default DataResult<T> mergeToList(final T list, final List<T> values) {
         DataResult<T> result = DataResult.success(list);
 
         for (final T value : values) {
-            result = result.flatMap(r -> mergeInto(r, value));
+            result = result.flatMap(r -> mergeToList(r, value));
         }
         return result;
     }
 
     /**
      * Only successful if first argument is a map or empty
-     * @return
      */
-    DataResult<T> mergeInto(T map, T key, T value);
+    DataResult<T> mergeToMap(T map, T key, T value);
 
-    default DataResult<T> mergeInto(final T map, final Map<T, T> values) {
+    default DataResult<T> mergeToMap(final T map, final Map<T, T> values) {
         DataResult<T> result = DataResult.success(map);
 
         for (final Map.Entry<T, T> entry : values.entrySet()) {
-            result = result.flatMap(r -> mergeInto(r, entry.getKey(), entry.getValue()));
+            result = result.flatMap(r -> mergeToMap(r, entry.getKey(), entry.getValue()));
         }
         return result;
+    }
+
+    /**
+     * Only successful if first argument is empty
+     */
+    default DataResult<T> mergeToPrimitive(final T prefix, final T value) {
+        if (!Objects.equals(prefix, empty())) {
+            return DataResult.error("Do not know how to append a primitive value " + value + " to " + prefix, value);
+        }
+        return DataResult.success(value);
     }
 
     DataResult<Stream<Pair<T, T>>> getMapValues(T input);
@@ -176,7 +184,7 @@ public interface DynamicOps<T> {
 
     // TODO: eats error if input is not a map
     default T set(final T input, final String key, final T value) {
-        return mergeInto(input, createString(key), value).result().orElse(input);
+        return mergeToMap(input, createString(key), value).result().orElse(input);
     }
 
     // TODO: eats error if input is not a map
@@ -185,7 +193,7 @@ public interface DynamicOps<T> {
     }
 
     default T updateGeneric(final T input, final T key, final Function<T, T> function) {
-        return getGeneric(input, key).flatMap(value -> mergeInto(input, key, function.apply(value))).result().orElse(input);
+        return getGeneric(input, key).flatMap(value -> mergeToMap(input, key, function.apply(value))).result().orElse(input);
     }
 
     default ListBuilder<T> listBuilder() {

@@ -199,7 +199,7 @@ public final class List implements TypeTemplate {
                 });
             }
 
-            return result.flatMap(l -> ops.mergeInto(rest, l));
+            return result.flatMap(l -> ops.mergeToList(rest, l));
         }
 
         @Override
