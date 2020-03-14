@@ -4,12 +4,14 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.types.Type;
+import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -208,6 +210,12 @@ public interface DynamicOps<T> {
         return list(list, prefix, e -> e.serialize(this, elementPrefix));
     }
 
+    default <E> DataResult<T> list(final Iterable<E> list, final T prefix, final Encoder<E> encoder) {
+        final ListBuilder<T> builder = listBuilder();
+        builder.addAll(list, encoder);
+        return builder.build(prefix);
+    }
+
     default <E> DataResult<T> list(final Iterable<E> list, final T prefix, final Function<? super E, ? extends DataResult<T>> elementSerializer) {
         final ListBuilder<T> builder = listBuilder();
         list.forEach(element -> builder.add(elementSerializer.apply(element)));
@@ -218,13 +226,29 @@ public interface DynamicOps<T> {
         return new RecordBuilder.Builder<>(this);
     }
 
-    default DataResult<T> map(final Map<String, ? extends Serializable> map, final T prefix) {
-        return map(map, prefix, Function.identity(), e -> e.serialize(this, empty()));
-    }
-
-    default <K, V> DataResult<T> map(final Map<K, V> map, final T prefix, final Function<? super K, ? extends String> keySerializer, final Function<? super V, ? extends DataResult<T>> elementSerializer) {
+    default <K, V> DataResult<T> map(final Map<K, V> map, final T prefix, final Function<? super K, ? extends DataResult<T>> keySerializer, final Function<? super V, ? extends DataResult<T>> elementSerializer) {
         final RecordBuilder<T> builder = mapBuilder();
         map.forEach((key, value) -> builder.add(keySerializer.apply(key), elementSerializer.apply(value)));
         return builder.build(prefix);
+    }
+
+    default <R> DataResult<R> readMap(final T input, final DataResult<R> empty, final Function3<R, T, T, DataResult<R>> combiner) {
+        return getMapValues(input).flatMap(stream -> {
+            final AtomicReference<DataResult<R>> result = new AtomicReference<>(empty);
+            stream.forEach(p -> result.set(result.get().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
+            return result.get();
+        });
+    }
+
+    default <E> Function<E, DataResult<T>> withEncoder(final Encoder<E> encoder) {
+        return e -> encoder.encodeStart(this, e);
+    }
+
+    default <E> Function<T, DataResult<Pair<E, T>>> withDecoder(final Decoder<E> decoder) {
+        return t -> decoder.decode(this, t);
+    }
+
+    default <E> Function<T, DataResult<E>> withParser(final Decoder<E> decoder) {
+        return t -> decoder.parse(this, t);
     }
 }

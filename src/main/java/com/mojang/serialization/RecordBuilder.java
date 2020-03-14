@@ -15,6 +15,10 @@ public interface RecordBuilder<T> {
 
     DataResult<T> build(T prefix);
 
+    default DataResult<T> build(final DataResult<T> prefix) {
+        return prefix.flatMap(this::build);
+    }
+
     default RecordBuilder<T> add(final String key, final T value) {
         return add(ops().createString(key), value);
     }

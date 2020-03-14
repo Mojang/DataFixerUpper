@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class DataResult<R> implements App<DataResult.Mu, R> {
     public static final class Mu implements K1 {}
@@ -100,6 +101,14 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
                 )
             )
         ));
+    }
+
+    public DataResult<R> setPartial(final Supplier<R> partial) {
+        return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial.get()))));
+    }
+
+    public DataResult<R> setPartial(final R partial) {
+        return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial))));
     }
 
     public static Instance instance() {

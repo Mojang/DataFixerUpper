@@ -56,6 +56,15 @@ public interface Decoder<A> {
         return simple.decoder().map(Function.identity());
     }
 
+    static <A> Decoder<A> unit(final A instance) {
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return DataResult.success(Pair.of(instance, input));
+            }
+        };
+    }
+
     interface Terminal<A> {
         <T> DataResult<A> decode(final DynamicOps<T> ops, final T input);
 

@@ -13,6 +13,10 @@ public interface ListBuilder<T> {
 
     ListBuilder<T> add(final DataResult<T> value);
 
+    default DataResult<T> build(final DataResult<T> prefix) {
+        return prefix.flatMap(this::build);
+    }
+
     default ListBuilder<T> add(final Serializable value) {
         return add(value, ops().empty());
     }
@@ -23,6 +27,11 @@ public interface ListBuilder<T> {
 
     default ListBuilder<T> addAll(final Iterable<? extends Serializable> values) {
         values.forEach(this::add);
+        return this;
+    }
+
+    default <E> ListBuilder<T> addAll(final Iterable<E> values, final Encoder<E> encoder) {
+        values.forEach(v -> encoder.encode(ops(), ops().empty(), v));
         return this;
     }
 
