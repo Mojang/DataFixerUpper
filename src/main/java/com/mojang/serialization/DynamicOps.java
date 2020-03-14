@@ -3,7 +3,6 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
 
@@ -29,7 +28,7 @@ public interface DynamicOps<T> {
         return createList(Stream.empty());
     }
 
-    Type<?> getType(final T input);
+    Codec<?> getType(final T input);
 
     DataResult<Number> getNumberValue(T input);
 
