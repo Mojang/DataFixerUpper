@@ -273,7 +273,19 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         @Override
         public DataResult<JsonElement> build(final JsonElement prefix) {
-            final DataResult<JsonElement> result = builder.flatMap(b -> INSTANCE.mergeToList(prefix, b));
+            final DataResult<JsonElement> result = builder.flatMap(b -> {
+                if (!prefix.isJsonArray() && prefix != ops().empty()) {
+                    return DataResult.error("Cannot append a list to not a list: " + prefix, prefix);
+                }
+
+                final JsonArray array = new JsonArray();
+                if (prefix != ops().empty()) {
+                    array.addAll(prefix.getAsJsonArray());
+                }
+                array.addAll(b);
+                return DataResult.success(array);
+            });
+            
             builder = DataResult.success(new JsonArray());
             return result;
         }
