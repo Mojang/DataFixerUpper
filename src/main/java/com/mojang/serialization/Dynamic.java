@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -53,12 +52,12 @@ public class Dynamic<T> extends DynamicLike<T> {
     }
 
     public OptionalDynamic<T> merge(final Dynamic<?> value) {
-        final DataResult<T> merged = ops.mergeInto(this.value, value.cast(ops));
+        final DataResult<T> merged = ops.mergeToList(this.value, value.cast(ops));
         return new OptionalDynamic<>(ops, merged.map(m -> new Dynamic<>(ops, m)));
     }
 
     public OptionalDynamic<T> merge(final Dynamic<?> key, final Dynamic<?> value) {
-        final DataResult<T> merged = ops.mergeInto(this.value, key.cast(ops), value.cast(ops));
+        final DataResult<T> merged = ops.mergeToMap(this.value, key.cast(ops), value.cast(ops));
         return new OptionalDynamic<>(ops, merged.map(m -> new Dynamic<>(ops, m)));
     }
 

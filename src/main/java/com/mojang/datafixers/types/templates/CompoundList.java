@@ -35,7 +35,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
-import java.util.stream.Stream;
 
 public final class CompoundList implements TypeTemplate {
     private final TypeTemplate key;
@@ -224,7 +223,7 @@ public final class CompoundList implements TypeTemplate {
                 });
             }
 
-            return result.flatMap(m -> ops.mergeInto(rest, m));
+            return result.flatMap(m -> ops.mergeToMap(rest, m));
         }
 
         @Override

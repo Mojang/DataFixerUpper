@@ -110,10 +110,7 @@ public final class Const implements TypeTemplate {
 
         @Override
         public final <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
-            if (rest != ops.empty()) {
-                return DataResult.error("Do not know how to append a primitive value " + value + " to " + rest, doWrite(ops, value));
-            }
-            return DataResult.success(doWrite(ops, value));
+            return ops.mergeToPrimitive(rest, doWrite(ops, value));
         }
 
         protected abstract <T> T doWrite(final DynamicOps<T> ops, final A value);

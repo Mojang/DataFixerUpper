@@ -53,7 +53,7 @@ public interface ListBuilder<T> {
 
         @Override
         public DataResult<T> build(final T prefix) {
-            final DataResult<T> result = builder.flatMap(b -> ops.mergeInto(prefix, b.build()));
+            final DataResult<T> result = builder.flatMap(b -> ops.mergeToList(prefix, b.build()));
             builder = DataResult.success(ImmutableList.builder());
             return result;
         }

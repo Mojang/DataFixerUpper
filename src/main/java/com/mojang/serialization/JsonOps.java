@@ -118,9 +118,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public DataResult<JsonElement> mergeInto(final JsonElement list, final JsonElement value) {
+    public DataResult<JsonElement> mergeToList(final JsonElement list, final JsonElement value) {
        if (!list.isJsonArray() && list != empty()) {
-            return DataResult.error("mergeInto called with not a list: " + list, list);
+            return DataResult.error("mergeToList called with not a list: " + list, list);
         }
 
         final JsonArray result = new JsonArray();
@@ -132,9 +132,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public DataResult<JsonElement> mergeInto(final JsonElement list, final List<JsonElement> values) {
+    public DataResult<JsonElement> mergeToList(final JsonElement list, final List<JsonElement> values) {
         if (!list.isJsonArray() && list != empty()) {
-            return DataResult.error("mergeInto called with not a list: " + list, list);
+            return DataResult.error("mergeToList called with not a list: " + list, list);
         }
 
         final JsonArray result = new JsonArray();
@@ -146,9 +146,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public DataResult<JsonElement> mergeInto(final JsonElement map, final JsonElement key, final JsonElement value) {
+    public DataResult<JsonElement> mergeToMap(final JsonElement map, final JsonElement key, final JsonElement value) {
         if (!map.isJsonObject() && map != empty()) {
-            return DataResult.error("mergeInto called with not a map: " + map, map);
+            return DataResult.error("mergeToMap called with not a map: " + map, map);
         }
         if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString()) {
             return DataResult.error("key is not a string: " + key, map);
@@ -164,9 +164,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public DataResult<JsonElement> mergeInto(final JsonElement map, final Map<JsonElement, JsonElement> values) {
+    public DataResult<JsonElement> mergeToMap(final JsonElement map, final Map<JsonElement, JsonElement> values) {
         if (!map.isJsonObject() && map != empty()) {
-            return DataResult.error("mergeInto called with not a map: " + map, map);
+            return DataResult.error("mergeToMap called with not a map: " + map, map);
         }
 
         final JsonObject output = new JsonObject();
@@ -273,7 +273,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         @Override
         public DataResult<JsonElement> build(final JsonElement prefix) {
-            final DataResult<JsonElement> result = builder.flatMap(b -> INSTANCE.mergeInto(prefix, b));
+            final DataResult<JsonElement> result = builder.flatMap(b -> INSTANCE.mergeToList(prefix, b));
             builder = DataResult.success(new JsonArray());
             return result;
         }
