@@ -174,7 +174,7 @@ public final class CompoundList implements TypeTemplate {
 
         @Override
         protected Codec<List<Pair<K, V>>> buildCodec() {
-            return new CompoundListCodec<>(key.codec(), element.codec());
+            return Codec.compoundList(key.codec(), element.codec());
         }
 
         @Override

@@ -213,7 +213,7 @@ public final class Product implements TypeTemplate {
 
         @Override
         public Codec<Pair<F, G>> buildCodec() {
-            return Pair.codec(first.codec(), second.codec());
+            return Codec.pair(first.codec(), second.codec());
         }
 
         @Override

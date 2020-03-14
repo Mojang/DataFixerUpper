@@ -14,10 +14,7 @@ import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -99,7 +96,13 @@ public final class Const implements TypeTemplate {
         return type;
     }
 
-    public abstract static class PrimitiveType<A> extends Type<A> {
+    public static final class PrimitiveType<A> extends Type<A> {
+        private final Codec<A> codec;
+
+        public PrimitiveType(final Codec<A> codec) {
+            this.codec = codec;
+        }
+
         @Override
         public boolean equals(final Object o, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             return this == o;
@@ -112,21 +115,12 @@ public final class Const implements TypeTemplate {
 
         @Override
         protected Codec<A> buildCodec() {
-            return new Codec<A>() {
-                @Override
-                public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                    return read(ops, input).map(r -> Pair.of(r, ops.empty()));
-                }
-
-                @Override
-                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
-                    return ops.mergeToPrimitive(prefix, doWrite(ops, input));
-                }
-            };
+            return codec;
         }
 
-        protected abstract <T> DataResult<A> read(final DynamicOps<T> ops, final T input);
-
-        protected abstract <T> T doWrite(final DynamicOps<T> ops, final A value);
+        @Override
+        public String toString() {
+            return codec.toString();
+        }
     }
 }

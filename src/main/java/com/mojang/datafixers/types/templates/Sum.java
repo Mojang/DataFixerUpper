@@ -212,7 +212,7 @@ public final class Sum implements TypeTemplate {
 
         @Override
         protected Codec<Either<F, G>> buildCodec() {
-            return Either.codec(first.codec(), second.codec());
+            return Codec.either(first.codec(), second.codec());
         }
 
         @Override
