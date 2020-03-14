@@ -3,16 +3,16 @@
 package com.mojang.serialization;
 
 public interface Encoder<A> {
-    <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input);
+    <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix);
 
     default <T> DataResult<T> encodeStart(final DynamicOps<T> ops, final A input) {
-        return encode(ops, ops.empty(), input);
+        return encode(input, ops, ops.empty());
     }
 
     static <A extends Serializable> Encoder<A> of() {
         return new Encoder<A>() {
             @Override
-            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
                 return input.serialize(ops, prefix);
             }
 
@@ -26,7 +26,7 @@ public interface Encoder<A> {
     static <A> Encoder<A> empty() {
         return new Encoder<A>() {
             @Override
-            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
                 return DataResult.success(prefix);
             }
 
@@ -40,7 +40,7 @@ public interface Encoder<A> {
     static <A> Encoder<A> error(final String error) {
         return new Encoder<A>() {
             @Override
-            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
                 return DataResult.error(error + " " + input);
             }
 

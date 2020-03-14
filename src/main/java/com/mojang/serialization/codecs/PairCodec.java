@@ -28,8 +28,8 @@ public final class PairCodec<F, S> implements Codec<Pair<F, S>> {
     }
 
     @Override
-    public <T> DataResult<T> encode(final DynamicOps<T> ops, final T rest, final Pair<F, S> value) {
-        return first.encode(ops, rest, value.getFirst()).flatMap(f -> second.encode(ops, f, value.getSecond()));
+    public <T> DataResult<T> encode(final Pair<F, S> value, final DynamicOps<T> ops, final T rest) {
+        return first.encode(value.getFirst(), ops, rest).flatMap(f -> second.encode(value.getSecond(), ops, f));
     }
 
     @Override

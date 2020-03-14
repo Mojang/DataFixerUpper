@@ -147,11 +147,11 @@ public final class Named implements TypeTemplate {
                 }
 
                 @Override
-                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Pair<String, A> input) {
+                public <T> DataResult<T> encode(final Pair<String, A> input, final DynamicOps<T> ops, final T prefix) {
                     if (!Objects.equals(input.getFirst(), name)) {
                         return DataResult.error("Named type name doesn't match: expected: " + name + ", got: " + input.getFirst(), prefix);
                     }
-                    return element.codec().encode(ops, prefix, input.getSecond());
+                    return element.codec().encode(input.getSecond(), ops, prefix);
                 }
             };
         }

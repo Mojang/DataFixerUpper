@@ -43,7 +43,7 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
             }
 
             @Override
-            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Dynamic<?> input) {
+            public <T> DataResult<T> encode(final Dynamic<?> input, final DynamicOps<T> ops, final T prefix) {
                 if (input.getValue() == input.getOps().empty()) {
                     // nothing to merge, return rest
                     return DataResult.success(prefix);

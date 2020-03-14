@@ -206,7 +206,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 }
 
                 @Override
-                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Pair<K, ?> input) {
+                public <T> DataResult<T> encode(final Pair<K, ?> input, final DynamicOps<T> ops, final T prefix) {
                     final Type<?> type = types.get(input.getFirst());
                     if (type == null) {
                         return DataResult.error("Unsupported key: " + input.getFirst() + " in " + this, prefix);
@@ -217,7 +217,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 @SuppressWarnings("unchecked")
                 private <T, A> DataResult<T> capWrite(final DynamicOps<T> ops, final Encoder<A> encoder, final K key, final Object value, final T rest) {
                     return keyType.codec().encodeStart(ops, key).flatMap(k ->
-                        encoder.encode(ops, rest, (A) value).flatMap(v ->
+                        encoder.encode((A) value, ops, rest).flatMap(v ->
                             ops.mergeToMap(v, ops.createString(name), k)
                         )
                     );

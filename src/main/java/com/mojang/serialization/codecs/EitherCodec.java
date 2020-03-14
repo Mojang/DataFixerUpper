@@ -29,10 +29,10 @@ public final class EitherCodec<F, S> implements Codec<Either<F, S>> {
     }
 
     @Override
-    public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Either<F, S> input) {
+    public <T> DataResult<T> encode(final Either<F, S> input, final DynamicOps<T> ops, final T prefix) {
         return input.map(
-            value1 -> first.encode(ops, prefix, value1),
-            value2 -> second.encode(ops, prefix, value2)
+            value1 -> first.encode(value1, ops, prefix),
+            value2 -> second.encode(value2, ops, prefix)
         );
     }
 

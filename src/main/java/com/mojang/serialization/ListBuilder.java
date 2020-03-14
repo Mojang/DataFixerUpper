@@ -35,7 +35,7 @@ public interface ListBuilder<T> {
     }
 
     default <E> ListBuilder<T> addAll(final Iterable<E> values, final Encoder<E> encoder) {
-        values.forEach(v -> encoder.encode(ops(), ops().empty(), v));
+        values.forEach(v -> encoder.encode(v, ops(), ops().empty()));
         return this;
     }
 
