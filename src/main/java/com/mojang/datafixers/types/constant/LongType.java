@@ -3,16 +3,15 @@
 package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.types.templates.Const;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
 public final class LongType extends Const.PrimitiveType<Long> {
     @Override
-    public <T> DataResult<Pair<Long, T>> read(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<Long> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> Pair.of(v.longValue(), ops.empty()));
+            .map(Number::longValue);
     }
 
     @Override

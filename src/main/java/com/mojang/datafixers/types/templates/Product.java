@@ -4,8 +4,6 @@ package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
@@ -21,11 +19,13 @@ import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -212,17 +212,8 @@ public final class Product implements TypeTemplate {
         }
 
         @Override
-        public <T> DataResult<Pair<Pair<F, G>, T>> read(final DynamicOps<T> ops, final T input) {
-            return first.read(ops, input).flatMap(p1 ->
-                second.read(ops, p1.getSecond()).map(p2 ->
-                    Pair.of(Pair.of(p1.getFirst(), p2.getFirst()), p2.getSecond())
-                )
-            );
-        }
-
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Pair<F, G> value) {
-            return first.write(ops, rest, value.getFirst()).flatMap(f -> second.write(ops, f, value.getSecond()));
+        public Codec<Pair<F, G>> buildCodec() {
+            return Pair.codec(first.codec(), second.codec());
         }
 
         @Override

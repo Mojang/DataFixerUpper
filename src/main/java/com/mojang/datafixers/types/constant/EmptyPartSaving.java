@@ -5,6 +5,7 @@ package com.mojang.datafixers.types.constant;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
@@ -34,29 +35,34 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
     }
 
     @Override
-    public <T> DataResult<Pair<Dynamic<?>, T>> read(final DynamicOps<T> ops, final T input) {
-        return DataResult.success(Pair.of(new Dynamic<>(ops, input), ops.empty()));
-    }
+    public Codec<Dynamic<?>> buildCodec() {
+        return new Codec<Dynamic<?>>() {
+            @Override
+            public <T> DataResult<Pair<Dynamic<?>, T>> decode(final DynamicOps<T> ops, final T input) {
+                return DataResult.success(Pair.of(new Dynamic<>(ops, input), ops.empty()));
+            }
 
-    @Override
-    public final <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Dynamic<?> value) {
-        if (value.getValue() == value.getOps().empty()) {
-            // nothing to merge, return rest
-            return DataResult.success(rest);
-        }
+            @Override
+            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Dynamic<?> input) {
+                if (input.getValue() == input.getOps().empty()) {
+                    // nothing to merge, return rest
+                    return DataResult.success(prefix);
+                }
 
-        final T casted = value.convert(ops).getValue();
-        if (rest == ops.empty()) {
-            // no need to merge anything, return the old value
-            return DataResult.success(casted);
-        }
+                final T casted = input.convert(ops).getValue();
+                if (prefix == ops.empty()) {
+                    // no need to merge anything, return the old value
+                    return DataResult.success(casted);
+                }
 
-        final DataResult<T> toMap = ops.getMapValues(casted).flatMap(map -> ops.mergeToMap(rest, map.collect(Pair.toMap())));
-        return toMap.result().map(DataResult::success).orElseGet(() -> {
-            final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeToList(rest, stream.collect(Collectors.toList())));
-            return toList.result().map(DataResult::success).orElseGet(() ->
-                DataResult.error("Don't know how to merge " + rest + " and " + casted, rest)
-            );
-        });
+                final DataResult<T> toMap = ops.getMapValues(casted).flatMap(map -> ops.mergeToMap(prefix, map.collect(Pair.toMap())));
+                return toMap.result().map(DataResult::success).orElseGet(() -> {
+                    final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeToList(prefix, stream.collect(Collectors.toList())));
+                    return toList.result().map(DataResult::success).orElseGet(() ->
+                        DataResult.error("Don't know how to merge " + prefix + " and " + casted, prefix)
+                    );
+                });
+            }
+        };
     }
 }

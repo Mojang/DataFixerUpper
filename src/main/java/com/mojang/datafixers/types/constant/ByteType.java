@@ -3,16 +3,15 @@
 package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.types.templates.Const;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
 public final class ByteType extends Const.PrimitiveType<Byte> {
     @Override
-    public <T> DataResult<Pair<Byte, T>> read(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<Byte> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> Pair.of(v.byteValue(), ops.empty()));
+            .map(Number::byteValue);
     }
 
     @Override

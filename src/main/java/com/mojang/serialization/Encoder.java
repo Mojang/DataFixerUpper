@@ -22,4 +22,32 @@ public interface Encoder<A> {
             }
         };
     }
+
+    static <A> Encoder<A> empty() {
+        return new Encoder<A>() {
+            @Override
+            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+                return DataResult.success(prefix);
+            }
+
+            @Override
+            public String toString() {
+                return "EmptyEncoder";
+            }
+        };
+    }
+
+    static <A> Encoder<A> error(final String error) {
+        return new Encoder<A>() {
+            @Override
+            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+                return DataResult.error(error + " " + input);
+            }
+
+            @Override
+            public String toString() {
+                return "EmptyEncoder[" + error + "]";
+            }
+        };
+    }
 }

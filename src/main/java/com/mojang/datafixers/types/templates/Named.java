@@ -18,6 +18,7 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
@@ -138,16 +139,21 @@ public final class Named implements TypeTemplate {
         }
 
         @Override
-        public <T> DataResult<Pair<Pair<String, A>, T>> read(final DynamicOps<T> ops, final T input) {
-            return element.read(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(name, v)));
-        }
+        protected Codec<Pair<String, A>> buildCodec() {
+            return new Codec<Pair<String, A>>() {
+                @Override
+                public <T> DataResult<Pair<Pair<String, A>, T>> decode(final DynamicOps<T> ops, final T input) {
+                    return element.codec().decode(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(name, v)));
+                }
 
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Pair<String, A> value) {
-            if (!Objects.equals(value.getFirst(), name)) {
-                return DataResult.error("Named type name doesn't match: expected: " + name + ", got: " + value.getFirst(), rest);
-            }
-            return element.write(ops, rest, value.getSecond());
+                @Override
+                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Pair<String, A> input) {
+                    if (!Objects.equals(input.getFirst(), name)) {
+                        return DataResult.error("Named type name doesn't match: expected: " + name + ", got: " + input.getFirst(), prefix);
+                    }
+                    return element.codec().encode(ops, prefix, input.getSecond());
+                }
+            };
         }
 
         @Override

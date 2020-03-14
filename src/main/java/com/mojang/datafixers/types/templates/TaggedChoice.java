@@ -31,8 +31,10 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Encoder;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -180,42 +182,47 @@ public final class TaggedChoice<K> implements TypeTemplate {
         }
 
         @Override
-        public <T> DataResult<Pair<Pair<K, ?>, T>> read(final DynamicOps<T> ops, final T input) {
-            final DataResult<Stream<Pair<T, T>>> values = ops.getMapValues(input);
-            return values.flatMap(vs -> {
-                final T nameString = ops.createString(name);
-                final Optional<Pair<T, T>> nameEntry = vs.filter(v -> v.getFirst() == nameString).findFirst();
-                if (!nameEntry.isPresent()) {
-                    return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
+        protected Codec<Pair<K, ?>> buildCodec() {
+            return new Codec<Pair<K, ?>>() {
+                @Override
+                public <T> DataResult<Pair<Pair<K, ?>, T>> decode(final DynamicOps<T> ops, final T input) {
+                    final DataResult<Stream<Pair<T, T>>> values = ops.getMapValues(input);
+                    return values.flatMap(vs -> {
+                        final T nameString = ops.createString(name);
+                        final Optional<Pair<T, T>> nameEntry = vs.filter(v -> v.getFirst() == nameString).findFirst();
+                        if (!nameEntry.isPresent()) {
+                            return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
+                        }
+
+                        return keyType.codec().decode(ops, nameEntry.get().getSecond()).flatMap(key -> {
+                            final K keyValue = key.getFirst();
+                            final Type<?> type = types.get(keyValue);
+                            if (type != null) {
+                                return type.codec().decode(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(keyValue, v)));
+                            }
+                            return DataResult.error("Unsupported key: " + keyValue + " in " + this);
+                        });
+                    });
                 }
 
-                return keyType.read(ops, nameEntry.get().getSecond()).flatMap(key -> {
-                    final K keyValue = key.getFirst();
-                    final Type<?> type = types.get(keyValue);
-                    if (type != null) {
-                        return type.read(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(keyValue, v)));
+                @Override
+                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Pair<K, ?> input) {
+                    final Type<?> type = types.get(input.getFirst());
+                    if (type == null) {
+                        return DataResult.error("Unsupported key: " + input.getFirst() + " in " + this, prefix);
                     }
-                    return DataResult.error("Unsupported key: " + keyValue + " in " + this);
-                });
-            });
-        }
+                    return capWrite(ops, type.codec(), input.getFirst(), input.getSecond(), prefix);
+                }
 
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Pair<K, ?> value) {
-            final Type<?> type = types.get(value.getFirst());
-            if (type == null) {
-                return DataResult.error("Unsupported key: " + value.getFirst() + " in " + this, rest);
-            }
-            return capWrite(ops, type, value.getFirst(), value.getSecond(), rest);
-        }
-
-        @SuppressWarnings("unchecked")
-        private <T, A> DataResult<T> capWrite(final DynamicOps<T> ops, final Type<A> type, final K key, final Object value, final T rest) {
-            return keyType.write(ops, ops.empty(), key).flatMap(k ->
-                type.write(ops, rest, (A) value).flatMap(v ->
-                    ops.mergeToMap(v, ops.createString(name), k)
-                )
-            );
+                @SuppressWarnings("unchecked")
+                private <T, A> DataResult<T> capWrite(final DynamicOps<T> ops, final Encoder<A> encoder, final K key, final Object value, final T rest) {
+                    return keyType.codec().encodeStart(ops, key).flatMap(k ->
+                        encoder.encode(ops, rest, (A) value).flatMap(v ->
+                            ops.mergeToMap(v, ops.createString(name), k)
+                        )
+                    );
+                }
+            };
         }
 
         @Override

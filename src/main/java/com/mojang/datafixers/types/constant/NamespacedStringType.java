@@ -4,7 +4,6 @@ package com.mojang.datafixers.types.constant;
 
 import com.google.common.base.Function;
 import com.mojang.datafixers.types.templates.Const;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
@@ -13,10 +12,10 @@ public final class NamespacedStringType extends Const.PrimitiveType<String> {
     public static Function<String, String> ENSURE_NAMESPACE = s -> s;
 
     @Override
-    public <T> DataResult<Pair<String, T>> read(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<String> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getStringValue(input)
-            .map(v -> Pair.of(ENSURE_NAMESPACE.apply(v), ops.empty()));
+            .map(ENSURE_NAMESPACE);
     }
 
     @Override

@@ -3,12 +3,8 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
@@ -21,19 +17,20 @@ import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.codecs.CompoundListCodec;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 
 public final class CompoundList implements TypeTemplate {
@@ -176,54 +173,8 @@ public final class CompoundList implements TypeTemplate {
         }
 
         @Override
-        public <T> DataResult<Pair<List<Pair<K, V>>, T>> read(final DynamicOps<T> ops, final T input) {
-            return ops.getMapValues(input).flatMap(map -> {
-                final AtomicReference<DataResult<Pair<ImmutableList.Builder<Pair<K, V>>, ImmutableMap.Builder<T, T>>>> result =
-                    new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableMap.builder())));
-
-                map.forEach(entry -> {
-                    result.set(result.get().flatMap(pair -> {
-                        final DataResult<Pair<K, V>> readEntry = key.read(ops, entry.getFirst()).flatMap(keyValue ->
-                            element.read(ops, entry.getSecond()).map(elementValue ->
-                                Pair.of(keyValue.getFirst(), elementValue.getFirst())
-                            )
-                        );
-                        readEntry.error().ifPresent(e -> {
-                            pair.getSecond().put(entry.getFirst(), entry.getSecond());
-                        });
-                        return readEntry.map(r -> {
-                            pair.getFirst().add(r);
-                            return pair;
-                        });
-                    }));
-                });
-
-                return result.get().map(pair -> Pair.of((List<Pair<K, V>>) pair.getFirst().build(), ops.createMap(pair.getSecond().build())));
-            });
-        }
-
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final List<Pair<K, V>> value) {
-            final Map<T, T> map = Maps.newHashMap();
-
-            DataResult<Map<T, T>> result = DataResult.success(map);
-
-            for (final Pair<K, V> pair : value) {
-                result = result.flatMap(m -> {
-                    final DataResult<T> element = this.element.write(ops, ops.empty(), pair.getSecond());
-                    final DataResult<Pair<T, T>> entry = element.flatMap(e -> key.write(ops, ops.empty(), pair.getFirst()).map(k -> Pair.of(k, e)));
-                    return entry.flatMap(e -> {
-                        final T key = e.getFirst();
-                        if (m.containsKey(key)) {
-                            return DataResult.error("Duplicate key: " + key, m);
-                        }
-                        m.put(key, e.getSecond());
-                        return DataResult.success(m);
-                    });
-                });
-            }
-
-            return result.flatMap(m -> ops.mergeToMap(rest, m));
+        protected Codec<List<Pair<K, V>>> buildCodec() {
+            return new CompoundListCodec<>(key.codec(), element.codec());
         }
 
         @Override

@@ -2,19 +2,20 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.functions.Functions;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -109,13 +110,18 @@ public final class Hook implements TypeTemplate {
         }
 
         @Override
-        public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
-            return delegate.read(ops, preRead.apply(ops, input));
-        }
+        protected Codec<A> buildCodec() {
+            return new Codec<A>() {
+                @Override
+                public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                    return delegate.codec().decode(ops, preRead.apply(ops, input));
+                }
 
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
-            return delegate.write(ops, rest, value).map(v -> postWrite.apply(ops, v));
+                @Override
+                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+                    return delegate.codec().encode(ops, prefix, input).map(v -> postWrite.apply(ops, v));
+                }
+            };
         }
 
         @Override

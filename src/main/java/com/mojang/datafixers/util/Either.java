@@ -7,6 +7,9 @@ import com.mojang.datafixers.kinds.Applicative;
 import com.mojang.datafixers.kinds.CocartesianLike;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.Traversable;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -15,7 +18,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
-    public static final class Mu<R> implements K1 {}
+    public static final class Mu<R> implements K1 {
+    }
 
     public static <L, R> Either<L, R> unbox(final App<Mu<R>, L> box) {
         return (Either<L, R>) box;
@@ -192,7 +196,8 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
     }
 
     public static final class Instance<R2> implements Applicative<Mu<R2>, Instance.Mu<R2>>, Traversable<Mu<R2>, Instance.Mu<R2>>, CocartesianLike<Mu<R2>, R2, Instance.Mu<R2>> {
-        public static final class Mu<R2> implements Applicative.Mu, Traversable.Mu, CocartesianLike.Mu {}
+        public static final class Mu<R2> implements Applicative.Mu, Traversable.Mu, CocartesianLike.Mu {
+        }
 
         @Override
         public <T, R> App<Either.Mu<R2>, R> map(final Function<? super T, ? extends R> func, final App<Either.Mu<R2>, T> ts) {
@@ -239,6 +244,59 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
         @Override
         public <A> App<Either.Mu<R2>, A> from(final App<Either.Mu<R2>, A> input) {
             return input;
+        }
+    }
+
+    public static <F, S> Codec<Either<F, S>> codec(final Codec<F> first, final Codec<S> second) {
+        return new EitherCodec<>(first, second);
+    }
+
+    private static final class EitherCodec<F, S> implements Codec<Either<F, S>> {
+        private final Codec<F> first;
+        private final Codec<S> second;
+
+        private EitherCodec(final Codec<F> first, final Codec<S> second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public <T> DataResult<Pair<Either<F, S>, T>> decode(final DynamicOps<T> ops, final T input) {
+            final DataResult<Pair<Either<F, S>, T>> firstRead = first.decode(ops, input).map(vo -> vo.mapFirst(Either::left));
+            if (firstRead.result().isPresent()) {
+                return firstRead;
+            }
+            return second.decode(ops, input).map(vo -> vo.mapFirst(Either::right));
+        }
+
+        @Override
+        public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final Either<F, S> input) {
+            return input.map(
+                value1 -> first.encode(ops, prefix, value1),
+                value2 -> second.encode(ops, prefix, value2)
+            );
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final EitherCodec<?, ?> eitherCodec = ((EitherCodec<?, ?>) o);
+            return Objects.equals(first, eitherCodec.first) && Objects.equals(second, eitherCodec.second);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(first, second);
+        }
+
+        @Override
+        public String toString() {
+            return "EitherCodec[" + first + ", " + second + ']';
         }
     }
 }

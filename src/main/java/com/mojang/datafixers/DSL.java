@@ -3,21 +3,18 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.Maps;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.datafixers.util.Unit;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.constant.BoolType;
 import com.mojang.datafixers.types.constant.ByteType;
 import com.mojang.datafixers.types.constant.DoubleType;
+import com.mojang.datafixers.types.constant.EmptyPart;
+import com.mojang.datafixers.types.constant.EmptyPartSaving;
 import com.mojang.datafixers.types.constant.FloatType;
 import com.mojang.datafixers.types.constant.IntType;
 import com.mojang.datafixers.types.constant.LongType;
 import com.mojang.datafixers.types.constant.NamespacedStringType;
-import com.mojang.datafixers.types.constant.EmptyPart;
-import com.mojang.datafixers.types.constant.EmptyPartSaving;
 import com.mojang.datafixers.types.constant.ShortType;
 import com.mojang.datafixers.types.constant.StringType;
 import com.mojang.datafixers.types.templates.Check;
@@ -32,6 +29,9 @@ import com.mojang.datafixers.types.templates.Sum;
 import com.mojang.datafixers.types.templates.Tag;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Dynamic;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Triple;
@@ -39,7 +39,6 @@ import org.apache.commons.lang3.tuple.Triple;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public interface DSL {
     interface TypeReference {
