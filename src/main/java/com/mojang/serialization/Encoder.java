@@ -5,6 +5,10 @@ package com.mojang.serialization;
 public interface Encoder<A> {
     <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input);
 
+    default <T> DataResult<T> encodeStart(final DynamicOps<T> ops, final A input) {
+        return encode(ops, ops.empty(), input);
+    }
+
     static <A extends Serializable> Encoder<A> of() {
         return new Encoder<A>() {
             @Override

@@ -11,25 +11,25 @@ import java.util.stream.Collectors;
 public final class ListBox<T> implements App<ListBox.Mu, T> {
     public static final class Mu implements K1 {}
 
-    public static <T> List<? extends T> unbox(final App<Mu, T> box) {
+    public static <T> List<T> unbox(final App<Mu, T> box) {
         return ((ListBox<T>) box).value;
     }
 
-    public static <T> ListBox<T> create(final List<? extends T> value) {
+    public static <T> ListBox<T> create(final List<T> value) {
         return new ListBox<>(value);
     }
 
-    private final List<? extends T> value;
+    private final List<T> value;
 
-    private ListBox(final List<? extends T> value) {
+    private ListBox(final List<T> value) {
         this.value = value;
     }
 
-    public static <F extends K1, A, B> App<F, List<? extends B>> traverse(final Applicative<F, ?> applicative, final Function<A, App<F, B>> function, final List<A> input) {
+    public static <F extends K1, A, B> App<F, List<B>> traverse(final Applicative<F, ?> applicative, final Function<A, App<F, B>> function, final List<A> input) {
         return applicative.map(ListBox::unbox, Instance.INSTANCE.traverse(applicative, function, create(input)));
     }
 
-    public static <F extends K1, A> App<F, List<? extends A>> flip(final Applicative<F, ?> applicative, final List<? extends App<F, A>> input) {
+    public static <F extends K1, A> App<F, List<A>> flip(final Applicative<F, ?> applicative, final List<App<F, A>> input) {
         return applicative.map(ListBox::unbox, Instance.INSTANCE.flip(applicative, create(input)));
     }
 

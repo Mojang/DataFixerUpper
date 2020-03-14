@@ -4,12 +4,15 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.ListBox;
+import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -60,10 +63,36 @@ public abstract class DynamicLike<T> {
         return decode(decoder).map(Pair::getFirst);
     }
 
-    public <E> DataResult<List<? extends E>> readList(final Decoder<? extends E> decoder) {
+    public <E> DataResult<List<E>> readList(final Decoder<E> decoder) {
         return asStreamOpt()
-            .map(s -> s.<DataResult<E>>map(d -> d.read(decoder)).collect(Collectors.toList()))
+                .map(s -> s.map(d -> d.read(decoder)).collect(Collectors.<App<DataResult.Mu, E>>toList()))
+                .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
+    }
+
+    public <E> DataResult<List<E>> readList(final Function<? super Dynamic<?>, ? extends DataResult<? extends E>> decoder) {
+        return asStreamOpt()
+            .map(s -> s.map(decoder).map(r -> r.map(e -> (E) e)).collect(Collectors.<App<DataResult.Mu, E>>toList()))
             .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
+    }
+
+    public <K, V> DataResult<List<Pair<K, V>>> readMap(final Decoder<K> keyDecoder, final Decoder<V> valueDecoder) {
+        return asMapOpt()
+            .map(stream -> stream.map(p -> p.getFirst().read(keyDecoder).flatMap(f -> p.getSecond().read(valueDecoder).map(s -> Pair.of(f, s)))).collect(Collectors.<App<DataResult.Mu, Pair<K, V>>>toList()))
+            .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
+    }
+
+    public <K, V> DataResult<List<Pair<K, V>>> readMap(final Decoder<K> keyDecoder, final Function<K, Decoder<V>> valueDecoder) {
+        return asMapOpt()
+            .map(stream -> stream.map(p -> p.getFirst().read(keyDecoder).flatMap(f -> p.getSecond().read(valueDecoder.apply(f)).map(s -> Pair.of(f, s)))).collect(Collectors.<App<DataResult.Mu, Pair<K, V>>>toList()))
+            .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
+    }
+
+    public <R> DataResult<R> readMap(final DataResult<R> empty, final Function3<R, Dynamic<T>, Dynamic<T>, DataResult<R>> combiner) {
+        return asMapOpt().flatMap(stream -> {
+            final AtomicReference<DataResult<R>> result = new AtomicReference<>(empty);
+            stream.forEach(p -> result.set(result.get().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
+            return result.get();
+        });
     }
 
     public Number asNumber(final Number defaultValue) {
