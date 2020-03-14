@@ -118,8 +118,8 @@ public final class Hook implements TypeTemplate {
                 }
 
                 @Override
-                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
-                    return delegate.codec().encode(ops, prefix, input).map(v -> postWrite.apply(ops, v));
+                public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                    return delegate.codec().encode(input, ops, prefix).map(v -> postWrite.apply(ops, v));
                 }
             };
         }

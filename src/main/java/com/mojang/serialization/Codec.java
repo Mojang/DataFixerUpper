@@ -25,8 +25,8 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
             }
 
             @Override
-            public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
-                return encoder.encode(ops, prefix, input);
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                return encoder.encode(input, ops, prefix);
             }
 
             @Override

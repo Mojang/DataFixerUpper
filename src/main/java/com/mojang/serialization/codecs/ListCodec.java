@@ -21,13 +21,13 @@ public final class ListCodec<A> implements Codec<List<A>> {
     }
 
     @Override
-    public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final java.util.List<A> input) {
+    public <T> DataResult<T> encode(final List<A> input, final DynamicOps<T> ops, final T prefix) {
         final java.util.List<T> list = new ArrayList<>(input.size());
         DataResult<java.util.List<T>> result = DataResult.success(list);
 
         for (final A a : input) {
             result = result.flatMap(t -> {
-                final DataResult<T> written = elementCodec.encode(ops, ops.empty(), a);
+                final DataResult<T> written = elementCodec.encode(a, ops, ops.empty());
                 return written.map(e -> {
                     list.add(e);
                     return list;

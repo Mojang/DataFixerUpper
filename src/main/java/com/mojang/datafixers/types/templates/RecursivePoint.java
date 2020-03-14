@@ -148,8 +148,8 @@ public final class RecursivePoint implements TypeTemplate {
                 }
 
                 @Override
-                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
-                    return unfold().codec().encode(ops, prefix, input);
+                public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                    return unfold().codec().encode(input, ops, prefix);
                 }
             };
         }

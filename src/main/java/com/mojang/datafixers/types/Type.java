@@ -126,7 +126,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
     protected abstract Codec<A> buildCodec();
 
     public final <T> DataResult<T> write(final DynamicOps<T> ops, final A value) {
-        return codec().encode(ops, ops.empty(), value);
+        return codec().encode(value, ops, ops.empty());
     }
 
     public final <T> DataResult<Dynamic<T>> writeDynamic(final DynamicOps<T> ops, final A value) {
@@ -164,7 +164,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         if (!expectedType.equals(f.newType(), true, true)) {
             return DataResult.error("Rewritten type doesn't match");
         }
-        return f.newType().codec().encode(ops, rest, f.function().evalCached().apply(ops).apply(value));
+        return f.newType().codec().encode(f.function().evalCached().apply(ops).apply(value), ops, rest);
     }
 
     @SuppressWarnings("unchecked")

@@ -52,7 +52,7 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
     }
 
     @Override
-    public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final List<Pair<K, V>> input) {
+    public <T> DataResult<T> encode(final List<Pair<K, V>> input, final DynamicOps<T> ops, final T prefix) {
         final Map<T, T> map = Maps.newHashMap();
 
         DataResult<Map<T, T>> result = DataResult.success(map);
