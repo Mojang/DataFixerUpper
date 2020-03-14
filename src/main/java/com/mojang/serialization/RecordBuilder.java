@@ -35,6 +35,10 @@ public interface RecordBuilder<T> {
         return add(key, value.serialize(ops(), elementPrefix));
     }
 
+    default <E> RecordBuilder<T> add(final String key, final E value, final Encoder<E> encoder) {
+        return add(key, encoder.encodeStart(ops(), value));
+    }
+
     final class Builder<T> implements RecordBuilder<T> {
         private final DynamicOps<T> ops;
         private DataResult<ImmutableMap.Builder<T, T>> builder = DataResult.success(ImmutableMap.builder());
