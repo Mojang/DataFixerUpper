@@ -7,9 +7,6 @@ import com.mojang.datafixers.kinds.Applicative;
 import com.mojang.datafixers.kinds.CartesianLike;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.Traversable;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 
 import java.util.Map;
 import java.util.Objects;
@@ -101,56 +98,6 @@ public class Pair<F, S> implements App<Pair.Mu<S>, F> {
         @Override
         public <A> App<Pair.Mu<S2>, A> from(final App<Pair.Mu<S2>, A> input) {
             return input;
-        }
-    }
-
-    public static <F, S> Codec<Pair<F, S>> codec(final Codec<F> first, final Codec<S> second) {
-        return new PairCodec<>(first, second);
-    }
-
-    private static final class PairCodec<F, S> implements Codec<Pair<F, S>> {
-        private final Codec<F> first;
-        private final Codec<S> second;
-
-        private PairCodec(final Codec<F> first, final Codec<S> second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        @Override
-        public <T> DataResult<Pair<Pair<F, S>, T>> decode(final DynamicOps<T> ops, final T input) {
-            return first.decode(ops, input).flatMap(p1 ->
-                second.decode(ops, p1.getSecond()).map(p2 ->
-                    Pair.of(Pair.of(p1.getFirst(), p2.getFirst()), p2.getSecond())
-                )
-            );
-        }
-
-        @Override
-        public <T> DataResult<T> encode(final DynamicOps<T> ops, final T rest, final Pair<F, S> value) {
-            return first.encode(ops, rest, value.getFirst()).flatMap(f -> second.encode(ops, f, value.getSecond()));
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final PairCodec<?, ?> pairCodec = (PairCodec<?, ?>) o;
-            return Objects.equals(first, pairCodec.first) && Objects.equals(second, pairCodec.second);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(first, second);
-        }
-
-        @Override
-        public String toString() {
-            return "PairCodec[" + first + ", " + second + ']';
         }
     }
 }

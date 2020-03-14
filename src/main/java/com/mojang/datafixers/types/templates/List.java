@@ -158,7 +158,7 @@ public final class List implements TypeTemplate {
 
         @Override
         public Codec<java.util.List<A>> buildCodec() {
-            return new ListCodec<>(element.codec());
+            return Codec.list(element.codec());
         }
 
         @Override

@@ -6,17 +6,8 @@ import com.google.common.collect.Maps;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
-import com.mojang.datafixers.types.constant.BoolType;
-import com.mojang.datafixers.types.constant.ByteType;
-import com.mojang.datafixers.types.constant.DoubleType;
 import com.mojang.datafixers.types.constant.EmptyPart;
 import com.mojang.datafixers.types.constant.EmptyPartSaving;
-import com.mojang.datafixers.types.constant.FloatType;
-import com.mojang.datafixers.types.constant.IntType;
-import com.mojang.datafixers.types.constant.LongType;
-import com.mojang.datafixers.types.constant.NamespacedStringType;
-import com.mojang.datafixers.types.constant.ShortType;
-import com.mojang.datafixers.types.constant.StringType;
 import com.mojang.datafixers.types.templates.Check;
 import com.mojang.datafixers.types.templates.CompoundList;
 import com.mojang.datafixers.types.templates.Const;
@@ -32,6 +23,7 @@ import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Triple;
@@ -81,10 +73,6 @@ public interface DSL {
 
     static Type<String> string() {
         return Instances.STRING_TYPE;
-    }
-
-    static Type<String> namespacedString() {
-        return Instances.NAMESPACED_STRING_TYPE;
     }
 
     static TypeTemplate emptyPart() {
@@ -446,15 +434,14 @@ public interface DSL {
     }
 
     final class Instances {
-        private static final Type<Boolean> BOOL_TYPE = new BoolType();
-        private static final Type<Integer> INT_TYPE = new IntType();
-        private static final Type<Long> LONG_TYPE = new LongType();
-        private static final Type<Byte> BYTE_TYPE = new ByteType();
-        private static final Type<Short> SHORT_TYPE = new ShortType();
-        private static final Type<Float> FLOAT_TYPE = new FloatType();
-        private static final Type<Double> DOUBLE_TYPE = new DoubleType();
-        private static final Type<String> STRING_TYPE = new StringType();
-        private static final Type<String> NAMESPACED_STRING_TYPE = new NamespacedStringType();
+        private static final Type<Boolean> BOOL_TYPE = new Const.PrimitiveType<>(Codec.BOOL);
+        private static final Type<Integer> INT_TYPE = new Const.PrimitiveType<>(Codec.INT);
+        private static final Type<Long> LONG_TYPE = new Const.PrimitiveType<>(Codec.LONG);
+        private static final Type<Byte> BYTE_TYPE = new Const.PrimitiveType<>(Codec.BYTE);
+        private static final Type<Short> SHORT_TYPE = new Const.PrimitiveType<>(Codec.SHORT);
+        private static final Type<Float> FLOAT_TYPE = new Const.PrimitiveType<>(Codec.FLOAT);
+        private static final Type<Double> DOUBLE_TYPE = new Const.PrimitiveType<>(Codec.DOUBLE);
+        private static final Type<String> STRING_TYPE = new Const.PrimitiveType<>(Codec.STRING);
         private static final Type<Unit> EMPTY_PART = new EmptyPart();
         private static final Type<Dynamic<?>> NIL_SAVE = new EmptyPartSaving();
 
