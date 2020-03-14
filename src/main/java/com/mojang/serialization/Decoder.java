@@ -62,6 +62,25 @@ public interface Decoder<A> {
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
                 return DataResult.success(Pair.of(instance, input));
             }
+
+            @Override
+            public String toString() {
+                return "UnitDecoder[" + instance + "]";
+            }
+        };
+    }
+
+    static <A> Decoder<A> error(final String error) {
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return DataResult.error(error);
+            }
+
+            @Override
+            public String toString() {
+                return "ErrorDecoder[" + error + ']';
+            }
         };
     }
 

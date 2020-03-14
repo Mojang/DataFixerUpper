@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class Type<A> implements App<Type.Mu, A>, Codec<A> {
+public abstract class Type<A> implements App<Type.Mu, A> {
     private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
     private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
 
@@ -47,6 +47,8 @@ public abstract class Type<A> implements App<Type.Mu, A>, Codec<A> {
 
     @Nullable
     private TypeTemplate template;
+
+    private final Codec<A> codec = buildCodec();
 
     public RewriteResult<A, ?> rewriteOrNop(final TypeRewriteRule rule) {
         return DataFixUtils.orElseGet(rule.rewrite(this), () -> RewriteResult.nop(this));
@@ -110,25 +112,17 @@ public abstract class Type<A> implements App<Type.Mu, A>, Codec<A> {
     }
 
     public final <T> DataResult<Pair<A, Dynamic<T>>> read(final Dynamic<T> input) {
-        return read(input.getOps(), input.getValue()).map(v -> v.mapSecond(t -> new Dynamic<T>(input.getOps(), t)));
+        return codec().decode(input.getOps(), input.getValue()).map(v -> v.mapSecond(t -> new Dynamic<T>(input.getOps(), t)));
     }
 
-    public abstract <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input);
-
-    public abstract <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value);
-
-    @Override
-    public final <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-        return read(ops, input);
+    public final Codec<A> codec() {
+        return codec;
     }
 
-    @Override
-    public final <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
-        return write(ops, prefix, input);
-    }
+    protected abstract Codec<A> buildCodec();
 
     public final <T> DataResult<T> write(final DynamicOps<T> ops, final A value) {
-        return write(ops, ops.empty(), value);
+        return codec().encode(ops, ops.empty(), value);
     }
 
     public final <T> DataResult<Dynamic<T>> writeDynamic(final DynamicOps<T> ops, final A value) {
@@ -140,11 +134,11 @@ public abstract class Type<A> implements App<Type.Mu, A>, Codec<A> {
     }
 
     public <T> DataResult<Pair<Typed<A>, T>> readTyped(final DynamicOps<T> ops, final T input) {
-        return read(ops, input).map(vo -> vo.mapFirst(v -> new Typed<>(this, ops, v)));
+        return codec().decode(ops, input).map(vo -> vo.mapFirst(v -> new Typed<>(this, ops, v)));
     }
 
     public <T> DataResult<Pair<Optional<?>, T>> read(final DynamicOps<T> ops, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
-        return read(ops, input).map(vo -> vo.mapFirst(v ->
+        return codec().decode(ops, input).map(vo -> vo.mapFirst(v ->
             rewrite(rule, fRule).map(r -> r.view().function().evalCached().apply(ops).apply(v)
             )
         ));
@@ -157,7 +151,7 @@ public abstract class Type<A> implements App<Type.Mu, A>, Codec<A> {
         }
         final View<A, ?> view = rewriteResult.get().view();
 
-        return read(ops, input).flatMap(pair ->
+        return codec().decode(ops, input).flatMap(pair ->
             capWrite(ops, expectedType, pair.getSecond(), pair.getFirst(), view)
         );
     }
@@ -166,7 +160,7 @@ public abstract class Type<A> implements App<Type.Mu, A>, Codec<A> {
         if (!expectedType.equals(f.newType(), true, true)) {
             return DataResult.error("Rewritten type doesn't match");
         }
-        return f.newType().write(ops, rest, f.function().evalCached().apply(ops).apply(value));
+        return f.newType().codec().encode(ops, rest, f.function().evalCached().apply(ops).apply(value));
     }
 
     @SuppressWarnings("unchecked")

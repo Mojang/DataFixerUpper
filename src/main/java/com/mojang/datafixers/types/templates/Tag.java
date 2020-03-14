@@ -14,6 +14,7 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
@@ -173,29 +174,34 @@ public final class Tag implements TypeTemplate {
         }
 
         @Override
-        public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
-            return ops.getMapValues(input).flatMap(map -> {
-                final T nameObject = ops.createString(name);
+        protected Codec<A> buildCodec() {
+            return new Codec<A>() {
+                @Override
+                public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                    return ops.getMapValues(input).flatMap(map -> {
+                        final T nameObject = ops.createString(name);
 
-                final Map<Boolean, List<Pair<T, T>>> partitioned = map.collect(Collectors.partitioningBy(p -> Objects.equals(p.getFirst(), nameObject)));
-                final List<Pair<T, T>> matched = partitioned.get(true);
-                final List<Pair<T, T>> rest = partitioned.get(false);
-                if (matched.isEmpty()) {
-                    return DataResult.error("No keys matched " + name);
+                        final Map<Boolean, List<Pair<T, T>>> partitioned = map.collect(Collectors.partitioningBy(p -> Objects.equals(p.getFirst(), nameObject)));
+                        final List<Pair<T, T>> matched = partitioned.get(true);
+                        final List<Pair<T, T>> rest = partitioned.get(false);
+                        if (matched.isEmpty()) {
+                            return DataResult.error("No keys matched " + name);
+                        }
+                        if (matched.size() != 1) {
+                            return DataResult.error("Too many keys matched " + name + ": " + matched);
+                        }
+
+                        return element.codec().decode(ops, matched.get(0).getSecond()).map(value ->
+                            Pair.of(value.getFirst(), ops.createMap(rest.stream().collect(Pair.toMap())))
+                        );
+                    });
                 }
-                if (matched.size() != 1) {
-                    return DataResult.error("Too many keys matched " + name + ": " + matched);
+
+                @Override
+                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+                    return element.codec().encodeStart(ops, input).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
                 }
-
-                return element.read(ops, matched.get(0).getSecond()).map(value ->
-                    Pair.of(value.getFirst(), ops.createMap(rest.stream().collect(Pair.toMap())))
-                );
-            });
-        }
-
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
-            return element.write(ops, ops.empty(), value).flatMap(result -> ops.mergeToMap(rest, ops.createString(name), result));
+            };
         }
 
         @Override

@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
@@ -12,11 +10,14 @@ import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.View;
 import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.functions.PointFreeRule;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import org.apache.commons.lang3.ObjectUtils;
 
 import javax.annotation.Nullable;
@@ -137,14 +138,20 @@ public final class RecursivePoint implements TypeTemplate {
             return type;
         }
 
+        /** needs to be lazy */
         @Override
-        public <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
-            return unfold().read(ops, input);
-        }
+        protected Codec<A> buildCodec() {
+            return new Codec<A>() {
+                @Override
+                public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                    return unfold().codec().decode(ops, input);
+                }
 
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
-            return unfold().write(ops, rest, value);
+                @Override
+                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+                    return unfold().codec().encode(ops, prefix, input);
+                }
+            };
         }
 
         @Override

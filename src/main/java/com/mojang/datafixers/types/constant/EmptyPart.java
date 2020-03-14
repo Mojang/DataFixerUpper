@@ -4,10 +4,11 @@ package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.types.templates.TypeTemplate;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
-import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Decoder;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Encoder;
 
 import java.util.Optional;
 
@@ -33,12 +34,7 @@ public final class EmptyPart extends com.mojang.datafixers.types.Type<Unit> {
     }
 
     @Override
-    public <T> DataResult<Pair<Unit, T>> read(final DynamicOps<T> ops, final T input) {
-        return DataResult.success(Pair.of(Unit.INSTANCE, input));
-    }
-
-    @Override
-    public final <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Unit value) {
-        return DataResult.success(rest);
+    protected Codec<Unit> buildCodec() {
+        return Codec.of(Encoder.empty(), Decoder.unit(Unit.INSTANCE));
     }
 }

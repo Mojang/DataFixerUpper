@@ -3,9 +3,9 @@
 package com.mojang.datafixers.types;
 
 import com.mojang.datafixers.types.templates.TypeTemplate;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Decoder;
+import com.mojang.serialization.Encoder;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -25,13 +25,11 @@ public final class Func<A, B> extends Type<Function<A, B>> {
     }
 
     @Override
-    public <T> DataResult<Pair<Function<A, B>, T>> read(final DynamicOps<T> ops, final T input) {
-        return DataResult.error("Cannot read a function");
-    }
-
-    @Override
-    public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final Function<A, B> value) {
-        return DataResult.error("Cannot save a function " + value, rest);
+    protected Codec<Function<A, B>> buildCodec() {
+        return Codec.of(
+            Encoder.error("Cannot save a function"),
+            Decoder.error("Cannot read a function")
+        );
     }
 
     @Override

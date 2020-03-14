@@ -19,16 +19,14 @@ import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.codecs.ListCodec;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 
 public final class List implements TypeTemplate {
@@ -159,47 +157,8 @@ public final class List implements TypeTemplate {
         }
 
         @Override
-        public <T> DataResult<Pair<java.util.List<A>, T>> read(final DynamicOps<T> ops, final T input) {
-            return ops.getStream(input).flatMap(stream -> {
-                final AtomicReference<DataResult<Pair<ImmutableList.Builder<A>, ImmutableList.Builder<T>>>> result =
-                    new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableList.builder())));
-
-                stream.forEach(t ->
-                    result.set(result.get().flatMap(pair -> {
-                        final DataResult<Pair<A, T>> read = element.read(ops, t);
-
-                        read.error().ifPresent(e -> pair.getSecond().add(t));
-
-                        return read.map(value -> {
-                            pair.getFirst().add(value.getFirst());
-                            return pair;
-                        });
-                    }))
-                );
-
-                return result.get().map(pair -> Pair.of((java.util.List<A>) pair.getFirst().build(), ops.createList(pair.getSecond().build().stream())));
-            });
-        }
-
-        /**
-         * Will write `ops.empty()` value into the partial result if the element failed to serialize
-         */
-        @Override
-        public <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final java.util.List<A> value) {
-            final java.util.List<T> list = new ArrayList<>(value.size());
-            DataResult<java.util.List<T>> result = DataResult.success(list);
-
-            for (final A a : value) {
-                result = result.flatMap(t -> {
-                    final DataResult<T> written = element.write(ops, ops.empty(), a);
-                    return written.map(e -> {
-                        list.add(e);
-                        return list;
-                    });
-                });
-            }
-
-            return result.flatMap(l -> ops.mergeToList(rest, l));
+        public Codec<java.util.List<A>> buildCodec() {
+            return new ListCodec<>(element.codec());
         }
 
         @Override

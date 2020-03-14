@@ -3,16 +3,15 @@
 package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.types.templates.Const;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
 public final class ShortType extends Const.PrimitiveType<Short> {
     @Override
-    public <T> DataResult<Pair<Short, T>> read(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<Short> read(final DynamicOps<T> ops, final T input) {
         return ops
             .getNumberValue(input)
-            .map(v -> Pair.of(v.shortValue(), ops.empty()));
+            .map(Number::shortValue);
     }
 
     @Override

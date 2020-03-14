@@ -3,7 +3,6 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.OpticParts;
@@ -14,6 +13,9 @@ import com.mojang.datafixers.optics.profunctors.AffineP;
 import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
@@ -109,9 +111,21 @@ public final class Const implements TypeTemplate {
         }
 
         @Override
-        public final <T> DataResult<T> write(final DynamicOps<T> ops, final T rest, final A value) {
-            return ops.mergeToPrimitive(rest, doWrite(ops, value));
+        protected Codec<A> buildCodec() {
+            return new Codec<A>() {
+                @Override
+                public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                    return read(ops, input).map(r -> Pair.of(r, ops.empty()));
+                }
+
+                @Override
+                public <T> DataResult<T> encode(final DynamicOps<T> ops, final T prefix, final A input) {
+                    return ops.mergeToPrimitive(prefix, doWrite(ops, input));
+                }
+            };
         }
+
+        protected abstract <T> DataResult<A> read(final DynamicOps<T> ops, final T input);
 
         protected abstract <T> T doWrite(final DynamicOps<T> ops, final A value);
     }
