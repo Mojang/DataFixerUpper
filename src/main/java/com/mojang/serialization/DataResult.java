@@ -222,6 +222,22 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
         @Override
         public <A, B, R> App<DataResult.Mu, R> ap2(final App<DataResult.Mu, BiFunction<A, B, R>> func, final App<DataResult.Mu, A> a, final App<DataResult.Mu, B> b) {
+            final DataResult<BiFunction<A, B, R>> fr = unbox(func);
+            final DataResult<A> ra = unbox(a);
+            final DataResult<B> rb = unbox(b);
+
+            // for less recursion
+            if (fr.result.left().isPresent()
+                && ra.result.left().isPresent()
+                && rb.result.left().isPresent()){
+                return DataResult.success(
+                    fr.result.left().get().apply(
+                        ra.result.left().get(),
+                        rb.result.left().get()
+                    )
+                );
+            }
+
             return unbox(a).flatMap(av ->
                 unbox(b).flatMap(bv ->
                     unbox(func).map(f ->
@@ -233,10 +249,29 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
         @Override
         public <T1, T2, T3, R> App<DataResult.Mu, R> ap3(final App<DataResult.Mu, Function3<T1, T2, T3, R>> func, final App<DataResult.Mu, T1> t1, final App<DataResult.Mu, T2> t2, final App<DataResult.Mu, T3> t3) {
-            return unbox(t1).flatMap(r1 ->
-                unbox(t2).flatMap(r2 ->
-                    unbox(t3).flatMap(r3 ->
-                        unbox(func).map(f ->
+            final DataResult<Function3<T1, T2, T3, R>> fr = unbox(func);
+            final DataResult<T1> dr1 = unbox(t1);
+            final DataResult<T2> dr2 = unbox(t2);
+            final DataResult<T3> dr3 = unbox(t3);
+
+            // for less recursion
+            if (fr.result.left().isPresent()
+                && dr1.result.left().isPresent()
+                && dr2.result.left().isPresent()
+                && dr3.result.left().isPresent()) {
+                return DataResult.success(
+                    fr.result.left().get().apply(
+                        dr1.result.left().get(),
+                        dr2.result.left().get(),
+                        dr3.result.left().get()
+                    )
+                );
+            }
+
+            return dr1.flatMap(r1 ->
+                dr2.flatMap(r2 ->
+                    dr3.flatMap(r3 ->
+                        fr.map(f ->
                             f.apply(r1, r2, r3)
                         )
                     )
