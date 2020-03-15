@@ -63,7 +63,7 @@ public interface Decoder<A> {
     }
 
     static <A> MapDecoder<A> unit(final Supplier<A> instance) {
-        return new MapDecoder<A>() {
+        return new MapDecoder.Implementation<A>() {
             @Override
             public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                 return DataResult.success(instance.get());

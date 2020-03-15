@@ -7,16 +7,16 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public interface MapCodec<A> extends MapDecoder<A>, MapEncoder<A>, Codec<A> {
-    default <O> RecordCodecBuilder<O, A> forGetter(final Function<O, A> getter) {
+public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implements MapEncoder<A>, Codec<A> {
+    public final <O> RecordCodecBuilder<O, A> forGetter(final Function<O, A> getter) {
         return RecordCodecBuilder.of(getter, this);
     }
 
     @Override
-    <T> Stream<T> keys(final DynamicOps<T> ops);
+    public abstract <T> Stream<T> keys(final DynamicOps<T> ops);
 
     @Override
-    default MapCodec<A> withDefault(final A value) {
+    public MapCodec<A> withDefault(final A value) {
         final MapCodec<A> self = this;
         return new MapCodec<A>() {
             @Override
@@ -40,4 +40,5 @@ public interface MapCodec<A> extends MapDecoder<A>, MapEncoder<A>, Codec<A> {
             }
         };
     }
+
 }

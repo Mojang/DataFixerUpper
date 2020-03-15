@@ -26,7 +26,7 @@ public interface Encoder<A> {
     }
 
     static <A> MapEncoder<A> empty() {
-        return new MapEncoder<A>() {
+        return new MapEncoder.Implementation<A>() {
             @Override
             public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                 return prefix;

@@ -13,7 +13,7 @@ import com.mojang.serialization.RecordBuilder;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class FieldCodec<A> implements MapCodec<A> {
+public class FieldCodec<A> extends MapCodec<A> {
     public static boolean REMOVE_FIELD_WHEN_PARSING = false;
 
     private final String name;
@@ -26,6 +26,9 @@ public class FieldCodec<A> implements MapCodec<A> {
 
     @Override
     public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+        if (ops.compressMaps()) {
+            return super.decode(ops, input);
+        }
         return ops.getMap(input).flatMap(map -> decode(ops, map).map(r -> {
             final T output;
             if (REMOVE_FIELD_WHEN_PARSING) {
@@ -40,6 +43,9 @@ public class FieldCodec<A> implements MapCodec<A> {
 
     @Override
     public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+        if (ops.compressMaps()) {
+            return super.encode(input, ops, prefix);
+        }
         return elementCodec.encodeStart(ops, input).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
     }
 

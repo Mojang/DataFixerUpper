@@ -188,6 +188,10 @@ public interface DynamicOps<T> {
 
     T remove(T input, String key);
 
+    default boolean compressMaps() {
+        return false;
+    }
+
     default DataResult<T> get(final T input, final String key) {
         return getGeneric(input, createString(key));
     }
