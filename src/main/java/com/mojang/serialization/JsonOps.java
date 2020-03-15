@@ -18,9 +18,13 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class JsonOps implements DynamicOps<JsonElement> {
-    public static final JsonOps INSTANCE = new JsonOps();
+    public static final JsonOps INSTANCE = new JsonOps(false);
+    public static final JsonOps COMPRESSED = new JsonOps(true);
 
-    protected JsonOps() {
+    private final boolean compressed;
+
+    protected JsonOps(final boolean compressed) {
+        this.compressed = compressed;
     }
 
     @Override
@@ -75,6 +79,13 @@ public class JsonOps implements DynamicOps<JsonElement> {
                 return DataResult.success(input.getAsNumber());
             } else if (input.getAsJsonPrimitive().isBoolean()) {
                 return DataResult.success(input.getAsBoolean() ? 1 : 0);
+            }
+            if (compressed && input.getAsJsonPrimitive().isString()) {
+                try {
+                    return DataResult.success(Integer.parseInt(input.getAsString()));
+                } catch (final NumberFormatException e) {
+                    return DataResult.error("Not a number: " + e + " " + input);
+                }
             }
         }
         if (input.isJsonPrimitive() && input.getAsJsonPrimitive().isBoolean()) {
@@ -151,7 +162,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
         if (!map.isJsonObject() && map != empty()) {
             return DataResult.error("mergeToMap called with not a map: " + map, map);
         }
-        if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString()) {
+        if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString() && !compressed) {
             return DataResult.error("key is not a string: " + key, map);
         }
 
@@ -179,7 +190,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         values.entries().forEach(entry -> {
             final JsonElement key = entry.getFirst();
-            if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString()) {
+            if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString() && !compressed) {
                 missed.add(key);
                 return;
             }
@@ -318,5 +329,10 @@ public class JsonOps implements DynamicOps<JsonElement> {
             builder = DataResult.success(new JsonArray());
             return result;
         }
+    }
+
+    @Override
+    public boolean compressMaps() {
+        return compressed;
     }
 }
