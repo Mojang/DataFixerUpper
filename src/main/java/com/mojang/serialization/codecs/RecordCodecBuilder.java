@@ -20,6 +20,7 @@ import com.mojang.serialization.RecordBuilder;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu<O>, F> {
     public static final class Mu<O> implements K1 {
@@ -107,6 +108,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                                 fEnc.encode(a1 -> input, ops, prefix);
                                 return prefix;
                             }
+
+                            @Override
+                            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                                return Stream.concat(aEnc.keys(ops), fEnc.keys(ops));
+                            }
                         };
                     },
 
@@ -118,6 +124,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                                     fr.apply(ar)
                                 )
                             );
+                        }
+
+                        @Override
+                        public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                            return Stream.concat(a.decoder.keys(ops), f.decoder.keys(ops));
                         }
                     }
                 );
@@ -147,6 +158,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             fEncoder.encode((a1, b1) -> input, ops, prefix);
                             return prefix;
                         }
+
+                        @Override
+                        public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                            return Stream.concat(aEncoder.keys(ops), Stream.concat(bEncoder.keys(ops), fEncoder.keys(ops)));
+                        }
                     };
                 },
                 new MapDecoder<R>() {
@@ -156,6 +172,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             fa.decoder.decode(ops, input),
                             fb.decoder.decode(ops, input)
                         ).apply(function.decoder.decode(ops, input)));
+                    }
+
+                    @Override
+                    public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                        return Stream.concat(fa.decoder.keys(ops), Stream.concat(fb.decoder.keys(ops), function.decoder.keys(ops)));
                     }
                 }
             );
@@ -192,6 +213,14 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             fEncoder.encode((t1, t2, t3) -> input, ops, prefix);
                             return prefix;
                         }
+
+                        @Override
+                        public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                            return Stream.concat(
+                                Stream.concat(e1.keys(ops), e2.keys(ops)),
+                                Stream.concat(e3.keys(ops), fEncoder.keys(ops))
+                            );
+                        }
                     };
                 },
                 new MapDecoder<R>() {
@@ -202,6 +231,14 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             f2.decoder.decode(ops, input),
                             f3.decoder.decode(ops, input)
                         ).apply(function.decoder.decode(ops, input)));
+                    }
+
+                    @Override
+                    public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                        return Stream.concat(
+                            Stream.concat(f1.decoder.keys(ops), f2.decoder.keys(ops)),
+                            Stream.concat(f3.decoder.keys(ops), function.decoder.keys(ops))
+                        );
                     }
                 }
             );
@@ -243,6 +280,17 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             fEncoder.encode((t1, t2, t3, t4) -> input, ops, prefix);
                             return prefix;
                         }
+
+                        @Override
+                        public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                            return Stream.concat(
+                                Stream.concat(
+                                    Stream.concat(e1.keys(ops), e2.keys(ops)),
+                                    Stream.concat(e3.keys(ops), e4.keys(ops))
+                                ),
+                                fEncoder.keys(ops)
+                            );
+                        }
                     };
                 },
                 new MapDecoder<R>() {
@@ -255,6 +303,17 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             f4.decoder.decode(ops, input)
                         ).apply(function.decoder.decode(ops, input)));
                     }
+
+                    @Override
+                    public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                        return Stream.concat(
+                            Stream.concat(
+                                Stream.concat(f1.decoder.keys(ops), f2.decoder.keys(ops)),
+                                Stream.concat(f3.decoder.keys(ops), f4.decoder.keys(ops))
+                            ),
+                            function.decoder.keys(ops)
+                        );
+                    }
                 }
             );
         }
@@ -266,9 +325,16 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
             return new RecordCodecBuilder<>(
                 getter.andThen(func),
                 o -> new MapEncoder<R>() {
+                    private final MapEncoder<T> encoder = unbox.encoder.apply(o);
+
                     @Override
                     public <U> RecordBuilder<U> encode(final R input, final DynamicOps<U> ops, final RecordBuilder<U> prefix) {
-                        return unbox.encoder.apply(o).encode(getter.apply(o), ops, prefix);
+                        return encoder.encode(getter.apply(o), ops, prefix);
+                    }
+
+                    @Override
+                    public <U> Stream<U> keys(final DynamicOps<U> ops) {
+                        return encoder.keys(ops);
                     }
                 },
                 unbox.decoder.map(func)
