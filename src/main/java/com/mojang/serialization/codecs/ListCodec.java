@@ -26,12 +26,9 @@ public final class ListCodec<A> implements Codec<List<A>> {
         DataResult<java.util.List<T>> result = DataResult.success(list);
 
         for (final A a : input) {
-            result = result.flatMap(t -> {
-                final DataResult<T> written = elementCodec.encode(a, ops, ops.empty());
-                return written.map(e -> {
-                    list.add(e);
-                    return list;
-                });
+            result = result.ap2(elementCodec.encode(a, ops, ops.empty()), (l, e) -> {
+                l.add(e);
+                return l;
             });
         }
 
