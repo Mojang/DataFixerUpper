@@ -111,13 +111,12 @@ public class Dynamic<T> extends DynamicLike<T> {
 
     @Override
     public OptionalDynamic<T> get(final String key) {
-        return new OptionalDynamic<>(ops, ops.getMapValues(value).flatMap(m -> {
-            final T keyString = ops.createString(key);
-            final Optional<T> value = m.filter(p -> Objects.equals(keyString, p.getFirst())).map(Pair::getSecond).findFirst();
-            if (!value.isPresent()) {
+        return new OptionalDynamic<>(ops, ops.getMap(value).flatMap(m -> {
+            final T value = m.get(ops.createString(key));
+            if (value == null) {
                 return DataResult.error("key missing: " + key + " in " + this.value);
             }
-            return DataResult.success(new Dynamic<>(ops, value.get()));
+            return DataResult.success(new Dynamic<>(ops, value));
         }));
     }
 
@@ -235,7 +234,7 @@ public class Dynamic<T> extends DynamicLike<T> {
         if (Objects.equals(type, Codec.compoundList(Codec.SAVING, Codec.SAVING))) {
             return outOps.createMap(inOps.getMapValues(input).result().orElse(Stream.empty()).map(e ->
                 Pair.of(convert(inOps, outOps, e.getFirst()), convert(inOps, outOps, e.getSecond()))
-            ).collect(Pair.toMap()));
+            ));
         }
         throw new IllegalStateException("Could not convert value of type " + type);
     }
