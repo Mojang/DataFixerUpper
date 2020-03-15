@@ -214,6 +214,12 @@ public class JsonOps implements DynamicOps<JsonElement> {
                 return object.get(key.getAsString());
             }
 
+            @Nullable
+            @Override
+            public JsonElement get(final String key) {
+                return object.get(key);
+            }
+
             @Override
             public Stream<Pair<JsonElement, JsonElement>> entries() {
                 return object.entrySet().stream().map(e -> Pair.of(new JsonPrimitive(e.getKey()), e.getValue()));

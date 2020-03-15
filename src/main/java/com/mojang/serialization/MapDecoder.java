@@ -5,9 +5,12 @@ package com.mojang.serialization;
 import com.mojang.datafixers.util.Pair;
 
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public interface MapDecoder<A> extends Decoder<A> {
     <T> DataResult<A> decode(DynamicOps<T> ops, MapLike<T> input);
+
+    <T> Stream<T> keys(final DynamicOps<T> ops);
 
     @Override
     default <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
@@ -21,6 +24,11 @@ public interface MapDecoder<A> extends Decoder<A> {
             @Override
             public <T> DataResult<B> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                 return self.decode(ops, input).map(function);
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
             }
         };
     }

@@ -12,6 +12,7 @@ import com.mojang.serialization.RecordBuilder;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /** Optimization of `Codec.either(someCodec.field(name), Codec.EMPTY)` */
 public class OptionalFieldCodec<A> implements MapCodec<Optional<A>> {
@@ -60,6 +61,11 @@ public class OptionalFieldCodec<A> implements MapCodec<Optional<A>> {
             return prefix.add(name, elementCodec.encodeStart(ops, input.get()));
         }
         return prefix;
+    }
+
+    @Override
+    public <T> Stream<T> keys(final DynamicOps<T> ops) {
+        return Stream.of(ops.createString(name));
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.mojang.datafixers.util.Pair;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public interface Decoder<A> {
     <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input);
@@ -66,6 +67,11 @@ public interface Decoder<A> {
             @Override
             public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                 return DataResult.success(instance.get());
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return Stream.empty();
             }
 
             @Override

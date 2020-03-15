@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import java.util.stream.Stream;
+
 public interface Encoder<A> {
     <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix);
 
@@ -28,6 +30,11 @@ public interface Encoder<A> {
             @Override
             public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                 return prefix;
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return Stream.empty();
             }
 
             @Override

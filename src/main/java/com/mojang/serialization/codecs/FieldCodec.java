@@ -11,6 +11,7 @@ import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class FieldCodec<A> implements MapCodec<A> {
     public static boolean REMOVE_FIELD_WHEN_PARSING = false;
@@ -54,6 +55,11 @@ public class FieldCodec<A> implements MapCodec<A> {
     @Override
     public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
         return prefix.add(name, elementCodec.encodeStart(ops, input));
+    }
+
+    @Override
+    public <T> Stream<T> keys(final DynamicOps<T> ops) {
+        return Stream.of(ops.createString(name));
     }
 
     @Override
