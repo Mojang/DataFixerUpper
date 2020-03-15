@@ -7,6 +7,7 @@ import com.mojang.datafixers.util.Function4;
 import com.mojang.datafixers.util.Function5;
 import com.mojang.datafixers.util.Function6;
 import com.mojang.datafixers.util.Function7;
+import com.mojang.datafixers.util.Function8;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -103,6 +104,14 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
         return ap7(point(func), t1, t2, t3, t4, t5, t6, t7);
     }
 
+    default <T1, T2, T3, T4, T5, T6, T7, T8, R> App<F, R> ap8(final App<F, Function8<T1, T2, T3, T4, T5, T6, T7, T8, R>> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8) {
+        return ap4(ap4(map(Function8::curry4, func), t1, t2, t3, t4), t5, t6, t7, t8);
+    }
+
+    default <T1, T2, T3, T4, T5, T6, T7, T8, R> App<F, R> apply8(final Function8<T1, T2, T3, T4, T5, T6, T7, T8, R> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8) {
+        return ap8(point(func), t1, t2, t3, t4, t5, t6, t7, t8);
+    }
+
     default <T1> P1<F, T1> group(final App<F, T1> t1) {
         return new P1<>(this, t1);
     }
@@ -129,6 +138,10 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
 
     default <T1, T2, T3, T4, T5, T6, T7> P7<F, T1, T2, T3, T4, T5, T6, T7> group(final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7) {
         return new P7<>(this, t1, t2, t3, t4, t5, t6, t7);
+    }
+
+    default <T1, T2, T3, T4, T5, T6, T7, T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> group(final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8) {
+        return new P8<>(this, t1, t2, t3, t4, t5, t6, t7, t8);
     }
 
     final class P1<F extends K1, T1> {
@@ -320,6 +333,38 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
 
         public <R> App<F, R> apply(final App<F, Function7<T1, T2, T3, T4, T5, T6, T7, R>> function) {
             return instance.ap7(function, t1, t2, t3, t4, t5, t6, t7);
+        }
+    }
+
+    final class P8<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+
+        private P8(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+        }
+
+        public <R> App<F, R> apply(final Function8<T1, T2, T3, T4, T5, T6, T7, T8, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function8<T1, T2, T3, T4, T5, T6, T7, T8, R>> function) {
+            return instance.ap8(function, t1, t2, t3, t4, t5, t6, t7, t8);
         }
     }
 }
