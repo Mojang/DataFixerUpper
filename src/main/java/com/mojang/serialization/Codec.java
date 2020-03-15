@@ -224,7 +224,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
                 return DataResult.success(casted);
             }
 
-            final DataResult<T> toMap = ops.getMapValues(casted).flatMap(map -> ops.mergeToMap(prefix, map.collect(Pair.toMap())));
+            final DataResult<T> toMap = ops.getMap(casted).flatMap(map -> ops.mergeToMap(prefix, map));
             return toMap.result().map(DataResult::success).orElseGet(() -> {
                 final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeToList(prefix, stream.collect(Collectors.toList())));
                 return toList.result().map(DataResult::success).orElseGet(() ->

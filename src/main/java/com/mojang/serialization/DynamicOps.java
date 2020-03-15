@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -94,12 +95,16 @@ public interface DynamicOps<T> {
     DataResult<T> mergeToMap(T map, T key, T value);
 
     default DataResult<T> mergeToMap(final T map, final Map<T, T> values) {
-        DataResult<T> result = DataResult.success(map);
+        return mergeToMap(map, MapLike.forMap(values));
+    }
 
-        for (final Map.Entry<T, T> entry : values.entrySet()) {
-            result = result.flatMap(r -> mergeToMap(r, entry.getKey(), entry.getValue()));
-        }
-        return result;
+    default DataResult<T> mergeToMap(final T map, final MapLike<T> values) {
+        final AtomicReference<DataResult<T>> result = new AtomicReference<>(DataResult.success(map));
+
+        values.entries().forEach(entry ->
+            result.set(result.get().flatMap(r -> mergeToMap(r, entry.getFirst(), entry.getSecond())))
+        );
+        return result.get();
     }
 
     /**
@@ -114,7 +119,21 @@ public interface DynamicOps<T> {
 
     DataResult<Stream<Pair<T, T>>> getMapValues(T input);
 
-    T createMap(Map<T, T> map);
+    T createMap(Stream<Pair<T, T>> map);
+
+    default DataResult<MapLike<T>> getMap(final T input) {
+        return getMapValues(input).flatMap(s -> {
+            try {
+                return DataResult.success(MapLike.forMap(s.collect(Pair.toMap())));
+            } catch (final IllegalStateException e) {
+                return DataResult.error("Error while building map: " + e.getMessage());
+            }
+        });
+    }
+
+    default T createMap(final Map<T, T> map) {
+        return createMap(map.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue())));
+    }
 
     DataResult<Stream<T>> getStream(T input);
 
@@ -174,10 +193,7 @@ public interface DynamicOps<T> {
     }
 
     default DataResult<T> getGeneric(final T input, final T key) {
-        return getMapValues(input).<T>flatMap(map -> map
-            .filter(p -> Objects.equals(key, p.getFirst()))
-            .map(Pair::getSecond)
-            .findFirst()
+        return getMap(input).flatMap(map -> Optional.ofNullable(map.get(key))
             .map(DataResult::success)
             .orElseGet(() -> DataResult.error("No element " + key + " in the map " + input))
         );

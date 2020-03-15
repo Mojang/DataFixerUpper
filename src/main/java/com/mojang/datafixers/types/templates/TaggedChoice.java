@@ -186,15 +186,13 @@ public final class TaggedChoice<K> implements TypeTemplate {
             return new Codec<Pair<K, ?>>() {
                 @Override
                 public <T> DataResult<Pair<Pair<K, ?>, T>> decode(final DynamicOps<T> ops, final T input) {
-                    final DataResult<Stream<Pair<T, T>>> values = ops.getMapValues(input);
-                    return values.flatMap(vs -> {
-                        final T nameString = ops.createString(name);
-                        final Optional<Pair<T, T>> nameEntry = vs.filter(v -> v.getFirst() == nameString).findFirst();
-                        if (!nameEntry.isPresent()) {
+                    return ops.getMap(input).flatMap(map -> {
+                        final T value = map.get(ops.createString(name));
+                        if (value == null) {
                             return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
                         }
 
-                        return keyType.codec().decode(ops, nameEntry.get().getSecond()).flatMap(key -> {
+                        return keyType.codec().decode(ops, value).flatMap(key -> {
                             final K keyValue = key.getFirst();
                             final Type<?> type = types.get(keyValue);
                             if (type != null) {

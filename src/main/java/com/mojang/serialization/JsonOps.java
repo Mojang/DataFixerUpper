@@ -10,9 +10,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.datafixers.util.Pair;
 
+import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -162,7 +162,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public DataResult<JsonElement> mergeToMap(final JsonElement map, final Map<JsonElement, JsonElement> values) {
+    public DataResult<JsonElement> mergeToMap(final JsonElement map, final MapLike<JsonElement> values) {
         if (!map.isJsonObject() && map != empty()) {
             return DataResult.error("mergeToMap called with not a map: " + map, map);
         }
@@ -174,15 +174,14 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         final List<JsonElement> missed = Lists.newArrayList();
 
-        for (final Map.Entry<JsonElement, JsonElement> entry : values.entrySet()) {
-            final JsonElement key = entry.getKey();
+        values.entries().forEach(entry -> {
+            final JsonElement key = entry.getFirst();
             if (!key.isJsonPrimitive() || !key.getAsJsonPrimitive().isString()) {
                 missed.add(key);
-                continue;
+                return;
             }
-
-            output.add(key.getAsString(), entry.getValue());
-        }
+            output.add(key.getAsString(), entry.getSecond());
+        });
 
         if (!missed.isEmpty()) {
             return DataResult.error("some keys are not strings: " + missed, output);
@@ -193,18 +192,41 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
     @Override
     public DataResult<Stream<Pair<JsonElement, JsonElement>>> getMapValues(final JsonElement input) {
-        if (input.isJsonObject()) {
-            return DataResult.success(input.getAsJsonObject().entrySet().stream().map(entry -> Pair.of(new JsonPrimitive(entry.getKey()), entry.getValue())));
+        if (!input.isJsonObject()) {
+            return DataResult.error("Not a JSON object: " + input);
         }
-        return DataResult.error("Not a JSON object: " + input);
+        return DataResult.success(input.getAsJsonObject().entrySet().stream().map(entry -> Pair.of(new JsonPrimitive(entry.getKey()), entry.getValue())));
     }
 
     @Override
-    public JsonElement createMap(final Map<JsonElement, JsonElement> map) {
-        final JsonObject result = new JsonObject();
-        for (final Map.Entry<JsonElement, JsonElement> entry : map.entrySet()) {
-            result.add(entry.getKey().getAsString(), entry.getValue());
+    public DataResult<MapLike<JsonElement>> getMap(final JsonElement input) {
+        if (!input.isJsonObject()) {
+            return DataResult.error("Not a JSON object: " + input);
         }
+        final JsonObject object = input.getAsJsonObject();
+        return DataResult.success(new MapLike<JsonElement>() {
+            @Nullable
+            @Override
+            public JsonElement get(final JsonElement key) {
+                return object.get(key.getAsString());
+            }
+
+            @Override
+            public Stream<Pair<JsonElement, JsonElement>> entries() {
+                return object.entrySet().stream().map(e -> Pair.of(new JsonPrimitive(e.getKey()), e.getValue()));
+            }
+
+            @Override
+            public String toString() {
+                return "MapLike[" + object + "]";
+            }
+        });
+    }
+
+    @Override
+    public JsonElement createMap(final Stream<Pair<JsonElement, JsonElement>> map) {
+        final JsonObject result = new JsonObject();
+        map.forEach(p -> result.add(p.getFirst().getAsString(), p.getSecond()));
         return result;
     }
 
