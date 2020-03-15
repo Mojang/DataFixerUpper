@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /** Optimization of `Codec.either(someCodec.field(name), Codec.EMPTY)` */
-public class OptionalFieldCodec<A> implements MapCodec<Optional<A>> {
+public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
     private final String name;
     private final Codec<A> elementCodec;
 
@@ -26,6 +26,9 @@ public class OptionalFieldCodec<A> implements MapCodec<Optional<A>> {
 
     @Override
     public <T> DataResult<Pair<Optional<A>, T>> decode(final DynamicOps<T> ops, final T input) {
+        if (ops.compressMaps()) {
+            return super.decode(ops, input);
+        }
         return ops.getMap(input).flatMap(map -> decode(ops, map).map(r -> {
             final T output;
             if (FieldCodec.REMOVE_FIELD_WHEN_PARSING) {
@@ -40,6 +43,9 @@ public class OptionalFieldCodec<A> implements MapCodec<Optional<A>> {
 
     @Override
     public <T> DataResult<T> encode(final Optional<A> input, final DynamicOps<T> ops, final T prefix) {
+        if (ops.compressMaps()) {
+            return super.encode(input, ops, prefix);
+        }
         if (input.isPresent()) {
             return elementCodec.encodeStart(ops, input.get()).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
         }
@@ -52,7 +58,11 @@ public class OptionalFieldCodec<A> implements MapCodec<Optional<A>> {
         if (value == null) {
             return DataResult.success(Optional.empty());
         }
-        return elementCodec.parse(ops, value).map(Optional::of);
+        final DataResult<A> parsed = elementCodec.parse(ops, value);
+        if (parsed.result().isPresent()) {
+            return parsed.map(Optional::of);
+        }
+        return DataResult.success(Optional.empty());
     }
 
     @Override

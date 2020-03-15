@@ -101,7 +101,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         final MapEncoder<A> aEnc = a.encoder.apply(o);
                         final A aFromO = a.getter.apply(o);
 
-                        return new MapEncoder<R>() {
+                        return new MapEncoder.Implementation<R>() {
                             @Override
                             public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                                 aEnc.encode(aFromO, ops, prefix);
@@ -116,7 +116,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         };
                     },
 
-                    new MapDecoder<R>() {
+                    new MapDecoder.Implementation<R>() {
                         @Override
                         public <T> DataResult<R> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                             return a.decoder.decode(ops, input).flatMap(ar ->
@@ -150,7 +150,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     final MapEncoder<B> bEncoder = fb.encoder.apply(o);
                     final B bFromO = fb.getter.apply(o);
 
-                    return new MapEncoder<R>() {
+                    return new MapEncoder.Implementation<R>() {
                         @Override
                         public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                             aEncoder.encode(aFromO, ops, prefix);
@@ -165,7 +165,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         }
                     };
                 },
-                new MapDecoder<R>() {
+                new MapDecoder.Implementation<R>() {
                     @Override
                     public <T> DataResult<R> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                         return DataResult.unbox(DataResult.instance().group(
@@ -204,7 +204,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     final MapEncoder<T3> e3 = f3.encoder.apply(o);
                     final T3 v3 = f3.getter.apply(o);
 
-                    return new MapEncoder<R>() {
+                    return new MapEncoder.Implementation<R>() {
                         @Override
                         public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                             e1.encode(v1, ops, prefix);
@@ -223,7 +223,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         }
                     };
                 },
-                new MapDecoder<R>() {
+                new MapDecoder.Implementation<R>() {
                     @Override
                     public <T> DataResult<R> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                         return DataResult.unbox(DataResult.instance().group(
@@ -270,7 +270,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     final MapEncoder<T4> e4 = f4.encoder.apply(o);
                     final T4 v4 = f4.getter.apply(o);
 
-                    return new MapEncoder<R>() {
+                    return new MapEncoder.Implementation<R>() {
                         @Override
                         public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                             e1.encode(v1, ops, prefix);
@@ -293,7 +293,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         }
                     };
                 },
-                new MapDecoder<R>() {
+                new MapDecoder.Implementation<R>() {
                     @Override
                     public <T> DataResult<R> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                         return DataResult.unbox(DataResult.instance().group(
@@ -324,7 +324,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
             final Function<O, T> getter = unbox.getter;
             return new RecordCodecBuilder<>(
                 getter.andThen(func),
-                o -> new MapEncoder<R>() {
+                o -> new MapEncoder.Implementation<R>() {
                     private final MapEncoder<T> encoder = unbox.encoder.apply(o);
 
                     @Override
