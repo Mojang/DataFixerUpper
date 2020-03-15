@@ -6,6 +6,7 @@ import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.Applicative;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Function3;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -196,22 +197,51 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
         @Override
         public <T, R> App<DataResult.Mu, R> map(final Function<? super T, ? extends R> func, final App<DataResult.Mu, T> ts) {
-            return DataResult.unbox(ts).map(func);
+            return unbox(ts).map(func);
         }
 
         @Override
         public <A> App<DataResult.Mu, A> point(final A a) {
-            return DataResult.success(a);
+            return success(a);
         }
 
         @Override
         public <A, R> Function<App<DataResult.Mu, A>, App<DataResult.Mu, R>> lift1(final App<DataResult.Mu, Function<A, R>> function) {
-            return a -> DataResult.unbox(function).flatMap(f -> DataResult.unbox(a).map(f));
+            return fa -> ap(function, fa);
+        }
+
+        /** Argument error before the function */
+        @Override
+        public <A, R> App<DataResult.Mu, R> ap(final App<DataResult.Mu, Function<A, R>> func, final App<DataResult.Mu, A> arg) {
+            return unbox(arg).flatMap(av ->
+                unbox(func).map(f ->
+                    f.apply(av)
+                )
+            );
         }
 
         @Override
-        public <A, B, R> BiFunction<App<DataResult.Mu, A>, App<DataResult.Mu, B>, App<DataResult.Mu, R>> lift2(final App<DataResult.Mu, BiFunction<A, B, R>> function) {
-            return (a, b) -> DataResult.unbox(function).flatMap(f -> DataResult.unbox(a).flatMap(av -> DataResult.unbox(b).map(bv -> f.apply(av, bv))));
+        public <A, B, R> App<DataResult.Mu, R> ap2(final App<DataResult.Mu, BiFunction<A, B, R>> func, final App<DataResult.Mu, A> a, final App<DataResult.Mu, B> b) {
+            return unbox(a).flatMap(av ->
+                unbox(b).flatMap(bv ->
+                    unbox(func).map(f ->
+                        f.apply(av, bv)
+                    )
+                )
+            );
+        }
+
+        @Override
+        public <T1, T2, T3, R> App<DataResult.Mu, R> ap3(final App<DataResult.Mu, Function3<T1, T2, T3, R>> func, final App<DataResult.Mu, T1> t1, final App<DataResult.Mu, T2> t2, final App<DataResult.Mu, T3> t3) {
+            return unbox(t1).flatMap(r1 ->
+                unbox(t2).flatMap(r2 ->
+                    unbox(t3).flatMap(r3 ->
+                        unbox(func).map(f ->
+                            f.apply(r1, r2, r3)
+                        )
+                    )
+                )
+            );
         }
     }
 }

@@ -57,22 +57,17 @@ public interface Decoder<A> {
         return simple.decoder().map(Function.identity());
     }
 
-    static <A> Decoder<A> unit(final A instance) {
-        return new Decoder<A>() {
-            @Override
-            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return DataResult.success(Pair.of(instance, input));
-            }
-
-            @Override
-            public String toString() {
-                return "UnitDecoder[" + instance + "]";
-            }
-        };
+    static <A> MapDecoder<A> unit(final A instance) {
+        return unit(() -> instance);
     }
 
-    static <A> Decoder<A> unit(final Supplier<A> instance) {
-        return new Decoder<A>() {
+    static <A> MapDecoder<A> unit(final Supplier<A> instance) {
+        return new MapDecoder<A>() {
+            @Override
+            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return DataResult.success(instance.get());
+            }
+
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
                 return DataResult.success(Pair.of(instance.get(), input));

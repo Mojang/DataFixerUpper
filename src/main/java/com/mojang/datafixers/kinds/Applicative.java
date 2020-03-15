@@ -23,28 +23,27 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
     <A, R> Function<App<F, A>, App<F, R>> lift1(final App<F, Function<A, R>> function);
 
     default <A, B, R> BiFunction<App<F, A>, App<F, B>, App<F, R>> lift2(final App<F, BiFunction<A, B, R>> function) {
-        final Function<BiFunction<A, B, R>, Function<A, Function<B, R>>> curry = f -> a -> b -> f.apply(a, b);
-        return (fa, fb) -> ap(lift1(map(curry, function)).apply(fa), fb);
+        return (fa, fb) -> ap2(function, fa, fb);
     }
 
     default <T1, T2, T3, R> Function3<App<F, T1>, App<F, T2>, App<F, T3>, App<F, R>> lift3(final App<F, Function3<T1, T2, T3, R>> function) {
-        return (ft1, ft2, ft3) -> lift2(lift1(map(Function3::curry, function)).apply(ft1)).apply(ft2, ft3);
+        return (ft1, ft2, ft3) -> ap3(function, ft1, ft2, ft3);
     }
 
     default <T1, T2, T3, T4, R> Function4<App<F, T1>, App<F, T2>, App<F, T3>, App<F, T4>, App<F, R>> lift4(final App<F, Function4<T1, T2, T3, T4, R>> function) {
-        return (ft1, ft2, ft3, ft4) -> lift2(lift2(map(Function4::curry2, function)).apply(ft1, ft2)).apply(ft3, ft4);
+        return (ft1, ft2, ft3, ft4) -> ap4(function, ft1, ft2, ft3, ft4);
     }
 
     default <T1, T2, T3, T4, T5, R> Function5<App<F, T1>, App<F, T2>, App<F, T3>, App<F, T4>, App<F, T5>, App<F, R>> lift5(final App<F, Function5<T1, T2, T3, T4, T5, R>> function) {
-        return (ft1, ft2, ft3, ft4, ft5) -> lift3(lift2(map(Function5::curry2, function)).apply(ft1, ft2)).apply(ft3, ft4, ft5);
+        return (ft1, ft2, ft3, ft4, ft5) -> ap5(function, ft1, ft2, ft3, ft4, ft5);
     }
 
     default <T1, T2, T3, T4, T5, T6, R> Function6<App<F, T1>, App<F, T2>, App<F, T3>, App<F, T4>, App<F, T5>, App<F, T6>, App<F, R>> lift6(final App<F, Function6<T1, T2, T3, T4, T5, T6, R>> function) {
-        return (ft1, ft2, ft3, ft4, ft5, ft6) -> lift3(lift3(map(Function6::curry3, function)).apply(ft1, ft2, ft3)).apply(ft4, ft5, ft6);
+        return (ft1, ft2, ft3, ft4, ft5, ft6) -> ap6(function, ft1, ft2, ft3, ft4, ft5, ft6);
     }
 
     default <T1, T2, T3, T4, T5, T6, T7, R> Function7<App<F, T1>, App<F, T2>, App<F, T3>, App<F, T4>, App<F, T5>, App<F, T6>, App<F, T7>, App<F, R>> lift7(final App<F, Function7<T1, T2, T3, T4, T5, T6, T7, R>> function) {
-        return (ft1, ft2, ft3, ft4, ft5, ft6, ft7) -> lift4(lift3(map(Function7::curry3, function)).apply(ft1, ft2, ft3)).apply(ft4, ft5, ft6, ft7);
+        return (ft1, ft2, ft3, ft4, ft5, ft6, ft7) -> ap7(function, ft1, ft2, ft3, ft4, ft5, ft6, ft7);
     }
 
     default <A, R> App<F, R> ap(final App<F, Function<A, R>> func, final App<F, A> arg) {
@@ -56,11 +55,52 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
     }
 
     default <A, B, R> App<F, R> ap2(final App<F, BiFunction<A, B, R>> func, final App<F, A> a, final App<F, B> b) {
-        return lift2(func).apply(a, b);
+        final Function<BiFunction<A, B, R>, Function<A, Function<B, R>>> curry = f -> a1 -> b1 -> f.apply(a1, b1);
+        return ap(ap(map(curry, func), a), b);
     }
 
-    default <A, B, R> App<F, R> ap2(final BiFunction<A, B, R> func, final App<F, A> a, final App<F, B> b) {
+    default <A, B, R> App<F, R> apply2(BiFunction<A, B, R> func, final App<F, A> a, final App<F, B> b) {
         return ap2(point(func), a, b);
+    }
+
+    default <T1, T2, T3, R> App<F, R> ap3(final App<F, Function3<T1, T2, T3, R>> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3) {
+        return ap2(ap(map(Function3::curry, func), t1), t2, t3);
+    }
+
+    default <T1, T2, T3, R> App<F, R> apply3(final Function3<T1, T2, T3, R> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3) {
+        return ap3(point(func), t1, t2, t3);
+    }
+
+    default <T1, T2, T3, T4, R> App<F, R> ap4(final App<F, Function4<T1, T2, T3, T4, R>> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4) {
+        return ap2(ap2(map(Function4::curry2, func), t1, t2), t3, t4);
+    }
+
+    default <T1, T2, T3, T4, R> App<F, R> apply4(final Function4<T1, T2, T3, T4, R> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4) {
+        return ap4(point(func), t1, t2, t3, t4);
+    }
+
+    default <T1, T2, T3, T4, T5, R> App<F, R> ap5(final App<F, Function5<T1, T2, T3, T4, T5, R>> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5) {
+        return ap3(ap2(map(Function5::curry2, func), t1, t2), t3, t4, t5);
+    }
+
+    default <T1, T2, T3, T4, T5, R> App<F, R> apply5(final Function5<T1, T2, T3, T4, T5, R> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5) {
+        return ap5(point(func), t1, t2, t3, t4, t5);
+    }
+
+    default <T1, T2, T3, T4, T5, T6, R> App<F, R> ap6(final App<F, Function6<T1, T2, T3, T4, T5, T6, R>> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6) {
+        return ap3(ap3(map(Function6::curry3, func), t1, t2, t3), t4, t5, t6);
+    }
+
+    default <T1, T2, T3, T4, T5, T6, R> App<F, R> apply6(final Function6<T1, T2, T3, T4, T5, T6, R> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6) {
+        return ap6(point(func), t1, t2, t3, t4, t5, t6);
+    }
+
+    default <T1, T2, T3, T4, T5, T6, T7, R> App<F, R> ap7(final App<F, Function7<T1, T2, T3, T4, T5, T6, T7, R>> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7) {
+        return ap4(ap3(map(Function7::curry3, func), t1, t2, t3), t4, t5, t6, t7);
+    }
+
+    default <T1, T2, T3, T4, T5, T6, T7, R> App<F, R> apply7(final Function7<T1, T2, T3, T4, T5, T6, T7, R> func, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7) {
+        return ap7(point(func), t1, t2, t3, t4, t5, t6, t7);
     }
 
     default <T1> P1<F, T1> group(final App<F, T1> t1) {
@@ -159,7 +199,7 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
         }
 
         public <R> App<F, R> apply(final App<F, Function3<T1, T2, T3, R>> function) {
-            return instance.lift3(function).apply(t1, t2, t3);
+            return instance.ap3(function, t1, t2, t3);
         }
     }
 
@@ -187,7 +227,7 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
         }
 
         public <R> App<F, R> apply(final App<F, Function4<T1, T2, T3, T4, R>> function) {
-            return instance.lift4(function).apply(t1, t2, t3, t4);
+            return instance.ap4(function, t1, t2, t3, t4);
         }
     }
 
@@ -217,7 +257,7 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
         }
 
         public <R> App<F, R> apply(final App<F, Function5<T1, T2, T3, T4, T5, R>> function) {
-            return instance.lift5(function).apply(t1, t2, t3, t4, t5);
+            return instance.ap5(function, t1, t2, t3, t4, t5);
         }
     }
 
@@ -249,7 +289,7 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
         }
 
         public <R> App<F, R> apply(final App<F, Function6<T1, T2, T3, T4, T5, T6, R>> function) {
-            return instance.lift6(function).apply(t1, t2, t3, t4, t5, t6);
+            return instance.ap6(function, t1, t2, t3, t4, t5, t6);
         }
     }
 
@@ -279,7 +319,7 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
         }
 
         public <R> App<F, R> apply(final App<F, Function7<T1, T2, T3, T4, T5, T6, T7, R>> function) {
-            return instance.lift7(function).apply(t1, t2, t3, t4, t5, t6, t7);
+            return instance.ap7(function, t1, t2, t3, t4, t5, t6, t7);
         }
     }
 }

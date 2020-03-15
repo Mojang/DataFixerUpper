@@ -101,7 +101,7 @@ public final class Product implements TypeTemplate {
             new Traversal<Pair<LS, RS>, Pair<LT, RT>, A, B>() {
                 @Override
                 public <F extends K1> FunctionType<Pair<LS, RS>, App<F, Pair<LT, RT>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
-                    return p -> applicative.ap2(Pair::of,
+                    return p -> applicative.ap2(applicative.point(Pair::of),
                         lt.wander(applicative, input).apply(p.getFirst()),
                         rt.wander(applicative, input).apply(p.getSecond())
                     );

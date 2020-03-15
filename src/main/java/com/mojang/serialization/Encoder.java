@@ -23,8 +23,13 @@ public interface Encoder<A> {
         };
     }
 
-    static <A> Encoder<A> empty() {
-        return new Encoder<A>() {
+    static <A> MapEncoder<A> empty() {
+        return new MapEncoder<A>() {
+            @Override
+            public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                return prefix;
+            }
+
             @Override
             public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
                 return DataResult.success(prefix);

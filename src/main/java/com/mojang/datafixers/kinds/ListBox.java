@@ -51,7 +51,7 @@ public final class ListBox<T> implements App<ListBox.Mu, T> {
 
             for (final A a : list) {
                 final App<F, B> fb = function.apply(a);
-                result = applicative.ap2(ImmutableList.Builder::add, result, fb);
+                result = applicative.ap2(applicative.point(ImmutableList.Builder::add), result, fb);
             }
 
             return applicative.map(b -> create(b.build()), result);
