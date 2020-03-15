@@ -9,6 +9,7 @@ import com.mojang.serialization.codecs.CompoundListCodec;
 import com.mojang.serialization.codecs.EitherCodec;
 import com.mojang.serialization.codecs.FieldCodec;
 import com.mojang.serialization.codecs.ListCodec;
+import com.mojang.serialization.codecs.OptionalFieldCodec;
 import com.mojang.serialization.codecs.PairCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 
@@ -59,12 +60,20 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new FieldCodec<>(name, elementCodec);
     }
 
+    static <F> OptionalFieldCodec<F> optionalField(final String name, final Codec<F> elementCodec) {
+        return new OptionalFieldCodec<>(name, elementCodec);
+    }
+
     default Codec<List<A>> listOf() {
         return list(this);
     }
 
     default FieldCodec<A> fieldOf(final String name) {
         return field(name, this);
+    }
+
+    default OptionalFieldCodec<A> optionalFieldOf(final String name) {
+        return optionalField(name, this);
     }
 
     PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {
