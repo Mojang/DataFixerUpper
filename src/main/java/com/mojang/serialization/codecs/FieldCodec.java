@@ -6,15 +6,13 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.MapDecoder;
-import com.mojang.serialization.MapEncoder;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
 import java.util.Objects;
-import java.util.function.Function;
 
-public class FieldCodec<A> implements MapEncoder<A>, MapDecoder<A>, Codec<A> {
+public class FieldCodec<A> implements MapCodec<A> {
     public static boolean REMOVE_FIELD_WHEN_PARSING = false;
 
     private final String name;
@@ -56,10 +54,6 @@ public class FieldCodec<A> implements MapEncoder<A>, MapDecoder<A>, Codec<A> {
     @Override
     public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
         return prefix.add(name, elementCodec.encodeStart(ops, input));
-    }
-
-    public <O> RecordCodecBuilder<O, A> forGetter(final Function<O, A> getter) {
-        return RecordCodecBuilder.of(getter, this);
     }
 
     @Override
