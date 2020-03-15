@@ -54,7 +54,7 @@ public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
 
     @Override
     public <T> DataResult<Optional<A>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        final T value = input.get(ops.createString(name));
+        final T value = input.get(name);
         if (value == null) {
             return DataResult.success(Optional.empty());
         }

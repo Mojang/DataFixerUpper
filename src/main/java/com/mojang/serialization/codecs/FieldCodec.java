@@ -51,7 +51,7 @@ public class FieldCodec<A> extends MapCodec<A> {
 
     @Override
     public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        final T value = input.get(ops.createString(name));
+        final T value = input.get(name);
         if (value == null) {
             return DataResult.error("No key " + name + " in " + input);
         }

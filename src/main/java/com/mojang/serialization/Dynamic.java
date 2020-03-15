@@ -112,7 +112,7 @@ public class Dynamic<T> extends DynamicLike<T> {
     @Override
     public OptionalDynamic<T> get(final String key) {
         return new OptionalDynamic<>(ops, ops.getMap(value).flatMap(m -> {
-            final T value = m.get(ops.createString(key));
+            final T value = m.get(key);
             if (value == null) {
                 return DataResult.error("key missing: " + key + " in " + this.value);
             }
