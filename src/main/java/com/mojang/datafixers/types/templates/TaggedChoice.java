@@ -186,7 +186,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 @Override
                 public <T> DataResult<Pair<Pair<K, ?>, T>> decode(final DynamicOps<T> ops, final T input) {
                     return ops.getMap(input).flatMap(map -> {
-                        final T value = map.get(ops.createString(name));
+                        final T value = map.get(name);
                         if (value == null) {
                             return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
                         }
