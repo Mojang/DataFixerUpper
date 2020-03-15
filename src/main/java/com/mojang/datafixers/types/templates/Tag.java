@@ -13,18 +13,13 @@ import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 public final class Tag implements TypeTemplate {
     private final String name;
@@ -175,33 +170,7 @@ public final class Tag implements TypeTemplate {
 
         @Override
         protected Codec<A> buildCodec() {
-            return new Codec<A>() {
-                @Override
-                public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                    return ops.getMapValues(input).flatMap(map -> {
-                        final T nameObject = ops.createString(name);
-
-                        final Map<Boolean, List<Pair<T, T>>> partitioned = map.collect(Collectors.partitioningBy(p -> Objects.equals(p.getFirst(), nameObject)));
-                        final List<Pair<T, T>> matched = partitioned.get(true);
-                        final List<Pair<T, T>> rest = partitioned.get(false);
-                        if (matched.isEmpty()) {
-                            return DataResult.error("No keys matched " + name);
-                        }
-                        if (matched.size() != 1) {
-                            return DataResult.error("Too many keys matched " + name + ": " + matched);
-                        }
-
-                        return element.codec().decode(ops, matched.get(0).getSecond()).map(value ->
-                            Pair.of(value.getFirst(), ops.createMap(rest.stream().collect(Pair.toMap())))
-                        );
-                    });
-                }
-
-                @Override
-                public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                    return element.codec().encodeStart(ops, input).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
-                }
-            };
+            return element.codec().fieldOf(name);
         }
 
         @Override

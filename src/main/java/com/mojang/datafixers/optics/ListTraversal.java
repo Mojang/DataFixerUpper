@@ -16,7 +16,7 @@ public final class ListTraversal<A, B> implements Traversal<List<A>, List<B>, A,
         return as -> {
             App<F, ImmutableList.Builder<B>> result = applicative.point(ImmutableList.builder());
             for (final A a : as) {
-                result = applicative.ap2(ImmutableList.Builder::add, result, input.apply(a));
+                result = applicative.ap2(applicative.point(ImmutableList.Builder::add), result, input.apply(a));
             }
             return applicative.map(ImmutableList.Builder::build, result);
         };

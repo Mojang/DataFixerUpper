@@ -7,6 +7,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.CompoundListCodec;
 import com.mojang.serialization.codecs.EitherCodec;
+import com.mojang.serialization.codecs.FieldCodec;
 import com.mojang.serialization.codecs.ListCodec;
 import com.mojang.serialization.codecs.PairCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
@@ -52,6 +53,18 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <K, V> Codec<List<Pair<K, V>>> compoundList(final Codec<K> keyCodec, final Codec<V> elementCodec) {
         return new CompoundListCodec<>(keyCodec, elementCodec);
+    }
+
+    static <F> FieldCodec<F> field(final String name, final Codec<F> elementCodec) {
+        return new FieldCodec<>(name, elementCodec);
+    }
+
+    default Codec<List<A>> listOf() {
+        return list(this);
+    }
+
+    default FieldCodec<A> fieldOf(final String name) {
+        return field(name, this);
     }
 
     PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {

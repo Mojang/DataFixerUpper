@@ -45,7 +45,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.stream.Stream;
 
 public final class TaggedChoice<K> implements TypeTemplate {
     private final String name;
