@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
@@ -14,6 +15,8 @@ import com.mojang.serialization.codecs.PairCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public interface Codec<A> extends Encoder<A>, Decoder<A> {
@@ -60,7 +63,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new FieldCodec<>(name, elementCodec);
     }
 
-    static <F> OptionalFieldCodec<F> optionalField(final String name, final Codec<F> elementCodec) {
+    static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {
         return new OptionalFieldCodec<>(name, elementCodec);
     }
 
@@ -72,8 +75,29 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return field(name, this);
     }
 
-    default OptionalFieldCodec<A> optionalFieldOf(final String name) {
+    default MapCodec<Optional<A>> optionalFieldOf(final String name) {
         return optionalField(name, this);
+    }
+
+    default Codec<A> withDefault(final A value) {
+        final Codec<A> self = this;
+
+        return new Codec<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return DataResult.success(self.decode(ops, input).result().orElseGet(() -> Pair.of(value, input)));
+            }
+
+            @Override
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                return self.encode(input, ops, prefix);
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + self + " " + value + "]";
+            }
+        };
     }
 
     PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {

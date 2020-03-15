@@ -6,17 +6,15 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.MapDecoder;
-import com.mojang.serialization.MapEncoder;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 
 /** Optimization of `Codec.either(someCodec.field(name), Codec.EMPTY)` */
-public class OptionalFieldCodec<A> implements MapEncoder<Optional<A>>, MapDecoder<Optional<A>>, Codec<Optional<A>> {
+public class OptionalFieldCodec<A> implements MapCodec<Optional<A>> {
     private final String name;
     private final Codec<A> elementCodec;
 
@@ -62,10 +60,6 @@ public class OptionalFieldCodec<A> implements MapEncoder<Optional<A>>, MapDecode
             return prefix.add(name, elementCodec.encodeStart(ops, input.get()));
         }
         return prefix;
-    }
-
-    public <O> RecordCodecBuilder<O, Optional<A>> forGetter(final Function<O, Optional<A>> getter) {
-        return RecordCodecBuilder.of(getter, this);
     }
 
     @Override
