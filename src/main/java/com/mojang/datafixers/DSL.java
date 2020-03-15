@@ -430,7 +430,7 @@ public interface DSL {
     }
 
     static Unit unit() {
-        return null;
+        return Unit.INSTANCE;
     }
 
     final class Instances {
