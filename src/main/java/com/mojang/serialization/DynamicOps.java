@@ -95,7 +95,7 @@ public interface DynamicOps<T> {
     DataResult<T> mergeToMap(T map, T key, T value);
 
     default DataResult<T> mergeToMap(final T map, final Map<T, T> values) {
-        return mergeToMap(map, MapLike.forMap(values));
+        return mergeToMap(map, MapLike.forMap(values, this));
     }
 
     default DataResult<T> mergeToMap(final T map, final MapLike<T> values) {
@@ -124,7 +124,7 @@ public interface DynamicOps<T> {
     default DataResult<MapLike<T>> getMap(final T input) {
         return getMapValues(input).flatMap(s -> {
             try {
-                return DataResult.success(MapLike.forMap(s.collect(Pair.toMap())));
+                return DataResult.success(MapLike.forMap(s.collect(Pair.toMap()), this));
             } catch (final IllegalStateException e) {
                 return DataResult.error("Error while building map: " + e.getMessage());
             }
