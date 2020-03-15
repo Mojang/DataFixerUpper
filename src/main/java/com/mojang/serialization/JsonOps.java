@@ -77,6 +77,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
                 return DataResult.success(input.getAsBoolean() ? 1 : 0);
             }
         }
+        if (input.isJsonPrimitive() && input.getAsJsonPrimitive().isBoolean()) {
+            return DataResult.success(input.getAsJsonPrimitive().getAsBoolean() ? 1 : 0);
+        }
         return DataResult.error("Not a number: " + input);
     }
 
@@ -284,10 +287,10 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         @Override
         public ListBuilder<JsonElement> add(final DataResult<JsonElement> value) {
-            builder = builder.flatMap(b -> value.map(element -> {
+            builder = builder.ap2(value, (b, element) -> {
                 b.add(element);
                 return b;
-            }));
+            });
             return this;
         }
 

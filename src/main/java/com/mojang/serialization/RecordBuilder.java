@@ -60,13 +60,13 @@ public interface RecordBuilder<T> {
 
         @Override
         public RecordBuilder<T> add(final T key, final DataResult<T> value) {
-            builder = builder.flatMap(b -> value.map(v -> b.put(key, v)));
+            builder = builder.ap2(value, (b, v) -> b.put(key, v));
             return this;
         }
 
         @Override
         public RecordBuilder<T> add(final DataResult<T> key, final DataResult<T> value) {
-            builder = builder.flatMap(b -> key.flatMap(k -> value.map(v -> b.put(k, v))));
+            builder = builder.ap(key.ap2(value, (k, v) -> b -> b.put(k, v)));
             return this;
         }
 

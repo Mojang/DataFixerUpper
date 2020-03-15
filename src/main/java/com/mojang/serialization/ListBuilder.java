@@ -60,7 +60,7 @@ public interface ListBuilder<T> {
 
         @Override
         public ListBuilder<T> add(final DataResult<T> value) {
-            builder = builder.flatMap(b -> value.map(b::add));
+            builder = builder.ap2(value, ImmutableList.Builder::add);
             return this;
         }
 

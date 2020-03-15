@@ -104,6 +104,27 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         ));
     }
 
+    public <R2> DataResult<R2> ap(final DataResult<Function<R, R2>> functionResult) {
+        return create(result.map(
+            arg -> functionResult.result.mapBoth(
+                func -> func.apply(arg),
+                funcError -> new DynamicException<>(funcError.message, funcError.partialResult.map(f -> f.apply(arg)))
+            ),
+            argError -> Either.right(functionResult.result.map(
+                func -> new DynamicException<>(argError.message, argError.partialResult.map(func)),
+                funcError -> new DynamicException<>(
+                    argError.message + "; " + funcError.message,
+                    argError.partialResult.flatMap(a -> funcError.partialResult.map(f -> f.apply(a)))
+                )
+            ))
+        ));
+    }
+
+    public <R2, S> DataResult<S> ap2(final DataResult<R2> second, final BiFunction<R, R2, S> function) {
+        final Function<R, Function<R2, S>> curried = r -> r2 -> function.apply(r, r2);
+        return second.ap(map(curried));
+    }
+
     public DataResult<R> setPartial(final Supplier<R> partial) {
         return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial.get()))));
     }
@@ -210,14 +231,9 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             return fa -> ap(function, fa);
         }
 
-        /** Argument error before the function */
         @Override
         public <A, R> App<DataResult.Mu, R> ap(final App<DataResult.Mu, Function<A, R>> func, final App<DataResult.Mu, A> arg) {
-            return unbox(arg).flatMap(av ->
-                unbox(func).map(f ->
-                    f.apply(av)
-                )
-            );
+            return unbox(arg).ap(unbox(func));
         }
 
         @Override
@@ -238,13 +254,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
                 );
             }
 
-            return unbox(a).flatMap(av ->
-                unbox(b).flatMap(bv ->
-                    unbox(func).map(f ->
-                        f.apply(av, bv)
-                    )
-                )
-            );
+            return Applicative.super.ap2(func, a, b);
         }
 
         @Override
@@ -268,15 +278,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
                 );
             }
 
-            return dr1.flatMap(r1 ->
-                dr2.flatMap(r2 ->
-                    dr3.flatMap(r3 ->
-                        fr.map(f ->
-                            f.apply(r1, r2, r3)
-                        )
-                    )
-                )
-            );
+            return Applicative.super.ap3(func, t1, t2, t3);
         }
     }
 }

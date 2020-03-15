@@ -52,7 +52,7 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
     }
 
     default <A, R> App<F, R> ap(final Function<A, R> func, final App<F, A> arg) {
-        return ap(point(func), arg);
+        return map(func, arg);
     }
 
     default <A, B, R> App<F, R> ap2(final App<F, BiFunction<A, B, R>> func, final App<F, A> a, final App<F, B> b) {
