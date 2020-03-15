@@ -180,8 +180,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         @Override
         public <T> DataResult<Boolean> read(final DynamicOps<T> ops, final T input) {
             return ops
-                .getNumberValue(input)
-                .map(v -> v.intValue() != 0);
+                .getBooleanValue(input);
         }
 
         @Override
