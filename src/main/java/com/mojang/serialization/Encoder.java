@@ -2,6 +2,9 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.mojang.serialization.codecs.FieldEncoder;
+
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public interface Encoder<A> {
@@ -9,6 +12,20 @@ public interface Encoder<A> {
 
     default <T> DataResult<T> encodeStart(final DynamicOps<T> ops, final A input) {
         return encode(input, ops, ops.empty());
+    }
+
+    default MapEncoder<A> fieldOf(final String name) {
+        return new FieldEncoder<>(name, this);
+    }
+
+    default <B> Encoder<B> comap(final Function<? super B, ? extends A> function) {
+        final Encoder<A> self = this;
+        return new Encoder<B>() {
+            @Override
+            public <T> DataResult<T> encode(final B input, final DynamicOps<T> ops, final T prefix) {
+                return self.encode(function.apply(input), ops, prefix);
+            }
+        };
     }
 
     static <A extends Serializable> Encoder<A> of() {

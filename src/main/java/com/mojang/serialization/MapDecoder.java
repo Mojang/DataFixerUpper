@@ -68,6 +68,45 @@ public interface MapDecoder<A> extends Decoder<A> {
         };
     }
 
+    default <E> MapDecoder<E> ap(final MapDecoder<Function<? super A, ? extends E>> decoder) {
+        final MapDecoder<A> self = this;
+        return new Implementation<E>() {
+            @Override
+            public <T> DataResult<E> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return self.decode(ops, input).flatMap(f ->
+                    decoder.decode(ops, input).map(e -> e.apply(f))
+                );
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return Stream.concat(self.keys(ops), decoder.keys(ops));
+            }
+        };
+    }
+
+    @Override
+    default MapDecoder<A> withDefault(final A value) {
+        final MapDecoder<A> self = this;
+
+        return new Implementation<A>() {
+            @Override
+            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return DataResult.success(self.decode(ops, input).result().orElse(value));
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + self + " " + value + "]";
+            }
+        };
+    }
+
     abstract class Implementation<A> implements MapDecoder<A> {
         private final Map<DynamicOps<?>, MapCompressor<?>> compressors = new Object2ObjectArrayMap<>();
 

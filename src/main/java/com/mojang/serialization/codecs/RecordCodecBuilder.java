@@ -7,12 +7,12 @@ import com.mojang.datafixers.kinds.Applicative;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Function4;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Decoder;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Encoder;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapDecoder;
 import com.mojang.serialization.MapEncoder;
 import com.mojang.serialization.MapLike;
@@ -48,7 +48,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         return of(getter, fieldCodec.fieldOf(name));
     }
 
-    public static <O, F, C extends MapDecoder<F> & MapEncoder<F>> RecordCodecBuilder<O, F> of(final Function<O, F> getter, final C codec) {
+    public static <O, F> RecordCodecBuilder<O, F> of(final Function<O, F> getter, final MapCodec<F> codec) {
         return new RecordCodecBuilder<>(getter, o -> codec, codec);
     }
 
@@ -56,20 +56,43 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         return new RecordCodecBuilder<>(o -> instance, o -> Encoder.empty(), Decoder.unit(instance));
     }
 
-    public static <O> Codec<O> build(final App<RecordCodecBuilder.Mu<O>, O> builder) {
+    public static <O> MapCodec<O> build(final App<RecordCodecBuilder.Mu<O>, O> builder) {
         return build(unbox(builder));
     }
 
-    public static <O> Codec<O> build(final RecordCodecBuilder<O, O> builder) {
-        return new Codec<O>() {
+    public <E> RecordCodecBuilder<O, E> dependent(final Function<O, E> getter, final MapEncoder<E> encoder, final Function<? super F, ? extends MapDecoder<E>> decoderGetter) {
+        return new RecordCodecBuilder<>(
+            getter,
+            o -> encoder,
+            new MapDecoder.Implementation<E>() {
+                @Override
+                public <T> DataResult<E> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                    return decoder.decode(ops, input).map(decoderGetter).flatMap(decoder1 -> decoder1.decode(ops, input).map(Function.identity()));
+                }
+
+                @Override
+                public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                    return encoder.keys(ops);
+                }
+            }
+        );
+    }
+
+    public static <O> MapCodec<O> build(final RecordCodecBuilder<O, O> builder) {
+        return new MapCodec<O>() {
             @Override
-            public <T> DataResult<Pair<O, T>> decode(final DynamicOps<T> ops, final T input) {
+            public <T> DataResult<O> decode(final DynamicOps<T> ops, final MapLike<T> input) {
                 return builder.decoder.decode(ops, input);
             }
 
             @Override
-            public <T> DataResult<T> encode(final O input, final DynamicOps<T> ops, final T prefix) {
+            public <T> RecordBuilder<T> encode(final O input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                 return builder.encoder.apply(input).encode(input, ops, prefix);
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return builder.decoder.keys(ops);
             }
 
             @Override
@@ -113,6 +136,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             public <T> Stream<T> keys(final DynamicOps<T> ops) {
                                 return Stream.concat(aEnc.keys(ops), fEnc.keys(ops));
                             }
+
+                            @Override
+                            public String toString() {
+                                return fEnc + " * " + aEnc;
+                            }
                         };
                     },
 
@@ -129,6 +157,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         @Override
                         public <T> Stream<T> keys(final DynamicOps<T> ops) {
                             return Stream.concat(a.decoder.keys(ops), f.decoder.keys(ops));
+                        }
+
+                        @Override
+                        public String toString() {
+                            return f.decoder + " * " + a.decoder;
                         }
                     }
                 );
@@ -163,6 +196,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         public <T> Stream<T> keys(final DynamicOps<T> ops) {
                             return Stream.concat(aEncoder.keys(ops), Stream.concat(bEncoder.keys(ops), fEncoder.keys(ops)));
                         }
+
+                        @Override
+                        public String toString() {
+                            return fEncoder + " * " + aEncoder + " * " + bEncoder;
+                        }
                     };
                 },
                 new MapDecoder.Implementation<R>() {
@@ -177,6 +215,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     @Override
                     public <T> Stream<T> keys(final DynamicOps<T> ops) {
                         return Stream.concat(fa.decoder.keys(ops), Stream.concat(fb.decoder.keys(ops), function.decoder.keys(ops)));
+                    }
+
+                    @Override
+                    public String toString() {
+                        return function.decoder + " * " + fa.decoder + " * " + fb.decoder;
                     }
                 }
             );
@@ -221,6 +264,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                                 Stream.concat(e3.keys(ops), fEncoder.keys(ops))
                             );
                         }
+
+                        @Override
+                        public String toString() {
+                            return fEncoder + " * " + e1 + " * " + e2 + " * " + e3;
+                        }
                     };
                 },
                 new MapDecoder.Implementation<R>() {
@@ -239,6 +287,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             Stream.concat(f1.decoder.keys(ops), f2.decoder.keys(ops)),
                             Stream.concat(f3.decoder.keys(ops), function.decoder.keys(ops))
                         );
+                    }
+
+                    @Override
+                    public String toString() {
+                        return function.decoder + " * " + f1.decoder + " * " + f2.decoder + " * " + f3.decoder;
                     }
                 }
             );
@@ -291,6 +344,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                                 fEncoder.keys(ops)
                             );
                         }
+
+                        @Override
+                        public String toString() {
+                            return fEncoder + " * " + e1 + " * " + e2 + " * " + e3 + " * " + e4;
+                        }
                     };
                 },
                 new MapDecoder.Implementation<R>() {
@@ -314,6 +372,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                             function.decoder.keys(ops)
                         );
                     }
+
+                    @Override
+                    public String toString() {
+                        return function.decoder + " * " + f1.decoder + " * " + f2.decoder + " * " + f3.decoder + " * " + f4.decoder;
+                    }
                 }
             );
         }
@@ -335,6 +398,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     @Override
                     public <U> Stream<U> keys(final DynamicOps<U> ops) {
                         return encoder.keys(ops);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return encoder + "[mapped]";
                     }
                 },
                 unbox.decoder.map(func)

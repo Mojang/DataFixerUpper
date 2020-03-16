@@ -2,13 +2,11 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
-import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.CompoundListCodec;
 import com.mojang.serialization.codecs.EitherCodec;
-import com.mojang.serialization.codecs.FieldCodec;
 import com.mojang.serialization.codecs.ListCodec;
 import com.mojang.serialization.codecs.OptionalFieldCodec;
 import com.mojang.serialization.codecs.PairCodec;
@@ -59,10 +57,6 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new CompoundListCodec<>(keyCodec, elementCodec);
     }
 
-    static <F> FieldCodec<F> field(final String name, final Codec<F> elementCodec) {
-        return new FieldCodec<>(name, elementCodec);
-    }
-
     static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {
         return new OptionalFieldCodec<>(name, elementCodec);
     }
@@ -71,33 +65,25 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return list(this);
     }
 
-    default FieldCodec<A> fieldOf(final String name) {
-        return field(name, this);
+    default <S> Codec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
+        return Codec.of(comap(from), map(to));
+    }
+
+    @Override
+    default MapCodec<A> fieldOf(final String name) {
+        return MapCodec.of(
+            Encoder.super.fieldOf(name),
+            Decoder.super.fieldOf(name)
+        );
     }
 
     default MapCodec<Optional<A>> optionalFieldOf(final String name) {
         return optionalField(name, this);
     }
 
+    @Override
     default Codec<A> withDefault(final A value) {
-        final Codec<A> self = this;
-
-        return new Codec<A>() {
-            @Override
-            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return DataResult.success(self.decode(ops, input).result().orElseGet(() -> Pair.of(value, input)));
-            }
-
-            @Override
-            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return self.encode(input, ops, prefix);
-            }
-
-            @Override
-            public String toString() {
-                return "WithDefault[" + self + " " + value + "]";
-            }
-        };
+        return Codec.of(this, Decoder.super.withDefault(value));
     }
 
     PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {

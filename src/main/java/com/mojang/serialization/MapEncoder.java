@@ -4,9 +4,9 @@ package com.mojang.serialization;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -24,6 +24,22 @@ public interface MapEncoder<A> extends Encoder<A> {
     <T> Stream<T> keys(final DynamicOps<T> ops);
 
     <T> MapCompressor<T> compressor(final DynamicOps<T> ops);
+
+    @Override
+    default <B> MapEncoder<B> comap(final Function<? super B, ? extends A> function) {
+        final MapEncoder<A> self = this;
+        return new MapEncoder.Implementation<B>() {
+            @Override
+            public <T> RecordBuilder<T> encode(final B input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                return self.encode(function.apply(input), ops, prefix);
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
+            }
+        };
+    }
 
     @Override
     default <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
