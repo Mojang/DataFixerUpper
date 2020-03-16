@@ -19,7 +19,7 @@ public final class MapCompressor<T> {
     private final int size;
 
     public MapCompressor(final DynamicOps<T> ops, final Stream<T> keyStream) {
-        final List<String> keys = keyStream.map(k -> ops.getStringValue(k).result().get()).sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+        final List<String> keys = keyStream.map(k -> ops.getStringValue(k).result().get()).distinct().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
 
         for (int i = 0; i < keys.size(); i++) {
             final String string = keys.get(i);

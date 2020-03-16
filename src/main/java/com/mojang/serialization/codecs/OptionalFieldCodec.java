@@ -31,7 +31,7 @@ public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
         }
         return ops.getMap(input).flatMap(map -> decode(ops, map).map(r -> {
             final T output;
-            if (FieldCodec.REMOVE_FIELD_WHEN_PARSING) {
+            if (FieldDecoder.REMOVE_FIELD_WHEN_PARSING) {
                 final T nameObject = ops.createString(name);
                 output = ops.createMap(map.entries().filter(e -> !Objects.equals(e.getFirst(), nameObject)));
             } else {

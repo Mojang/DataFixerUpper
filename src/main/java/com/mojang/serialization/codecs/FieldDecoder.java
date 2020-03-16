@@ -3,23 +3,22 @@
 package com.mojang.serialization.codecs;
 
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Decoder;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.MapDecoder;
 import com.mojang.serialization.MapLike;
-import com.mojang.serialization.RecordBuilder;
 
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class FieldCodec<A> extends MapCodec<A> {
+public class FieldDecoder<A> extends MapDecoder.Implementation<A> {
     public static boolean REMOVE_FIELD_WHEN_PARSING = false;
 
-    private final String name;
-    private final Codec<A> elementCodec;
+    protected final String name;
+    private final Decoder<A> elementCodec;
 
-    public FieldCodec(final String name, final Codec<A> elementCodec) {
+    public FieldDecoder(final String name, final Decoder<A> elementCodec) {
         this.name = name;
         this.elementCodec = elementCodec;
     }
@@ -42,25 +41,12 @@ public class FieldCodec<A> extends MapCodec<A> {
     }
 
     @Override
-    public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-        if (ops.compressMaps()) {
-            return super.encode(input, ops, prefix);
-        }
-        return elementCodec.encodeStart(ops, input).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
-    }
-
-    @Override
     public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
         final T value = input.get(name);
         if (value == null) {
             return DataResult.error("No key " + name + " in " + input);
         }
         return elementCodec.parse(ops, value);
-    }
-
-    @Override
-    public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-        return prefix.add(name, elementCodec.encodeStart(ops, input));
     }
 
     @Override
@@ -76,7 +62,7 @@ public class FieldCodec<A> extends MapCodec<A> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final FieldCodec<?> that = (FieldCodec<?>) o;
+        final FieldDecoder<?> that = (FieldDecoder<?>) o;
         return Objects.equals(name, that.name) && Objects.equals(elementCodec, that.elementCodec);
     }
 
@@ -87,6 +73,6 @@ public class FieldCodec<A> extends MapCodec<A> {
 
     @Override
     public String toString() {
-        return "FieldCodec[" + name + ": " + elementCodec + ']';
+        return "FieldDecoder[" + name + ": " + elementCodec + ']';
     }
 }

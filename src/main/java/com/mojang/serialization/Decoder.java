@@ -3,6 +3,7 @@
 package com.mojang.serialization;
 
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.codecs.FieldDecoder;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -34,6 +35,26 @@ public interface Decoder<A> {
 
     default Simple<A> simple() {
         return this::parse;
+    }
+
+    default MapDecoder<A> fieldOf(final String name) {
+        return new FieldDecoder<>(name, this);
+    }
+
+    default Decoder<A> withDefault(final A value) {
+        final Decoder<A> self = this;
+
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return DataResult.success(self.decode(ops, input).result().orElseGet(() -> Pair.of(value, input)));
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + self + " " + value + "]";
+            }
+        };
     }
 
     default <B> Decoder<B> map(final Function<? super A, ? extends B> function) {
