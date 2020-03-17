@@ -65,6 +65,11 @@ public interface MapDecoder<A> extends Decoder<A> {
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
                 return self.keys(ops);
             }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[mapped]";
+            }
         };
     }
 
@@ -81,6 +86,11 @@ public interface MapDecoder<A> extends Decoder<A> {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
                 return Stream.concat(self.keys(ops), decoder.keys(ops));
+            }
+
+            @Override
+            public String toString() {
+                return decoder.toString() + " * " + self.toString();
             }
         };
     }
