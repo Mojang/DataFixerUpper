@@ -4,11 +4,10 @@ package com.mojang.serialization;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public interface MapEncoder<A> extends Encoder<A> {
@@ -16,7 +15,7 @@ public interface MapEncoder<A> extends Encoder<A> {
 
     default <T> RecordBuilder<T> compressedBuilder(final DynamicOps<T> ops) {
         if (ops.compressMaps()) {
-            return new MapCodec.CompressedRecordBuilder<>(compressor(ops), ops);
+            return makeCompressedBuilder(ops, compressor(ops));
         }
         return ops.mapBuilder();
     }
@@ -61,76 +60,39 @@ public interface MapEncoder<A> extends Encoder<A> {
         }
     }
 
-    class CompressedRecordBuilder<T> implements RecordBuilder<T> {
-        private final MapCompressor<T> compressor;
-        private final DynamicOps<T> ops;
-        private DataResult<List<T>> builder;
+    static <T> RecordBuilder<T> makeCompressedBuilder(final DynamicOps<T> ops, final MapCompressor<T> compressor) {
+        class CompressedRecordBuilder extends RecordBuilder.AbstractBuilder<T, List<T>> {
+            private CompressedRecordBuilder() {
+                super(ops);
+            }
 
-        public CompressedRecordBuilder(final MapCompressor<T> compressor, final DynamicOps<T> ops) {
-            this.compressor = compressor;
-            this.ops = ops;
-            resetBuilder(compressor);
+            @Override
+            protected List<T> initBuilder() {
+                final ArrayList<T> list = new ArrayList<>(compressor.size());
+                for (int i = 0; i < compressor.size(); i++) {
+                    list.add(null);
+                }
+                return list;
+            }
+
+            @Override
+            protected List<T> append(final T key, final T value, final List<T> builder) {
+                builder.set(compressor.compress(key), value);
+                return builder;
+            }
+
+            @Override
+            protected List<T> append(final String key, final T value, final List<T> builder) {
+                builder.set(compressor.compress(key), value);
+                return builder;
+            }
+
+            @Override
+            protected DataResult<T> build(final List<T> builder, final T prefix) {
+                return ops().mergeToList(prefix, builder);
+            }
         }
 
-        @Override
-        public DynamicOps<T> ops() {
-            return ops;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final String key, final T value) {
-            builder = builder.map(b -> {
-                b.set(compressor.compress(key), value);
-                return b;
-            });
-            return this;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final String key, final DataResult<T> value) {
-            builder = builder.ap2(value, (b, v) -> {
-                b.set(compressor.compress(key), v);
-                return b;
-            });
-            return this;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final T key, final T value) {
-            builder = builder.map(b -> {
-                b.set(compressor.compress(key), value);
-                return b;
-            });
-            return this;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final T key, final DataResult<T> value) {
-            builder = builder.ap2(value, (b, v) -> {
-                b.set(compressor.compress(key), v);
-                return b;
-            });
-            return this;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final DataResult<T> key, final DataResult<T> value) {
-            builder = builder.ap(key.ap2(value, (k, v) -> b -> {
-                b.set(compressor.compress(k), v);
-                return b;
-            }));
-            return this;
-        }
-
-        @Override
-        public DataResult<T> build(final T prefix) {
-            final DataResult<T> result = builder.flatMap(l -> ops.mergeToList(prefix, l));
-            resetBuilder(compressor);
-            return result;
-        }
-
-        private void resetBuilder(final MapCompressor<T> compressor) {
-            builder = DataResult.success(IntStream.range(0, compressor.size()).<T>mapToObj(i -> null).collect(Collectors.toList()));
-        }
+        return new CompressedRecordBuilder();
     }
 }
