@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -119,6 +121,10 @@ public interface DynamicOps<T> {
 
     DataResult<Stream<Pair<T, T>>> getMapValues(T input);
 
+    default DataResult<Consumer<BiConsumer<T, T>>> getMapEntries(final T input) {
+        return getMapValues(input).map(s -> c -> s.forEach(p -> c.accept(p.getFirst(), p.getSecond())));
+    }
+
     T createMap(Stream<Pair<T, T>> map);
 
     default DataResult<MapLike<T>> getMap(final T input) {
@@ -136,6 +142,10 @@ public interface DynamicOps<T> {
     }
 
     DataResult<Stream<T>> getStream(T input);
+
+    default DataResult<Consumer<Consumer<T>>> getList(final T input) {
+        return getStream(input).map(s -> s::forEach);
+    }
 
     T createList(Stream<T> input);
 
@@ -242,7 +252,7 @@ public interface DynamicOps<T> {
     }
 
     default RecordBuilder<T> mapBuilder() {
-        return new RecordBuilder.Builder<>(this);
+        return new RecordBuilder.MapBuilder<>(this);
     }
 
     default <K, V> DataResult<T> map(final Map<K, V> map, final T prefix, final Function<? super K, ? extends DataResult<T>> keySerializer, final Function<? super V, ? extends DataResult<T>> elementSerializer) {

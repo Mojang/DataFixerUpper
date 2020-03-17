@@ -7,8 +7,8 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.ListBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,26 +22,22 @@ public final class ListCodec<A> implements Codec<List<A>> {
 
     @Override
     public <T> DataResult<T> encode(final List<A> input, final DynamicOps<T> ops, final T prefix) {
-        final java.util.List<T> list = new ArrayList<>(input.size());
-        DataResult<java.util.List<T>> result = DataResult.success(list);
+        final ListBuilder<T> builder = ops.listBuilder();
 
         for (final A a : input) {
-            result = result.ap2(elementCodec.encode(a, ops, ops.empty()), (l, e) -> {
-                l.add(e);
-                return l;
-            });
+            builder.add(elementCodec.encodeStart(ops, a));
         }
 
-        return result.flatMap(l -> ops.mergeToList(prefix, l));
+        return builder.build(prefix);
     }
 
     @Override
     public <T> DataResult<Pair<List<A>, T>> decode(final DynamicOps<T> ops, final T input) {
-        return ops.getStream(input).flatMap(stream -> {
+        return ops.getList(input).flatMap(stream -> {
             final AtomicReference<DataResult<Pair<ImmutableList.Builder<A>, ImmutableList.Builder<T>>>> result =
                 new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableList.builder())));
 
-            stream.forEach(t ->
+            stream.accept(t ->
                 result.set(result.get().flatMap(pair -> {
                     final DataResult<Pair<A, T>> read = elementCodec.decode(ops, t);
 

@@ -4,14 +4,13 @@ package com.mojang.serialization.codecs;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.RecordBuilder;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -26,53 +25,34 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
 
     @Override
     public <T> DataResult<Pair<List<Pair<K, V>>, T>> decode(final DynamicOps<T> ops, final T input) {
-        return ops.getMapValues(input).flatMap(map -> {
-            final AtomicReference<DataResult<Pair<ImmutableList.Builder<Pair<K, V>>, ImmutableMap.Builder<T, T>>>> result =
-                new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableMap.builder())));
+        return ops.getMapEntries(input).flatMap(map -> {
+            final AtomicReference<DataResult<ImmutableList.Builder<Pair<K, V>>>> result = new AtomicReference<>(DataResult.success(ImmutableList.builder()));
+            final ImmutableMap.Builder<T, T> errors = ImmutableMap.builder();
 
-            map.forEach(entry -> {
-                result.set(result.get().flatMap(pair -> {
-                    final DataResult<Pair<K, V>> readEntry = keyCodec.parse(ops, entry.getFirst()).flatMap(keyValue ->
-                        elementCodec.parse(ops, entry.getSecond()).map(elementValue ->
-                            Pair.of(keyValue, elementValue)
-                        )
-                    );
-                    readEntry.error().ifPresent(e -> {
-                        pair.getSecond().put(entry.getFirst(), entry.getSecond());
-                    });
-                    return readEntry.map(r -> {
-                        pair.getFirst().add(r);
-                        return pair;
-                    });
-                }));
+            map.accept((key, value) -> {
+                final DataResult<K> k = keyCodec.parse(ops, key);
+                final DataResult<V> v = elementCodec.parse(ops, value);
+
+                final DataResult<Pair<K, V>> readEntry = k.ap2(v, Pair::new);
+
+                readEntry.error().ifPresent(e -> errors.put(key, value));
+
+                result.set(result.get().ap2(readEntry, ImmutableList.Builder::add));
             });
 
-            return result.get().map(pair -> Pair.of(pair.getFirst().build(), ops.createMap(pair.getSecond().build())));
+            return result.get().map(builder -> Pair.of(builder.build(), ops.createMap(errors.build())));
         });
     }
 
     @Override
     public <T> DataResult<T> encode(final List<Pair<K, V>> input, final DynamicOps<T> ops, final T prefix) {
-        final Map<T, T> map = Maps.newHashMap();
-
-        DataResult<Map<T, T>> result = DataResult.success(map);
+        final RecordBuilder<T> builder = ops.mapBuilder();
 
         for (final Pair<K, V> pair : input) {
-            result = result.flatMap(m -> {
-                final DataResult<T> element = elementCodec.encodeStart(ops, pair.getSecond());
-                final DataResult<Pair<T, T>> entry = element.flatMap(e -> keyCodec.encodeStart(ops, pair.getFirst()).map(k -> Pair.of(k, e)));
-                return entry.flatMap(e -> {
-                    final T key = e.getFirst();
-                    if (m.containsKey(key)) {
-                        return DataResult.error("Duplicate key: " + key, m);
-                    }
-                    m.put(key, e.getSecond());
-                    return DataResult.success(m);
-                });
-            });
+            builder.add(keyCodec.encodeStart(ops, pair.getFirst()), elementCodec.encodeStart(ops, pair.getSecond()));
         }
 
-        return result.flatMap(m -> ops.mergeToMap(prefix, m));
+        return builder.build(prefix);
     }
 
 

@@ -13,7 +13,10 @@ import com.mojang.datafixers.util.Pair;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -118,8 +121,10 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
     @Override
     public DataResult<String> getStringValue(final JsonElement input) {
-        if (input.isJsonPrimitive() && input.getAsJsonPrimitive().isString()) {
-            return DataResult.success(input.getAsString());
+        if (input.isJsonPrimitive()) {
+            if (input.getAsJsonPrimitive().isString() || input.getAsJsonPrimitive().isNumber() && compressed) {
+                return DataResult.success(input.getAsString());
+            }
         }
         return DataResult.error("Not a string: " + input);
     }
@@ -213,6 +218,18 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
+    public DataResult<Consumer<BiConsumer<JsonElement, JsonElement>>> getMapEntries(final JsonElement input) {
+        if (!input.isJsonObject()) {
+            return DataResult.error("Not a JSON object: " + input);
+        }
+        return DataResult.success(c -> {
+            for (final Map.Entry<String, JsonElement> entry : input.getAsJsonObject().entrySet()) {
+                c.accept(createString(entry.getKey()), entry.getValue());
+            }
+        });
+    }
+
+    @Override
     public DataResult<MapLike<JsonElement>> getMap(final JsonElement input) {
         if (!input.isJsonObject()) {
             return DataResult.error("Not a JSON object: " + input);
@@ -254,6 +271,18 @@ public class JsonOps implements DynamicOps<JsonElement> {
     public DataResult<Stream<JsonElement>> getStream(final JsonElement input) {
         if (input.isJsonArray()) {
             return DataResult.success(StreamSupport.stream(input.getAsJsonArray().spliterator(), false));
+        }
+        return DataResult.error("Not a json array: " + input);
+    }
+
+    @Override
+    public DataResult<Consumer<Consumer<JsonElement>>> getList(final JsonElement input) {
+        if (input.isJsonArray()) {
+            return DataResult.success(c -> {
+                for (final JsonElement element : input.getAsJsonArray()) {
+                    c.accept(element);
+                }
+            });
         }
         return DataResult.error("Not a json array: " + input);
     }
@@ -334,5 +363,45 @@ public class JsonOps implements DynamicOps<JsonElement> {
     @Override
     public boolean compressMaps() {
         return compressed;
+    }
+
+    @Override
+    public RecordBuilder<JsonElement> mapBuilder() {
+        return new JsonRecordBuilder();
+    }
+
+    private class JsonRecordBuilder extends RecordBuilder.AbstractStringBuilder<JsonElement, JsonObject> {
+        protected JsonRecordBuilder() {
+            super(JsonOps.this);
+        }
+
+        @Override
+        protected JsonObject initBuilder() {
+            return new JsonObject();
+        }
+
+        @Override
+        protected JsonObject append(final String key, final JsonElement value, final JsonObject builder) {
+            builder.add(key, value);
+            return builder;
+        }
+
+        @Override
+        protected DataResult<JsonElement> build(final JsonObject builder, final JsonElement prefix) {
+            if (prefix == null || prefix.isJsonNull()) {
+                return DataResult.success(builder);
+            }
+            if (prefix.isJsonObject()) {
+                final JsonObject result = new JsonObject();
+                for (final Map.Entry<String, JsonElement> entry : prefix.getAsJsonObject().entrySet()) {
+                    result.add(entry.getKey(), entry.getValue());
+                }
+                for (final Map.Entry<String, JsonElement> entry : builder.entrySet()) {
+                    result.add(entry.getKey(), entry.getValue());
+                }
+                return DataResult.success(result);
+            }
+            return DataResult.error("mergeToMap called with not a map: " + prefix, prefix);
+        }
     }
 }

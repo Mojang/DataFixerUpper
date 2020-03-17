@@ -6,10 +6,10 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -20,7 +20,11 @@ public interface MapDecoder<A> extends Decoder<A> {
         if (ops.compressMaps()) {
             return decode(ops, new MapLike<T>() {
                 private final MapCompressor<T> compressor = compressor(ops);
-                private final List<T> entries = ops.getStream(input).result().get().collect(Collectors.toList());
+                private final List<T> entries = new ArrayList<>();
+
+                {
+                    ops.getList(input).result().get().accept(entries::add);
+                }
 
                 @Nullable
                 @Override

@@ -211,10 +211,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                 new MapDecoder.Implementation<R>() {
                     @Override
                     public <T> DataResult<R> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                        return DataResult.unbox(DataResult.instance().group(
+                        return DataResult.unbox(DataResult.instance().ap2(
+                            function.decoder.decode(ops, input),
                             fa.decoder.decode(ops, input),
                             fb.decoder.decode(ops, input)
-                        ).apply(function.decoder.decode(ops, input)));
+                        ));
                     }
 
                     @Override
@@ -279,11 +280,12 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                 new MapDecoder.Implementation<R>() {
                     @Override
                     public <T> DataResult<R> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                        return DataResult.unbox(DataResult.instance().group(
+                        return DataResult.unbox(DataResult.instance().ap3(
+                            function.decoder.decode(ops, input),
                             f1.decoder.decode(ops, input),
                             f2.decoder.decode(ops, input),
                             f3.decoder.decode(ops, input)
-                        ).apply(function.decoder.decode(ops, input)));
+                        ));
                     }
 
                     @Override
@@ -359,12 +361,13 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                 new MapDecoder.Implementation<R>() {
                     @Override
                     public <T> DataResult<R> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                        return DataResult.unbox(DataResult.instance().group(
+                        return DataResult.unbox(DataResult.instance().ap4(
+                            function.decoder.decode(ops, input),
                             f1.decoder.decode(ops, input),
                             f2.decoder.decode(ops, input),
                             f3.decoder.decode(ops, input),
                             f4.decoder.decode(ops, input)
-                        ).apply(function.decoder.decode(ops, input)));
+                        ));
                     }
 
                     @Override
