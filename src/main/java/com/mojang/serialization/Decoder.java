@@ -64,6 +64,11 @@ public interface Decoder<A> {
             public <T> DataResult<Pair<B, T>> decode(final DynamicOps<T> ops, final T input) {
                 return self.decode(ops, input).map(p -> p.mapFirst(function));
             }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[mapped]";
+            }
         };
     }
 

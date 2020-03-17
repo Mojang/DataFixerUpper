@@ -25,6 +25,11 @@ public interface Encoder<A> {
             public <T> DataResult<T> encode(final B input, final DynamicOps<T> ops, final T prefix) {
                 return self.encode(function.apply(input), ops, prefix);
             }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[comapped]";
+            }
         };
     }
 

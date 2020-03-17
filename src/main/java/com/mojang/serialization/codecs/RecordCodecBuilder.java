@@ -74,6 +74,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                 public <T> Stream<T> keys(final DynamicOps<T> ops) {
                     return encoder.keys(ops);
                 }
+
+                @Override
+                public String toString() {
+                    return "Dependent[" + encoder + "]";
+                }
             }
         );
     }

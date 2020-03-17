@@ -23,6 +23,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     static <A> Codec<A> of(final Encoder<A> encoder, final Decoder<A> decoder) {
+        return of(encoder, decoder, "Codec[" + encoder + " " + decoder + "]");
+    }
+
+    static <A> Codec<A> of(final Encoder<A> encoder, final Decoder<A> decoder, final String name) {
         return new Codec<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
@@ -36,7 +40,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return "Codec[" + encoder + " " + decoder + "]";
+                return name;
             }
         };
     }
@@ -66,14 +70,15 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default <S> Codec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
-        return Codec.of(comap(from), map(to));
+        return Codec.of(comap(from), map(to), toString() + "[xmapped]");
     }
 
     @Override
     default MapCodec<A> fieldOf(final String name) {
         return MapCodec.of(
             Encoder.super.fieldOf(name),
-            Decoder.super.fieldOf(name)
+            Decoder.super.fieldOf(name),
+            "Field[" + name + ": " + toString() + "]"
         );
     }
 

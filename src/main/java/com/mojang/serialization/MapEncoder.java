@@ -38,6 +38,11 @@ public interface MapEncoder<A> extends Encoder<A> {
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
                 return self.keys(ops);
             }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[comapped]";
+            }
         };
     }
 
