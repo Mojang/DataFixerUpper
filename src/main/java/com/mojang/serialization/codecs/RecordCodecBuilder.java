@@ -56,8 +56,8 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         return new RecordCodecBuilder<>(o -> instance, o -> Encoder.empty(), Decoder.unit(instance));
     }
 
-    public static <O> MapCodec<O> build(final App<RecordCodecBuilder.Mu<O>, O> builder) {
-        return build(unbox(builder));
+    public static <O> MapCodec<O> create(final Function<Instance<O>, ? extends App<RecordCodecBuilder.Mu<O>, O>> builder) {
+        return build(builder.apply(instance()));
     }
 
     public <E> RecordCodecBuilder<O, E> dependent(final Function<O, E> getter, final MapEncoder<E> encoder, final Function<? super F, ? extends MapDecoder<E>> decoderGetter) {
@@ -83,7 +83,8 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         );
     }
 
-    public static <O> MapCodec<O> build(final RecordCodecBuilder<O, O> builder) {
+    public static <O> MapCodec<O> build(final App<RecordCodecBuilder.Mu<O>, O> builderBox) {
+        final RecordCodecBuilder<O, O> builder = unbox(builderBox);
         return new MapCodec<O>() {
             @Override
             public <T> DataResult<O> decode(final DynamicOps<T> ops, final MapLike<T> input) {
