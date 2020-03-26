@@ -12,10 +12,13 @@ import com.mojang.serialization.codecs.OptionalFieldCodec;
 import com.mojang.serialization.codecs.PairCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public interface Codec<A> extends Encoder<A>, Decoder<A> {
     static <A extends Serializable> Codec<A> of(final Decoder<A> decoder) {
@@ -238,6 +241,60 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         @Override
         public String toString() {
             return "Double";
+        }
+    };
+
+    PrimitiveCodec<ByteBuffer> BYTE_BUFFER = new PrimitiveCodec<ByteBuffer>() {
+        @Override
+        public <T> DataResult<ByteBuffer> read(final DynamicOps<T> ops, final T input) {
+            return ops
+                    .getByteBuffer(input);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final ByteBuffer value) {
+            return ops.createByteList(value);
+        }
+
+        @Override
+        public String toString() {
+            return "ByteBuffer";
+        }
+    };
+
+    PrimitiveCodec<IntStream> INT_STREAM = new PrimitiveCodec<IntStream>() {
+        @Override
+        public <T> DataResult<IntStream> read(final DynamicOps<T> ops, final T input) {
+            return ops
+                    .getIntStream(input);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final IntStream value) {
+            return ops.createIntList(value);
+        }
+
+        @Override
+        public String toString() {
+            return "IntStream";
+        }
+    };
+
+    PrimitiveCodec<LongStream> LONG_STREAM = new PrimitiveCodec<LongStream>() {
+        @Override
+        public <T> DataResult<LongStream> read(final DynamicOps<T> ops, final T input) {
+            return ops
+                    .getLongStream(input);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final LongStream value) {
+            return ops.createLongList(value);
+        }
+
+        @Override
+        public String toString() {
+            return "LongStream";
         }
     };
 
