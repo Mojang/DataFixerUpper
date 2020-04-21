@@ -43,10 +43,10 @@ public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
 
     @Override
     public <T> DataResult<T> encode(final Optional<A> input, final DynamicOps<T> ops, final T prefix) {
-        if (ops.compressMaps()) {
-            return super.encode(input, ops, prefix);
-        }
         if (input.isPresent()) {
+            if (ops.compressMaps()) {
+                return super.encode(input, ops, prefix);
+            }
             return elementCodec.encodeStart(ops, input.get()).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
         }
         return DataResult.success(prefix);

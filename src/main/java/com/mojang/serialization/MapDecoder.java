@@ -9,6 +9,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -18,14 +20,17 @@ public interface MapDecoder<A> extends Decoder<A> {
 
     default <T> DataResult<A> compressedDecode(final DynamicOps<T> ops, final T input) {
         if (ops.compressMaps()) {
-            return decode(ops, new MapLike<T>() {
-                private final MapCompressor<T> compressor = compressor(ops);
-                private final List<T> entries = new ArrayList<>();
+            final Optional<Consumer<Consumer<T>>> inputList = ops.getList(input).result();
 
-                {
-                    ops.getList(input).result().get().accept(entries::add);
-                }
+            if (!inputList.isPresent()) {
+                return DataResult.error("Input is not a list");
+            }
 
+            final MapCompressor<T> compressor = compressor(ops);
+            final List<T> entries = new ArrayList<>();
+            inputList.get().accept(entries::add);
+
+            final MapLike<T> map = new MapLike<T>() {
                 @Nullable
                 @Override
                 public T get(final T key) {
@@ -42,7 +47,8 @@ public interface MapDecoder<A> extends Decoder<A> {
                 public Stream<Pair<T, T>> entries() {
                     return IntStream.range(0, entries.size()).mapToObj(i -> Pair.of(compressor.decompress(i), entries.get(i)));
                 }
-            });
+            };
+            return decode(ops, map);
         }
         return ops.getMap(input).flatMap(map -> decode(ops, map));
     }
