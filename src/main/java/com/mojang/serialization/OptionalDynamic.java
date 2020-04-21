@@ -20,6 +20,10 @@ public final class OptionalDynamic<T> extends DynamicLike<T> {
         this.delegate = delegate;
     }
 
+    public DataResult<Dynamic<T>> get() {
+        return delegate;
+    }
+
     public Optional<Dynamic<T>> result() {
         return delegate.result();
     }
