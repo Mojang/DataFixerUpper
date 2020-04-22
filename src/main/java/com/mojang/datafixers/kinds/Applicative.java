@@ -507,4 +507,332 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
             return instance.ap8(function, t1, t2, t3, t4, t5, t6, t7, t8);
         }
     }
+
+    final class P9<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+
+        private P9(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+        }
+
+        public <R> App<F, R> apply(final Function9<T1, T2, T3, T4, T5, T6, T7, T8, T9, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function9<T1, T2, T3, T4, T5, T6, T7, T8, T9, R>> function) {
+            return instance.ap9(function, t1, t2, t3, t4, t5, t6, t7, t8, t9);
+        }
+    }
+
+    final class P10<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+        private final App<F, T10> t10;
+
+        private P10(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9, final App<F, T10> t10) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+            this.t10 = t10;
+        }
+
+        public <R> App<F, R> apply(final Function10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R>> function) {
+            return instance.ap10(function, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+        }
+    }
+
+    final class P11<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+        private final App<F, T10> t10;
+        private final App<F, T11> t11;
+
+        private P11(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9, final App<F, T10> t10, final App<F, T11> t11) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+            this.t10 = t10;
+            this.t11 = t11;
+        }
+
+        public <R> App<F, R> apply(final Function11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, R>> function) {
+            return instance.ap11(function, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11);
+        }
+    }
+
+    final class P12<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+        private final App<F, T10> t10;
+        private final App<F, T11> t11;
+        private final App<F, T12> t12;
+
+        private P12(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9, final App<F, T10> t10, final App<F, T11> t11, final App<F, T12> t12) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+            this.t10 = t10;
+            this.t11 = t11;
+            this.t12 = t12;
+        }
+
+        public <R> App<F, R> apply(final Function12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, R>> function) {
+            return instance.ap12(function, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12);
+        }
+    }
+
+    final class P13<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+        private final App<F, T10> t10;
+        private final App<F, T11> t11;
+        private final App<F, T12> t12;
+        private final App<F, T13> t13;
+
+        private P13(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9, final App<F, T10> t10, final App<F, T11> t11, final App<F, T12> t12, final App<F, T13> t13) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+            this.t10 = t10;
+            this.t11 = t11;
+            this.t12 = t12;
+            this.t13 = t13;
+        }
+
+        public <R> App<F, R> apply(final Function13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, R>> function) {
+            return instance.ap13(function, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13);
+        }
+    }
+
+    final class P14<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+        private final App<F, T10> t10;
+        private final App<F, T11> t11;
+        private final App<F, T12> t12;
+        private final App<F, T13> t13;
+        private final App<F, T14> t14;
+
+        private P14(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9, final App<F, T10> t10, final App<F, T11> t11, final App<F, T12> t12, final App<F, T13> t13, final App<F, T14> t14) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+            this.t10 = t10;
+            this.t11 = t11;
+            this.t12 = t12;
+            this.t13 = t13;
+            this.t14 = t14;
+        }
+
+        public <R> App<F, R> apply(final Function14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, R>> function) {
+            return instance.ap14(function, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14);
+        }
+    }
+
+    final class P15<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+        private final App<F, T10> t10;
+        private final App<F, T11> t11;
+        private final App<F, T12> t12;
+        private final App<F, T13> t13;
+        private final App<F, T14> t14;
+        private final App<F, T15> t15;
+
+        private P15(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9, final App<F, T10> t10, final App<F, T11> t11, final App<F, T12> t12, final App<F, T13> t13, final App<F, T14> t14, final App<F, T15> t15) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+            this.t10 = t10;
+            this.t11 = t11;
+            this.t12 = t12;
+            this.t13 = t13;
+            this.t14 = t14;
+            this.t15 = t15;
+        }
+
+        public <R> App<F, R> apply(final Function15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, R>> function) {
+            return instance.ap15(function, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15);
+        }
+    }
+
+    final class P16<F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> {
+        private final Applicative<F, ?> instance;
+        private final App<F, T1> t1;
+        private final App<F, T2> t2;
+        private final App<F, T3> t3;
+        private final App<F, T4> t4;
+        private final App<F, T5> t5;
+        private final App<F, T6> t6;
+        private final App<F, T7> t7;
+        private final App<F, T8> t8;
+        private final App<F, T9> t9;
+        private final App<F, T10> t10;
+        private final App<F, T11> t11;
+        private final App<F, T12> t12;
+        private final App<F, T13> t13;
+        private final App<F, T14> t14;
+        private final App<F, T15> t15;
+        private final App<F, T16> t16;
+
+        private P16(final Applicative<F, ?> instance, final App<F, T1> t1, final App<F, T2> t2, final App<F, T3> t3, final App<F, T4> t4, final App<F, T5> t5, final App<F, T6> t6, final App<F, T7> t7, final App<F, T8> t8, final App<F, T9> t9, final App<F, T10> t10, final App<F, T11> t11, final App<F, T12> t12, final App<F, T13> t13, final App<F, T14> t14, final App<F, T15> t15, final App<F, T16> t16) {
+            this.instance = instance;
+            this.t1 = t1;
+            this.t2 = t2;
+            this.t3 = t3;
+            this.t4 = t4;
+            this.t5 = t5;
+            this.t6 = t6;
+            this.t7 = t7;
+            this.t8 = t8;
+            this.t9 = t9;
+            this.t10 = t10;
+            this.t11 = t11;
+            this.t12 = t12;
+            this.t13 = t13;
+            this.t14 = t14;
+            this.t15 = t15;
+            this.t16 = t16;
+        }
+
+        public <R> App<F, R> apply(final Function16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, R> function) {
+            return apply(instance.point(function));
+        }
+
+        public <R> App<F, R> apply(final App<F, Function16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, R>> function) {
+            return instance.ap16(function, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16);
+        }
+    }
 }
