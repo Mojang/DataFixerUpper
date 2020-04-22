@@ -157,6 +157,30 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
             return new P2<>(instance, t1, t2);
         }
 
+        public <T2, T3> P3<F, T1, T2, T3> and(final P2<F, T2, T3> p) {
+            return new P3<>(instance, t1, p.t1, p.t2);
+        }
+
+        public <T2, T3, T4> P4<F, T1, T2, T3, T4> and(final P3<F, T2, T3, T4> p) {
+            return new P4<>(instance, t1, p.t1, p.t2, p.t3);
+        }
+
+        public <T2, T3, T4, T5> P5<F, T1, T2, T3, T4, T5> and(final P4<F, T2, T3, T4, T5> p) {
+            return new P5<>(instance, t1, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T2, T3, T4, T5, T6> P6<F, T1, T2, T3, T4, T5, T6> and(final P5<F, T2, T3, T4, T5, T6> p) {
+            return new P6<>(instance, t1, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T2, T3, T4, T5, T6, T7> P7<F, T1, T2, T3, T4, T5, T6, T7> and(final P6<F, T2, T3, T4, T5, T6, T7> p) {
+            return new P7<>(instance, t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> and(final P7<F, T2, T3, T4, T5, T6, T7, T8> p) {
+            return new P8<>(instance, t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
         public <R> App<F, R> apply(final Function<T1, R> function) {
             return apply(instance.point(function));
         }
@@ -179,6 +203,26 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
 
         public <T3> P3<F, T1, T2, T3> and(final App<F, T3> t3) {
             return new P3<>(instance, t1, t2, t3);
+        }
+
+        public <T3, T4> P4<F, T1, T2, T3, T4> and(final P2<F, T3, T4> p) {
+            return new P4<>(instance, t1, t2, p.t1, p.t2);
+        }
+
+        public <T3, T4, T5> P5<F, T1, T2, T3, T4, T5> and(final P3<F, T3, T4, T5> p) {
+            return new P5<>(instance, t1, t2, p.t1, p.t2, p.t3);
+        }
+
+        public <T3, T4, T5, T6> P6<F, T1, T2, T3, T4, T5, T6> and(final P4<F, T3, T4, T5, T6> p) {
+            return new P6<>(instance, t1, t2, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T3, T4, T5, T6, T7> P7<F, T1, T2, T3, T4, T5, T6, T7> and(final P5<F, T3, T4, T5, T6, T7> p) {
+            return new P7<>(instance, t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T3, T4, T5, T6, T7, T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> and(final P6<F, T3, T4, T5, T6, T7, T8> p) {
+            return new P8<>(instance, t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
         }
 
         public <R> App<F, R> apply(final BiFunction<T1, T2, R> function) {
@@ -205,6 +249,22 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
 
         public <T4> P4<F, T1, T2, T3, T4> and(final App<F, T4> t4) {
             return new P4<>(instance, t1, t2, t3, t4);
+        }
+
+        public <T4, T5> P5<F, T1, T2, T3, T4, T5> and(final P2<F, T4, T5> p) {
+            return new P5<>(instance, t1, t2, t3, p.t1, p.t2);
+        }
+
+        public <T4, T5, T6> P6<F, T1, T2, T3, T4, T5, T6> and(final P3<F, T4, T5, T6> p) {
+            return new P6<>(instance, t1, t2, t3, p.t1, p.t2, p.t3);
+        }
+
+        public <T4, T5, T6, T7> P7<F, T1, T2, T3, T4, T5, T6, T7> and(final P4<F, T4, T5, T6, T7> p) {
+            return new P7<>(instance, t1, t2, t3, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T4, T5, T6, T7, T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> and(final P5<F, T4, T5, T6, T7, T8> p) {
+            return new P8<>(instance, t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5);
         }
 
         public <R> App<F, R> apply(final Function3<T1, T2, T3, R> function) {
@@ -235,6 +295,18 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
             return new P5<>(instance, t1, t2, t3, t4, t5);
         }
 
+        public <T5, T6> P6<F, T1, T2, T3, T4, T5, T6> and(final P2<F, T5, T6> p) {
+            return new P6<>(instance, t1, t2, t3, t4, p.t1, p.t2);
+        }
+
+        public <T5, T6, T7> P7<F, T1, T2, T3, T4, T5, T6, T7> and(final P3<F, T5, T6, T7> p) {
+            return new P7<>(instance, t1, t2, t3, t4, p.t1, p.t2, p.t3);
+        }
+
+        public <T5, T6, T7, T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> and(final P4<F, T5, T6, T7, T8> p) {
+            return new P8<>(instance, t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4);
+        }
+
         public <R> App<F, R> apply(final Function4<T1, T2, T3, T4, R> function) {
             return apply(instance.point(function));
         }
@@ -263,6 +335,14 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
 
         public <T6> P6<F, T1, T2, T3, T4, T5, T6> and(final App<F, T6> t6) {
             return new P6<>(instance, t1, t2, t3, t4, t5, t6);
+        }
+
+        public <T6, T7> P7<F, T1, T2, T3, T4, T5, T6, T7> and(final P2<F, T6, T7> p) {
+            return new P7<>(instance, t1, t2, t3, t4, t5, p.t1, p.t2);
+        }
+
+        public <T6, T7, T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> and(final P3<F, T6, T7, T8> p) {
+            return new P8<>(instance, t1, t2, t3, t4, t5, p.t1, p.t2, p.t3);
         }
 
         public <R> App<F, R> apply(final Function5<T1, T2, T3, T4, T5, R> function) {
@@ -297,6 +377,10 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
             return new P7<>(instance, t1, t2, t3, t4, t5, t6, t7);
         }
 
+        public <T7, T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> and(final P2<F, T7, T8> p) {
+            return new P8<>(instance, t1, t2, t3, t4, t5, t6, p.t1, p.t2);
+        }
+
         public <R> App<F, R> apply(final Function6<T1, T2, T3, T4, T5, T6, R> function) {
             return apply(instance.point(function));
         }
@@ -325,6 +409,10 @@ public interface Applicative<F extends K1, Mu extends Applicative.Mu> extends Fu
             this.t5 = t5;
             this.t6 = t6;
             this.t7 = t7;
+        }
+
+        public <T8> P8<F, T1, T2, T3, T4, T5, T6, T7, T8> and(final App<F, T8> t8) {
+            return new P8<>(instance, t1, t2, t3, t4, t5, t6, t7, t8);
         }
 
         public <R> App<F, R> apply(final Function7<T1, T2, T3, T4, T5, T6, T7, R> function) {
