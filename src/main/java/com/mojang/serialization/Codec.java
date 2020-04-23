@@ -11,6 +11,7 @@ import com.mojang.serialization.codecs.ListCodec;
 import com.mojang.serialization.codecs.OptionalFieldCodec;
 import com.mojang.serialization.codecs.PairCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
+import com.mojang.serialization.codecs.SimpleMapCodec;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -63,6 +64,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <K, V> Codec<List<Pair<K, V>>> compoundList(final Codec<K> keyCodec, final Codec<V> elementCodec) {
         return new CompoundListCodec<>(keyCodec, elementCodec);
+    }
+
+    static <K, V> SimpleMapCodec<K, V> simpleMap(final Codec<K> keyCodec, final Codec<V> elementCodec, final Keyable keys) {
+        return new SimpleMapCodec<>(keyCodec, elementCodec, keys);
     }
 
     static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {
