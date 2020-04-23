@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Decoder;
 import com.mojang.serialization.DynamicOps;
@@ -13,31 +12,12 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public class FieldDecoder<A> extends MapDecoder.Implementation<A> {
-    public static boolean REMOVE_FIELD_WHEN_PARSING = false;
-
     protected final String name;
     private final Decoder<A> elementCodec;
 
     public FieldDecoder(final String name, final Decoder<A> elementCodec) {
         this.name = name;
         this.elementCodec = elementCodec;
-    }
-
-    @Override
-    public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-        if (ops.compressMaps()) {
-            return super.decode(ops, input);
-        }
-        return ops.getMap(input).flatMap(map -> decode(ops, map).map(r -> {
-            final T output;
-            if (REMOVE_FIELD_WHEN_PARSING) {
-                final T nameObject = ops.createString(name);
-                output = ops.createMap(map.entries().filter(e -> !Objects.equals(e.getFirst(), nameObject)));
-            } else {
-                output = input;
-            }
-            return Pair.of(r, output);
-        }));
     }
 
     @Override
