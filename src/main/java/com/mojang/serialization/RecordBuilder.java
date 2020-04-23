@@ -3,7 +3,6 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonElement;
 
 public interface RecordBuilder<T> {
     DynamicOps<T> ops();
@@ -13,6 +12,8 @@ public interface RecordBuilder<T> {
     RecordBuilder<T> add(T key, DataResult<T> value);
 
     RecordBuilder<T> add(DataResult<T> key, DataResult<T> value);
+
+    RecordBuilder<T> withErrorsFrom(final DataResult<?> result);
 
     DataResult<T> build(T prefix);
 
@@ -102,6 +103,12 @@ public interface RecordBuilder<T> {
                 add(k, value);
                 return builder;
             });
+            return this;
+        }
+
+        @Override
+        public RecordBuilder<T> withErrorsFrom(final DataResult<?> result) {
+            builder = builder.flatMap(v -> result.map(r -> v));
             return this;
         }
     }
