@@ -57,6 +57,37 @@ public interface Decoder<A> {
         };
     }
 
+    default Decoder<A> withDefault(final Supplier<? extends A> value) {
+        final Decoder<A> self = this;
+
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return DataResult.success(self.decode(ops, input).result().orElseGet(() -> Pair.of(value.get(), input)));
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + self + " " + value.get() + "]";
+            }
+        };
+    }
+
+    default <B> Decoder<B> flatMap(final Function<? super A, ? extends DataResult<? extends B>> function) {
+        final Decoder<A> self = this;
+        return new Decoder<B>() {
+            @Override
+            public <T> DataResult<Pair<B, T>> decode(final DynamicOps<T> ops, final T input) {
+                return self.decode(ops, input).flatMap(p -> function.apply(p.getFirst()).map(r -> Pair.of(r, p.getSecond())));
+            }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[flatMapped]";
+            }
+        };
+    }
+
     default <B> Decoder<B> map(final Function<? super A, ? extends B> function) {
         final Decoder<A> self = this;
         return new Decoder<B>() {

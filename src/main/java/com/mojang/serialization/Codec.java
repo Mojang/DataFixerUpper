@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -76,6 +77,18 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return Codec.of(comap(from), map(to), toString() + "[xmapped]");
     }
 
+    default <S> Codec<S> comapFlatMap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends A> from) {
+        return Codec.of(comap(from), flatMap(to), toString() + "[comapFlatMapped]");
+    }
+
+    default <S> Codec<S> flatComapMap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
+        return Codec.of(flatComap(from), map(to), toString() + "[flatComapMapped]");
+    }
+
+    default <S> Codec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
+        return Codec.of(flatComap(from), flatMap(to), toString() + "[flatXmapped]");
+    }
+
     @Override
     default MapCodec<A> fieldOf(final String name) {
         return MapCodec.of(
@@ -92,6 +105,19 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     @Override
     default Codec<A> withDefault(final A value) {
         return Codec.of(this, Decoder.super.withDefault(value));
+    }
+
+    @Override
+    default Codec<A> withDefault(final Supplier<? extends A> value) {
+        return Codec.of(this, Decoder.super.withDefault(value));
+    }
+
+    static <A> MapCodec<A> unit(final A defaultValue) {
+        return unit(() -> defaultValue);
+    }
+
+    static <A> MapCodec<A> unit(final Supplier<A> defaultValue) {
+        return MapCodec.of(Encoder.empty(), Decoder.unit(defaultValue));
     }
 
     PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {

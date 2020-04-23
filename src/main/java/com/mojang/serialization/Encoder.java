@@ -33,6 +33,21 @@ public interface Encoder<A> {
         };
     }
 
+    default <B> Encoder<B> flatComap(final Function<? super B, ? extends DataResult<? extends A>> function) {
+        final Encoder<A> self = this;
+        return new Encoder<B>() {
+            @Override
+            public <T> DataResult<T> encode(final B input, final DynamicOps<T> ops, final T prefix) {
+                return function.apply(input).flatMap(a -> self.encode(a, ops, prefix));
+            }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[flatComapped]";
+            }
+        };
+    }
+
     static <A extends Serializable> Encoder<A> of() {
         return new Encoder<A>() {
             @Override
