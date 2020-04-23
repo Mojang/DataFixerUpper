@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -22,34 +21,6 @@ public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
     public OptionalFieldCodec(final String name, final Codec<A> elementCodec) {
         this.name = name;
         this.elementCodec = elementCodec;
-    }
-
-    @Override
-    public <T> DataResult<Pair<Optional<A>, T>> decode(final DynamicOps<T> ops, final T input) {
-        if (ops.compressMaps()) {
-            return super.decode(ops, input);
-        }
-        return ops.getMap(input).flatMap(map -> decode(ops, map).map(r -> {
-            final T output;
-            if (FieldDecoder.REMOVE_FIELD_WHEN_PARSING) {
-                final T nameObject = ops.createString(name);
-                output = ops.createMap(map.entries().filter(e -> !Objects.equals(e.getFirst(), nameObject)));
-            } else {
-                output = input;
-            }
-            return Pair.of(r, output);
-        }));
-    }
-
-    @Override
-    public <T> DataResult<T> encode(final Optional<A> input, final DynamicOps<T> ops, final T prefix) {
-        if (input.isPresent()) {
-            if (ops.compressMaps()) {
-                return super.encode(input, ops, prefix);
-            }
-            return elementCodec.encodeStart(ops, input.get()).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
-        }
-        return DataResult.success(prefix);
     }
 
     @Override

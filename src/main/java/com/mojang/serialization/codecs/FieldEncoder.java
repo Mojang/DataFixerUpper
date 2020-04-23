@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Encoder;
 import com.mojang.serialization.MapEncoder;
@@ -18,14 +17,6 @@ public class FieldEncoder<A> extends MapEncoder.Implementation<A> {
     public FieldEncoder(final String name, final Encoder<A> elementCodec) {
         this.name = name;
         this.elementCodec = elementCodec;
-    }
-
-    @Override
-    public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-        if (ops.compressMaps()) {
-            return super.encode(input, ops, prefix);
-        }
-        return elementCodec.encodeStart(ops, input).flatMap(result -> ops.mergeToMap(prefix, ops.createString(name), result));
     }
 
     @Override
