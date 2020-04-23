@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public interface MapEncoder<A> extends Encoder<A> {
+public interface MapEncoder<A> extends Encoder<A>, Keyable {
     <T> RecordBuilder<T> encode(A input, DynamicOps<T> ops, RecordBuilder<T> prefix);
 
     default <T> RecordBuilder<T> compressedBuilder(final DynamicOps<T> ops) {
@@ -19,8 +19,6 @@ public interface MapEncoder<A> extends Encoder<A> {
         }
         return ops.mapBuilder();
     }
-
-    <T> Stream<T> keys(final DynamicOps<T> ops);
 
     <T> MapCompressor<T> compressor(final DynamicOps<T> ops);
 

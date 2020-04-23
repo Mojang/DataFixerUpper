@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public interface MapDecoder<A> extends Decoder<A> {
+public interface MapDecoder<A> extends Decoder<A>, Keyable {
     <T> DataResult<A> decode(DynamicOps<T> ops, MapLike<T> input);
 
     default <T> DataResult<A> compressedDecode(final DynamicOps<T> ops, final T input) {
@@ -54,8 +54,6 @@ public interface MapDecoder<A> extends Decoder<A> {
     }
 
     <T> MapCompressor<T> compressor(DynamicOps<T> ops);
-
-    <T> Stream<T> keys(final DynamicOps<T> ops);
 
     @Override
     default <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
