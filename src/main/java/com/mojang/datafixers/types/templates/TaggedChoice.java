@@ -35,6 +35,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Encoder;
+import com.mojang.serialization.codecs.KeyDispatchCodec;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -180,46 +181,24 @@ public final class TaggedChoice<K> implements TypeTemplate {
             return DSL.taggedChoice(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().template())).collect(Pair.toMap()));
         }
 
+        @SuppressWarnings("unchecked")
+        private <V> DataResult<? extends Encoder<Pair<K, ?>>> encoder(final Pair<K, V> pair) {
+            return getCodec(pair.getFirst()).map(c -> ((Encoder<V>) c).comap(p -> (V) p.getSecond()));
+        }
+
         @Override
         protected Codec<Pair<K, ?>> buildCodec() {
-            return new Codec<Pair<K, ?>>() {
-                @Override
-                public <T> DataResult<Pair<Pair<K, ?>, T>> decode(final DynamicOps<T> ops, final T input) {
-                    return ops.getMap(input).flatMap(map -> {
-                        final T value = map.get(name);
-                        if (value == null) {
-                            return DataResult.error("Input does not contain a key [" + name + "]  with the name: " + input);
-                        }
+            return new KeyDispatchCodec<>(
+                name,
+                keyType.codec(),
+                p -> DataResult.success(p.getFirst()),
+                k -> getCodec(k).map(c -> c.map(v -> Pair.of(k, v))),
+                this::encoder
+            );
+        }
 
-                        return keyType.codec().decode(ops, value).flatMap(key -> {
-                            final K keyValue = key.getFirst();
-                            final Type<?> type = types.get(keyValue);
-                            if (type != null) {
-                                return type.codec().decode(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(keyValue, v)));
-                            }
-                            return DataResult.error("Unsupported key: " + keyValue + " in " + this);
-                        });
-                    });
-                }
-
-                @Override
-                public <T> DataResult<T> encode(final Pair<K, ?> input, final DynamicOps<T> ops, final T prefix) {
-                    final Type<?> type = types.get(input.getFirst());
-                    if (type == null) {
-                        return DataResult.error("Unsupported key: " + input.getFirst() + " in " + this, prefix);
-                    }
-                    return capWrite(ops, type.codec(), input.getFirst(), input.getSecond(), prefix);
-                }
-
-                @SuppressWarnings("unchecked")
-                private <T, A> DataResult<T> capWrite(final DynamicOps<T> ops, final Encoder<A> encoder, final K key, final Object value, final T rest) {
-                    return keyType.codec().encodeStart(ops, key).flatMap(k ->
-                        encoder.encode((A) value, ops, rest).flatMap(v ->
-                            ops.mergeToMap(v, ops.createString(name), k)
-                        )
-                    );
-                }
-            };
+        private DataResult<? extends Codec<?>> getCodec(final K k) {
+            return Optional.ofNullable(types.get(k)).map(t -> DataResult.success(t.codec())).orElseGet(() -> DataResult.error("Unsupported key: " + k));
         }
 
         @Override
