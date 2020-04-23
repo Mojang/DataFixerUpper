@@ -7,6 +7,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.CompoundListCodec;
 import com.mojang.serialization.codecs.EitherCodec;
+import com.mojang.serialization.codecs.KeyDispatchCodec;
 import com.mojang.serialization.codecs.ListCodec;
 import com.mojang.serialization.codecs.OptionalFieldCodec;
 import com.mojang.serialization.codecs.PairCodec;
@@ -123,6 +124,22 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <A> MapCodec<A> unit(final Supplier<A> defaultValue) {
         return MapCodec.of(Encoder.empty(), Decoder.unit(defaultValue));
+    }
+
+    default <E> MapCodec<E> dispatch(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+        return dispatch("type", type, codec);
+    }
+
+    default <E> MapCodec<E> dispatch(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+        return partialDispatchCodec(typeKey, type.andThen(DataResult::success), codec);
+    }
+
+    default <E> MapCodec<E> partialDispatchCodec(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+        return partialDispatch(typeKey, type, codec.andThen(DataResult::success));
+    }
+
+    default <E> MapCodec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends Codec<? extends E>>> codec) {
+        return new KeyDispatchCodec<>(typeKey, this, type, codec);
     }
 
     PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {
