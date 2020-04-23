@@ -45,7 +45,7 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
 
                 @Override
                 public Stream<Pair<T, T>> entries() {
-                    return IntStream.range(0, entries.size()).mapToObj(i -> Pair.of(compressor.decompress(i), entries.get(i)));
+                    return IntStream.range(0, entries.size()).mapToObj(i -> Pair.of(compressor.decompress(i), entries.get(i))).filter(p -> p.getSecond() != null);
                 }
             };
             return decode(ops, map);
