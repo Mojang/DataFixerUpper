@@ -13,6 +13,8 @@ public interface ListBuilder<T> {
 
     ListBuilder<T> add(final DataResult<T> value);
 
+    ListBuilder<T> withErrorsFrom(final DataResult<?> result);
+
     default DataResult<T> build(final DataResult<T> prefix) {
         return prefix.flatMap(this::build);
     }
@@ -61,6 +63,12 @@ public interface ListBuilder<T> {
         @Override
         public ListBuilder<T> add(final DataResult<T> value) {
             builder = builder.ap2(value, ImmutableList.Builder::add);
+            return this;
+        }
+
+        @Override
+        public ListBuilder<T> withErrorsFrom(final DataResult<?> result) {
+            builder = builder.flatMap(r -> result.map(v -> r));
             return this;
         }
 

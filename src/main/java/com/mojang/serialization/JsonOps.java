@@ -341,6 +341,12 @@ public class JsonOps implements DynamicOps<JsonElement> {
         }
 
         @Override
+        public ListBuilder<JsonElement> withErrorsFrom(final DataResult<?> result) {
+            builder = builder.flatMap(r -> result.map(v -> r));
+            return this;
+        }
+
+        @Override
         public DataResult<JsonElement> build(final JsonElement prefix) {
             final DataResult<JsonElement> result = builder.flatMap(b -> {
                 if (!prefix.isJsonArray() && prefix != ops().empty()) {
