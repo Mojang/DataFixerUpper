@@ -5,6 +5,7 @@ package com.mojang.datafixers;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class DataFixUtils {
@@ -92,5 +93,12 @@ public class DataFixUtils {
 
     public static int getSubVersion(final int key) {
         return key % 10;
+    }
+
+    public static <T> Function<T, T> consumerToFunction(final Consumer<T> consumer) {
+        return s -> {
+            consumer.accept(s);
+            return s;
+        };
     }
 }

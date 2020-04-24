@@ -4,6 +4,8 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableList;
 
+import java.util.function.Function;
+
 public interface ListBuilder<T> {
     DynamicOps<T> ops();
 
@@ -14,6 +16,8 @@ public interface ListBuilder<T> {
     ListBuilder<T> add(final DataResult<T> value);
 
     ListBuilder<T> withErrorsFrom(final DataResult<?> result);
+
+    ListBuilder<T> mapError(Function<String, String> onError);
 
     default DataResult<T> build(final DataResult<T> prefix) {
         return prefix.flatMap(this::build);
@@ -62,13 +66,19 @@ public interface ListBuilder<T> {
 
         @Override
         public ListBuilder<T> add(final DataResult<T> value) {
-            builder = builder.ap2(value, ImmutableList.Builder::add);
+            builder = builder.apply2(ImmutableList.Builder::add, value);
             return this;
         }
 
         @Override
         public ListBuilder<T> withErrorsFrom(final DataResult<?> result) {
             builder = builder.flatMap(r -> result.map(v -> r));
+            return this;
+        }
+
+        @Override
+        public ListBuilder<T> mapError(final Function<String, String> onError) {
+            builder = builder.mapError(onError);
             return this;
         }
 

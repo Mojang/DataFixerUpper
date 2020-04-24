@@ -5,6 +5,7 @@ package com.mojang.serialization;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.codecs.FieldDecoder;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -41,38 +42,6 @@ public interface Decoder<A> {
         return new FieldDecoder<>(name, this);
     }
 
-    default Decoder<A> withDefault(final A value) {
-        final Decoder<A> self = this;
-
-        return new Decoder<A>() {
-            @Override
-            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return DataResult.success(self.decode(ops, input).result().orElseGet(() -> Pair.of(value, input)));
-            }
-
-            @Override
-            public String toString() {
-                return "WithDefault[" + self + " " + value + "]";
-            }
-        };
-    }
-
-    default Decoder<A> withDefault(final Supplier<? extends A> value) {
-        final Decoder<A> self = this;
-
-        return new Decoder<A>() {
-            @Override
-            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return DataResult.success(self.decode(ops, input).result().orElseGet(() -> Pair.of(value.get(), input)));
-            }
-
-            @Override
-            public String toString() {
-                return "WithDefault[" + self + " " + value.get() + "]";
-            }
-        };
-    }
-
     default <B> Decoder<B> flatMap(final Function<? super A, ? extends DataResult<? extends B>> function) {
         final Decoder<A> self = this;
         return new Decoder<B>() {
@@ -99,6 +68,21 @@ public interface Decoder<A> {
             @Override
             public String toString() {
                 return self.toString() + "[mapped]";
+            }
+        };
+    }
+
+    default Decoder<A> promotePartial(final Consumer<String> onError) {
+        final Decoder<A> self = this;
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return self.decode(ops, input).promotePartial(onError);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[promotePartial]";
             }
         };
     }

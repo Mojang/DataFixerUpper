@@ -86,6 +86,18 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         ));
     }
 
+    public DataResult<R> promotePartial(final Consumer<String> onError) {
+        return result.map(
+            DataResult::success,
+            r -> {
+                onError.accept(r.message);
+                return r.partialResult
+                    .map(DataResult::success)
+                    .orElseGet(() -> create(Either.right(r)));
+            }
+        );
+    }
+
     /**
      * Applies the function to either full or partial result, in case of partial concatenates errors.
      */
@@ -120,9 +132,12 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         ));
     }
 
-    public <R2, S> DataResult<S> ap2(final DataResult<R2> second, final BiFunction<R, R2, S> function) {
-        final Function<R, Function<R2, S>> curried = r -> r2 -> function.apply(r, r2);
-        return second.ap(map(curried));
+    public <R2, S> DataResult<S> apply2(final BiFunction<R, R2, S> function, final DataResult<R2> second) {
+        return unbox(instance().apply2(function, this, second));
+    }
+
+    public <R2, R3, S> DataResult<S> apply3(final Function3<R, R2, R3, S> function, final DataResult<R2> second, final DataResult<R3> third) {
+        return unbox(instance().apply3(function, this, second, third));
     }
 
     public DataResult<R> setPartial(final Supplier<R> partial) {
@@ -131,6 +146,10 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
     public DataResult<R> setPartial(final R partial) {
         return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial))));
+    }
+
+    public DataResult<R> mapError(final Function<String, String> function) {
+        return create(result.mapRight(r -> new DynamicException<>(function.apply(r.message), r.partialResult)));
     }
 
     public static Instance instance() {
