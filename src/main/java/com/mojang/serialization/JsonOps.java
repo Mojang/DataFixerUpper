@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -341,16 +342,22 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         @Override
         public ListBuilder<JsonElement> add(final DataResult<JsonElement> value) {
-            builder = builder.ap2(value, (b, element) -> {
+            builder = builder.apply2((b, element) -> {
                 b.add(element);
                 return b;
-            });
+            }, value);
             return this;
         }
 
         @Override
         public ListBuilder<JsonElement> withErrorsFrom(final DataResult<?> result) {
             builder = builder.flatMap(r -> result.map(v -> r));
+            return this;
+        }
+
+        @Override
+        public ListBuilder<JsonElement> mapError(final Function<String, String> onError) {
+            builder = builder.mapError(onError);
             return this;
         }
 

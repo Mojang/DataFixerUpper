@@ -103,28 +103,6 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
         };
     }
 
-    @Override
-    default MapDecoder<A> withDefault(final A value) {
-        final MapDecoder<A> self = this;
-
-        return new Implementation<A>() {
-            @Override
-            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                return DataResult.success(self.decode(ops, input).result().orElse(value));
-            }
-
-            @Override
-            public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
-            }
-
-            @Override
-            public String toString() {
-                return "WithDefault[" + self + " " + value + "]";
-            }
-        };
-    }
-
     abstract class Implementation<A> implements MapDecoder<A> {
         private final Map<DynamicOps<?>, MapCompressor<?>> compressors = new Object2ObjectArrayMap<>();
 

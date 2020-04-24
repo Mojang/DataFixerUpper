@@ -4,6 +4,7 @@ package com.mojang.serialization.codecs;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -34,23 +35,26 @@ public final class ListCodec<A> implements Codec<List<A>> {
     @Override
     public <T> DataResult<Pair<List<A>, T>> decode(final DynamicOps<T> ops, final T input) {
         return ops.getList(input).flatMap(stream -> {
-            final AtomicReference<DataResult<Pair<ImmutableList.Builder<A>, ImmutableList.Builder<T>>>> result =
-                new AtomicReference<>(DataResult.success(Pair.of(ImmutableList.builder(), ImmutableList.builder())));
+            final ImmutableList.Builder<A> read = ImmutableList.builder();
+            final ImmutableList.Builder<T> failed = ImmutableList.builder();
+            final AtomicReference<DataResult<Unit>> result =
+                new AtomicReference<>(DataResult.success(Unit.INSTANCE));
 
-            stream.accept(t ->
-                result.set(result.get().flatMap(pair -> {
-                    final DataResult<Pair<A, T>> read = elementCodec.decode(ops, t);
+            stream.accept(t -> {
+                final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);
+                element.error().ifPresent(e -> failed.add(t));
+                result.set(result.get().apply2((r, v) -> {
+                    read.add(v.getFirst());
+                    return r;
+                }, element));
+            });
 
-                    read.error().ifPresent(e -> pair.getSecond().add(t));
+            final ImmutableList<A> elements = read.build();
+            final T errors = ops.createList(failed.build().stream());
 
-                    return read.map(value -> {
-                        pair.getFirst().add(value.getFirst());
-                        return pair;
-                    });
-                }))
-            );
+            final Pair<List<A>, T> pair = Pair.of(elements, errors);
 
-            return result.get().map(pair -> Pair.of(pair.getFirst().build(), ops.createList(pair.getSecond().build().stream())));
+            return result.get().map(unit -> pair).setPartial(pair);
         });
     }
 

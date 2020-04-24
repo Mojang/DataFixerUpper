@@ -4,6 +4,8 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
 
+import java.util.function.Function;
+
 public interface RecordBuilder<T> {
     DynamicOps<T> ops();
 
@@ -14,6 +16,8 @@ public interface RecordBuilder<T> {
     RecordBuilder<T> add(DataResult<T> key, DataResult<T> value);
 
     RecordBuilder<T> withErrorsFrom(final DataResult<?> result);
+
+    RecordBuilder<T> mapError(Function<String, String> onError);
 
     DataResult<T> build(T prefix);
 
@@ -68,7 +72,7 @@ public interface RecordBuilder<T> {
 
         @Override
         public RecordBuilder<T> add(final String key, final DataResult<T> value) {
-            builder = builder.ap2(value, (b, v) -> append(key, v, b));
+            builder = builder.apply2((b, v) -> append(key, v, b), value);
             return this;
         }
 
@@ -111,6 +115,12 @@ public interface RecordBuilder<T> {
             builder = builder.flatMap(v -> result.map(r -> v));
             return this;
         }
+
+        @Override
+        public RecordBuilder<T> mapError(final Function<String, String> onError) {
+            builder = builder.mapError(onError);
+            return this;
+        }
     }
 
     abstract class AbstractBuilder<T, R> extends AbstractStringBuilder<T, R> {
@@ -133,13 +143,13 @@ public interface RecordBuilder<T> {
 
         @Override
         public RecordBuilder<T> add(final T key, final DataResult<T> value) {
-            builder = builder.ap2(value, (b, v) -> append(key, v, b));
+            builder = builder.apply2((b, v) -> append(key, v, b), value);
             return this;
         }
 
         @Override
         public RecordBuilder<T> add(final DataResult<T> key, final DataResult<T> value) {
-            builder = builder.ap(key.ap2(value, (k, v) -> b -> append(k, v, b)));
+            builder = builder.ap(key.apply2((k, v) -> b -> append(k, v, b), value));
             return this;
         }
     }

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
@@ -17,6 +18,7 @@ import com.mojang.serialization.codecs.SimpleMapCodec;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -108,14 +110,120 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return optionalField(name, this);
     }
 
-    @Override
+    interface ResultFunction<A> {
+        <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a);
+
+        <T> DataResult<T> coApply(final DynamicOps<T> ops, final A input, final DataResult<T> t);
+    }
+
+    default Codec<A> mapResult(final ResultFunction<A> function) {
+        final Codec<A> self = this;
+
+        return new Codec<A>() {
+            @Override
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                return function.coApply(ops, input, self.encode(input, ops, prefix));
+            }
+
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return function.apply(ops, input, self.decode(ops, input));
+            }
+
+            @Override
+            public String toString() {
+                return self + "[mapResult " + function + "]";
+            }
+        };
+    }
+
+    default Codec<A> withDefault(final Consumer<String> onError, final A value) {
+        return withDefault(DataFixUtils.consumerToFunction(onError), value);
+    }
+
+    default Codec<A> withDefault(final Function<String, String> onError, final A value) {
+        return mapResult(new ResultFunction<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
+                return DataResult.success(a.mapError(onError).result().orElseGet(() -> Pair.of(value, input)));
+            }
+
+            @Override
+            public <T> DataResult<T> coApply(final DynamicOps<T> ops, final A input, final DataResult<T> t) {
+                return t.mapError(onError);
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + onError + " " + value + "]";
+            }
+        });
+    }
+
+    default Codec<A> withDefault(final Consumer<String> onError, final Supplier<? extends A> value) {
+        return withDefault(DataFixUtils.consumerToFunction(onError), value);
+    }
+
+    default Codec<A> withDefault(final Function<String, String> onError, final Supplier<? extends A> value) {
+        return mapResult(new ResultFunction<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
+                return DataResult.success(a.mapError(onError).result().orElseGet(() -> Pair.of(value.get(), input)));
+            }
+
+            @Override
+            public <T> DataResult<T> coApply(final DynamicOps<T> ops, final A input, final DataResult<T> t) {
+                return t.mapError(onError);
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + onError + " " + value.get() + "]";
+            }
+        });
+    }
+
     default Codec<A> withDefault(final A value) {
-        return Codec.of(this, Decoder.super.withDefault(value));
+        return mapResult(new ResultFunction<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
+                return DataResult.success(a.result().orElseGet(() -> Pair.of(value, input)));
+            }
+
+            @Override
+            public <T> DataResult<T> coApply(final DynamicOps<T> ops, final A input, final DataResult<T> t) {
+                return t;
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + value + "]";
+            }
+        });
+    }
+
+    default Codec<A> withDefault(final Supplier<? extends A> value) {
+        return mapResult(new ResultFunction<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
+                return DataResult.success(a.result().orElseGet(() -> Pair.of(value.get(), input)));
+            }
+
+            @Override
+            public <T> DataResult<T> coApply(final DynamicOps<T> ops, final A input, final DataResult<T> t) {
+                return t;
+            }
+
+            @Override
+            public String toString() {
+                return "WithDefault[" + value.get() + "]";
+            }
+        });
     }
 
     @Override
-    default Codec<A> withDefault(final Supplier<? extends A> value) {
-        return Codec.of(this, Decoder.super.withDefault(value));
+    default Codec<A> promotePartial(final Consumer<String> onError) {
+        return Codec.of(this, Decoder.super.promotePartial(onError));
     }
 
     static <A> MapCodec<A> unit(final A defaultValue) {

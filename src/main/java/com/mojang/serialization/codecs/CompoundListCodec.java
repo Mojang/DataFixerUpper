@@ -5,6 +5,7 @@ package com.mojang.serialization.codecs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -26,21 +27,31 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
     @Override
     public <T> DataResult<Pair<List<Pair<K, V>>, T>> decode(final DynamicOps<T> ops, final T input) {
         return ops.getMapEntries(input).flatMap(map -> {
-            final AtomicReference<DataResult<ImmutableList.Builder<Pair<K, V>>>> result = new AtomicReference<>(DataResult.success(ImmutableList.builder()));
-            final ImmutableMap.Builder<T, T> errors = ImmutableMap.builder();
+            final ImmutableList.Builder<Pair<K, V>> read = ImmutableList.builder();
+            final ImmutableMap.Builder<T, T> failed = ImmutableMap.builder();
+
+            final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE));
 
             map.accept((key, value) -> {
                 final DataResult<K> k = keyCodec.parse(ops, key);
                 final DataResult<V> v = elementCodec.parse(ops, value);
 
-                final DataResult<Pair<K, V>> readEntry = k.ap2(v, Pair::new);
+                final DataResult<Pair<K, V>> readEntry = k.apply2(Pair::new, v);
 
-                readEntry.error().ifPresent(e -> errors.put(key, value));
+                readEntry.error().ifPresent(e -> failed.put(key, value));
 
-                result.set(result.get().ap2(readEntry, ImmutableList.Builder::add));
+                result.set(result.get().apply2((u, e) -> {
+                    read.add(e);
+                    return u;
+                }, readEntry));
             });
 
-            return result.get().map(builder -> Pair.of(builder.build(), ops.createMap(errors.build())));
+            final ImmutableList<Pair<K, V>> elements = read.build();
+            final T errors = ops.createMap(failed.build());
+
+            final Pair<List<Pair<K, V>>, T> pair = Pair.of(elements, errors);
+
+            return result.get().map(unit -> pair).setPartial(pair);
         });
     }
 

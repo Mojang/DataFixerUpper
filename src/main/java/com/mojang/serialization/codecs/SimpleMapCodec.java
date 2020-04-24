@@ -2,7 +2,10 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -34,15 +37,27 @@ public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> {
 
     @Override
     public <T> DataResult<Map<K, V>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        final AtomicReference<DataResult<ImmutableMap.Builder<K, V>>> result = new AtomicReference<>(DataResult.success(ImmutableMap.builder()));
+        final ImmutableMap.Builder<K, V> read = ImmutableMap.builder();
+        final ImmutableList.Builder<Pair<T, T>> failed = ImmutableList.builder();
+        final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE));
 
         input.entries().forEach(pair -> {
             final DataResult<K> k = keyCodec.parse(ops, pair.getFirst());
             final DataResult<V> v = elementCodec.parse(ops, pair.getSecond());
-            result.set(DataResult.unbox(DataResult.instance().apply3(ImmutableMap.Builder::put, result.get(), k, v)));
+
+            final DataResult<Pair<K, V>> entry = k.apply2(Pair::of, v);
+            entry.error().ifPresent(e -> failed.add(pair));
+
+            result.set(result.get().apply2((u, p) -> {
+                read.put(p.getFirst(), p.getSecond());
+                return u;
+            }, entry));
         });
 
-        return result.get().map(ImmutableMap.Builder::build);
+        final Map<K, V> elements = read.build();
+        final T errors = ops.createMap(failed.build().stream());
+
+        return result.get().map(unit -> elements).setPartial(elements).mapError(e -> e + " missed input: " + errors);
     }
 
     @Override
