@@ -32,7 +32,7 @@ public final class PairMapCodec<F, S> extends MapCodec<Pair<F, S>> {
 
     @Override
     public <T> RecordBuilder<T> encode(final Pair<F, S> input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-        return second.encode(input.getSecond(), ops, first.encode(input.getFirst(), ops, prefix));
+        return first.encode(input.getFirst(), ops, second.encode(input.getSecond(), ops, prefix));
     }
 
     @Override
