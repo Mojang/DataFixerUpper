@@ -8,10 +8,12 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.CompoundListCodec;
 import com.mojang.serialization.codecs.EitherCodec;
+import com.mojang.serialization.codecs.EitherMapCodec;
 import com.mojang.serialization.codecs.KeyDispatchCodec;
 import com.mojang.serialization.codecs.ListCodec;
 import com.mojang.serialization.codecs.OptionalFieldCodec;
 import com.mojang.serialization.codecs.PairCodec;
+import com.mojang.serialization.codecs.PairMapCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.SimpleMapCodec;
 
@@ -24,6 +26,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 public interface Codec<A> extends Encoder<A>, Decoder<A> {
     static <A extends Serializable> Codec<A> of(final Decoder<A> decoder) {
@@ -53,12 +56,54 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         };
     }
 
+    static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder) {
+        return of(encoder, decoder, "MapCodec[" + encoder + " " + decoder + "]");
+    }
+
+    static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder, final String name) {
+        return new MapCodec<A>() {
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return Stream.concat(encoder.keys(ops), decoder.keys(ops));
+            }
+
+            @Override
+            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return decoder.decode(ops, input);
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                return encoder.encode(input, ops, prefix);
+            }
+
+            @Override
+            public String toString() {
+                return name;
+            }
+        };
+    }
+
     static <F, S> Codec<Pair<F, S>> pair(final Codec<F> first, final Codec<S> second) {
+        if (first instanceof MapCodec<?> && second instanceof MapCodec<?>) {
+            return new PairMapCodec<>(((MapCodec<F>) first), ((MapCodec<S>) second));
+        }
         return new PairCodec<>(first, second);
     }
 
     static <F, S> Codec<Either<F, S>> either(final Codec<F> first, final Codec<S> second) {
+        if (first instanceof MapCodec<?> && second instanceof MapCodec<?>) {
+            return new EitherMapCodec<>(((MapCodec<F>) first), ((MapCodec<S>) second));
+        }
         return new EitherCodec<>(first, second);
+    }
+
+    static <F, S> MapCodec<Pair<F, S>> mapPair(final MapCodec<F> first, final MapCodec<S> second) {
+        return new PairMapCodec<>(first, second);
+    }
+
+    static <F, S> MapCodec<Either<F, S>> mapEither(final MapCodec<F> first, final MapCodec<S> second) {
+        return new EitherMapCodec<>(first, second);
     }
 
     static <E> Codec<List<E>> list(final Codec<E> elementCodec) {
@@ -480,6 +525,11 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
                     DataResult.error("Don't know how to merge " + prefix + " and " + casted, prefix)
                 );
             });
+        }
+
+        @Override
+        public String toString() {
+            return "saving";
         }
     };
 

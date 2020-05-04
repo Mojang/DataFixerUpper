@@ -1,5 +1,6 @@
 package com.mojang.serialization.codecs;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Decoder;
@@ -47,14 +48,17 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
         return keyCodec.decode(ops, elementName).flatMap(type -> {
             final DataResult<? extends Decoder<? extends V>> elementDecoder = decoder.apply(type.getFirst());
             return elementDecoder.flatMap(c -> {
-                if (c instanceof MapDecoder<?> && !ops.compressMaps()) {
+                if (ops.compressMaps()) {
+                    final T value = input.get(ops.createString(valueKey));
+                    if (value == null) {
+                        return DataResult.error("Input does not have a \"value\" entry: " + input);
+                    }
+                    return c.parse(ops, value).map(Function.identity());
+                }
+                if (c instanceof MapDecoder<?>) {
                     return ((MapDecoder<? extends V>) c).decode(ops, input).map(Function.identity());
                 }
-                final T value = input.get(ops.createString(valueKey));
-                if (value == null) {
-                    return DataResult.error("Input does not have a \"value\" entry: " + input);
-                }
-                return c.parse(ops, value).map(Function.identity());
+                return c.decode(ops, ops.createMap(input.entries())).map(Pair::getFirst);
             });
         });
     }
@@ -68,13 +72,22 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
         }
 
         final Encoder<V> c = elementEncoder.result().get();
-        if (c instanceof MapEncoder<?> && !ops.compressMaps()) {
+        if (ops.compressMaps()) {
+            return prefix
+                .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)))
+                .add(valueKey, c.encodeStart(ops, input));
+        }
+        if (c instanceof MapEncoder<?>) {
             return ((MapEncoder<V>) c).encode(input, ops, prefix)
                 .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
         }
-        return prefix
-            .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)))
-            .add(valueKey, c.encodeStart(ops, input));
+
+        prefix.add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
+        final DataResult<MapLike<T>> element = c.encodeStart(ops, input).flatMap(ops::getMap);
+        return element.map(map -> {
+            map.entries().forEach(pair -> prefix.add(pair.getFirst(), pair.getSecond()));
+            return prefix;
+        }).result().orElseGet(() -> prefix.withErrorsFrom(element));
     }
 
     @Override
