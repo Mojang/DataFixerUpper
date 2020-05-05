@@ -9,6 +9,7 @@ import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.RecordBuilder;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
             final ImmutableList.Builder<Pair<K, V>> read = ImmutableList.builder();
             final ImmutableMap.Builder<T, T> failed = ImmutableMap.builder();
 
-            final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE));
+            final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE, Lifecycle.experimental()));
 
             map.accept((key, value) -> {
                 final DataResult<K> k = keyCodec.parse(ops, key);

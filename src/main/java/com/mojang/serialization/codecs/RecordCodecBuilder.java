@@ -12,6 +12,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Decoder;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Encoder;
+import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapDecoder;
 import com.mojang.serialization.MapEncoder;
@@ -54,6 +55,18 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
     public static <O, F> RecordCodecBuilder<O, F> point(final F instance) {
         return new RecordCodecBuilder<>(o -> instance, o -> Encoder.empty(), Decoder.unit(instance));
+    }
+
+    public static <O, F> RecordCodecBuilder<O, F> stable(final F instance) {
+        return point(instance, Lifecycle.stable());
+    }
+
+    public static <O, F> RecordCodecBuilder<O, F> deprecated(final F instance, final int since) {
+        return point(instance, Lifecycle.deprecated(since));
+    }
+
+    public static <O, F> RecordCodecBuilder<O, F> point(final F instance, final Lifecycle lifecycle) {
+        return new RecordCodecBuilder<>(o -> instance, o -> Encoder.<F>empty().withLifecycle(lifecycle), Decoder.unit(instance).withLifecycle(lifecycle));
     }
 
     public static <O> MapCodec<O> create(final Function<Instance<O>, ? extends App<RecordCodecBuilder.Mu<O>, O>> builder) {
@@ -110,6 +123,18 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
     public static final class Instance<O> implements Applicative<Mu<O>, Instance.Mu<O>> {
         private static final class Mu<O> implements Applicative.Mu {
+        }
+
+        public <A> App<RecordCodecBuilder.Mu<O>, A> stable(final A a) {
+            return RecordCodecBuilder.stable(a);
+        }
+
+        public <A> App<RecordCodecBuilder.Mu<O>, A> deprecated(final A a, final int since) {
+            return RecordCodecBuilder.deprecated(a, since);
+        }
+
+        public <A> App<RecordCodecBuilder.Mu<O>, A> point(final A a, final Lifecycle lifecycle) {
+            return RecordCodecBuilder.point(a, lifecycle);
         }
 
         @Override

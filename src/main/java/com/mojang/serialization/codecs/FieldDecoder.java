@@ -11,7 +11,7 @@ import com.mojang.serialization.MapLike;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class FieldDecoder<A> extends MapDecoder.Implementation<A> {
+public final class FieldDecoder<A> extends MapDecoder.Implementation<A> {
     protected final String name;
     private final Decoder<A> elementCodec;
 

@@ -15,6 +15,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * Represents either a successful operation, or a partial operation with an error message and a partial result (if available)
+ * Also stores an additional lifecycle marker (monoidal)
+ */
 public class DataResult<R> implements App<DataResult.Mu, R> {
     public static final class Mu implements K1 {}
 
@@ -23,25 +27,39 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
     }
 
     private final Either<R, DynamicException<R>> result;
+    private final Lifecycle lifecycle;
 
     public static <R> DataResult<R> success(final R result) {
-        return new DataResult<>(Either.left(result));
+        return success(result, Lifecycle.experimental());
     }
 
     public static <R> DataResult<R> error(final String message, final R partialResult) {
-        return new DataResult<>(Either.right(new DynamicException<>(message, Optional.of(partialResult))));
+        return error(message, partialResult, Lifecycle.experimental());
     }
 
     public static <R> DataResult<R> error(final String message) {
-        return new DataResult<>(Either.right(new DynamicException<>(message, Optional.empty())));
+        return error(message, Lifecycle.experimental());
     }
 
-    public static <R> DataResult<R> create(final Either<R, DynamicException<R>> result) {
-        return new DataResult<>(result);
+    public static <R> DataResult<R> success(final R result, final Lifecycle experimental) {
+        return new DataResult<>(Either.left(result), experimental);
     }
 
-    private DataResult(final Either<R, DynamicException<R>> result) {
+    public static <R> DataResult<R> error(final String message, final R partialResult, final Lifecycle lifecycle) {
+        return new DataResult<>(Either.right(new DynamicException<>(message, Optional.of(partialResult))), lifecycle);
+    }
+
+    public static <R> DataResult<R> error(final String message, final Lifecycle lifecycle) {
+        return new DataResult<>(Either.right(new DynamicException<>(message, Optional.empty())), lifecycle);
+    }
+
+    private static <R> DataResult<R> create(final Either<R, DynamicException<R>> result, final Lifecycle lifecycle) {
+        return new DataResult<>(result, lifecycle);
+    }
+
+    private DataResult(final Either<R, DynamicException<R>> result, final Lifecycle lifecycle) {
         this.result = result;
+        this.lifecycle = lifecycle;
     }
 
     public Either<R, DynamicException<R>> get() {
@@ -50,6 +68,10 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
     public Optional<R> result() {
         return result.left();
+    }
+
+    public Lifecycle lifecycle() {
+        return lifecycle;
     }
 
     public Optional<R> resultOrPartial(final Consumer<String> onError) {
@@ -83,17 +105,17 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return create(result.mapBoth(
             function,
             r -> new DynamicException<>(r.message, r.partialResult.map(function))
-        ));
+        ), lifecycle);
     }
 
     public DataResult<R> promotePartial(final Consumer<String> onError) {
         return result.map(
-            DataResult::success,
+            r -> new DataResult<>(Either.left(r), lifecycle),
             r -> {
                 onError.accept(r.message);
                 return r.partialResult
-                    .map(DataResult::success)
-                    .orElseGet(() -> create(Either.right(r)));
+                    .map(pr -> new DataResult<>(Either.left(pr), lifecycle))
+                    .orElseGet(() -> create(Either.right(r), lifecycle));
             }
         );
     }
@@ -102,18 +124,23 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
      * Applies the function to either full or partial result, in case of partial concatenates errors.
      */
     public <R2> DataResult<R2> flatMap(final Function<? super R, ? extends DataResult<R2>> function) {
-        return create(result.map(
-            l -> function.apply(l).get(),
-            r -> Either.right(r.partialResult
-                .map(value -> function.apply(value).get().map(
-                    l2 -> new DynamicException<>(r.message, Optional.of(l2)),
-                    r2 -> new DynamicException<>(r.message + "; " + r2.message, r2.partialResult)
-                ))
+        return result.map(
+            l -> {
+                final DataResult<R2> second = function.apply(l);
+                return create(second.get(), lifecycle.add(second.lifecycle));
+            },
+            r -> r.partialResult
+                .map(value -> {
+                    final DataResult<R2> second = function.apply(value);
+                    return create(Either.right(second.get().map(
+                        l2 -> new DynamicException<>(r.message, Optional.of(l2)),
+                        r2 -> new DynamicException<>(r.message + "; " + r2.message, r2.partialResult)
+                    )), lifecycle.add(second.lifecycle));
+                })
                 .orElseGet(
-                    () -> new DynamicException<>(r.message, Optional.empty())
+                    () -> create(Either.right(new DynamicException<>(r.message, Optional.empty())), lifecycle)
                 )
-            )
-        ));
+        );
     }
 
     public <R2> DataResult<R2> ap(final DataResult<Function<R, R2>> functionResult) {
@@ -129,7 +156,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
                     argError.partialResult.flatMap(a -> funcError.partialResult.map(f -> f.apply(a)))
                 )
             ))
-        ));
+        ), lifecycle.add(functionResult.lifecycle));
     }
 
     public <R2, S> DataResult<S> apply2(final BiFunction<R, R2, S> function, final DataResult<R2> second) {
@@ -141,15 +168,23 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
     }
 
     public DataResult<R> setPartial(final Supplier<R> partial) {
-        return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial.get()))));
+        return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial.get()))), lifecycle);
     }
 
     public DataResult<R> setPartial(final R partial) {
-        return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial))));
+        return create(result.mapRight(r -> new DynamicException<>(r.message, Optional.of(partial))), lifecycle);
     }
 
     public DataResult<R> mapError(final Function<String, String> function) {
-        return create(result.mapRight(r -> new DynamicException<>(function.apply(r.message), r.partialResult)));
+        return create(result.mapRight(r -> new DynamicException<>(function.apply(r.message), r.partialResult)), lifecycle);
+    }
+
+    public DataResult<R> setLifecycle(final Lifecycle lifecycle) {
+        return create(result, lifecycle);
+    }
+
+    public DataResult<R> addLifecycle(final Lifecycle lifecycle) {
+        return create(result, this.lifecycle.add(lifecycle));
     }
 
     public static Instance instance() {
@@ -265,12 +300,10 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             if (fr.result.left().isPresent()
                 && ra.result.left().isPresent()
                 && rb.result.left().isPresent()){
-                return DataResult.success(
-                    fr.result.left().get().apply(
-                        ra.result.left().get(),
-                        rb.result.left().get()
-                    )
-                );
+                return new DataResult<>(Either.left(fr.result.left().get().apply(
+                    ra.result.left().get(),
+                    rb.result.left().get()
+                )), fr.lifecycle.add(ra.lifecycle).add(rb.lifecycle));
             }
 
             return Applicative.super.ap2(func, a, b);
@@ -288,13 +321,11 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
                 && dr1.result.left().isPresent()
                 && dr2.result.left().isPresent()
                 && dr3.result.left().isPresent()) {
-                return DataResult.success(
-                    fr.result.left().get().apply(
-                        dr1.result.left().get(),
-                        dr2.result.left().get(),
-                        dr3.result.left().get()
-                    )
-                );
+                return new DataResult<>(Either.left(fr.result.left().get().apply(
+                    dr1.result.left().get(),
+                    dr2.result.left().get(),
+                    dr3.result.left().get()
+                )), fr.lifecycle.add(dr1.lifecycle).add(dr2.lifecycle).add(dr3.lifecycle));
             }
 
             return Applicative.super.ap3(func, t1, t2, t3);

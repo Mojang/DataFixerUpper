@@ -45,6 +45,43 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         };
     }
 
+    @Override
+    public MapCodec<A> withLifecycle(final Lifecycle lifecycle) {
+        final MapCodec<A> self = this;
+
+        return new MapCodec<A>() {
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
+            }
+
+            @Override
+            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return self.decode(ops, input).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
+            }
+        };
+    }
+
+    @Override
+    public MapCodec<A> stable() {
+        return withLifecycle(Lifecycle.stable());
+    }
+
+    @Override
+    public MapCodec<A> deprecated(final int since) {
+        return withLifecycle(Lifecycle.deprecated(since));
+    }
+
     public <S> MapCodec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
         return MapCodec.of(comap(from), map(to), toString() + "[comapped]");
     }
@@ -74,7 +111,7 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         @Override
         public <T> DataResult<O> decode(final DynamicOps<T> ops, final MapLike<T> input) {
             return codec.decode(ops, input).flatMap((O base) ->
-                splitter.apply(base).getSecond().decode(ops, input).map(e -> combiner.apply(base, e))
+                splitter.apply(base).getSecond().decode(ops, input).map(e -> combiner.apply(base, e)).setLifecycle(Lifecycle.experimental())
             );
         }
 
@@ -83,7 +120,7 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
             codec.encode(input, ops, prefix);
             final Pair<E, MapCodec<E>> e = splitter.apply(input);
             e.getSecond().encode(e.getFirst(), ops, prefix);
-            return prefix;
+            return prefix.setLifecycle(Lifecycle.experimental());
         }
     }
 
@@ -123,7 +160,7 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
     }
 
     @Override
-    public Codec<A> withDefault(final Consumer<String> onError, final A value) {
+    public MapCodec<A> withDefault(final Consumer<String> onError, final A value) {
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 
@@ -148,7 +185,7 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
     }
 
     @Override
-    public Codec<A> withDefault(final Consumer<String> onError, final Supplier<? extends A> value) {
+    public MapCodec<A> withDefault(final Consumer<String> onError, final Supplier<? extends A> value) {
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 

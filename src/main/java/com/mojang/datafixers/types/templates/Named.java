@@ -21,6 +21,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Lifecycle;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -143,7 +144,7 @@ public final class Named implements TypeTemplate {
             return new Codec<Pair<String, A>>() {
                 @Override
                 public <T> DataResult<Pair<Pair<String, A>, T>> decode(final DynamicOps<T> ops, final T input) {
-                    return element.codec().decode(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(name, v)));
+                    return element.codec().decode(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(name, v))).setLifecycle(Lifecycle.experimental());
                 }
 
                 @Override
@@ -151,7 +152,7 @@ public final class Named implements TypeTemplate {
                     if (!Objects.equals(input.getFirst(), name)) {
                         return DataResult.error("Named type name doesn't match: expected: " + name + ", got: " + input.getFirst(), prefix);
                     }
-                    return element.codec().encode(input.getSecond(), ops, prefix);
+                    return element.codec().encode(input.getSecond(), ops, prefix).setLifecycle(Lifecycle.experimental());
                 }
             };
         }

@@ -17,6 +17,8 @@ public interface RecordBuilder<T> {
 
     RecordBuilder<T> withErrorsFrom(final DataResult<?> result);
 
+    RecordBuilder<T> setLifecycle(Lifecycle lifecycle);
+
     RecordBuilder<T> mapError(Function<String, String> onError);
 
     DataResult<T> build(T prefix);
@@ -113,6 +115,12 @@ public interface RecordBuilder<T> {
         @Override
         public RecordBuilder<T> withErrorsFrom(final DataResult<?> result) {
             builder = builder.flatMap(v -> result.map(r -> v));
+            return this;
+        }
+
+        @Override
+        public RecordBuilder<T> setLifecycle(final Lifecycle lifecycle) {
+            builder = builder.setLifecycle(lifecycle);
             return this;
         }
 
