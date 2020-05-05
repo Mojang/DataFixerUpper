@@ -48,6 +48,21 @@ public interface Encoder<A> {
         };
     }
 
+    default Encoder<A> withLifecycle(final Lifecycle lifecycle) {
+        final Encoder<A> self = this;
+        return new Encoder<A>() {
+            @Override
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
+            }
+        };
+    }
+
     static <A extends Serializable> Encoder<A> of() {
         return new Encoder<A>() {
             @Override

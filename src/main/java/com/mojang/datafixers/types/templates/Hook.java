@@ -16,6 +16,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Lifecycle;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -114,12 +115,12 @@ public final class Hook implements TypeTemplate {
             return new Codec<A>() {
                 @Override
                 public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                    return delegate.codec().decode(ops, preRead.apply(ops, input));
+                    return delegate.codec().decode(ops, preRead.apply(ops, input)).setLifecycle(Lifecycle.experimental());
                 }
 
                 @Override
                 public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                    return delegate.codec().encode(input, ops, prefix).map(v -> postWrite.apply(ops, v));
+                    return delegate.codec().encode(input, ops, prefix).map(v -> postWrite.apply(ops, v)).setLifecycle(Lifecycle.experimental());
                 }
             };
         }

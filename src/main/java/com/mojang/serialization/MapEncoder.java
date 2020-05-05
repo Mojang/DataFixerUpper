@@ -48,6 +48,27 @@ public interface MapEncoder<A> extends Encoder<A>, Keyable {
         return encode(input, ops, compressedBuilder(ops)).build(prefix);
     }
 
+    @Override
+    default MapEncoder<A> withLifecycle(final Lifecycle lifecycle) {
+        final MapEncoder<A> self = this;
+        return new Implementation<A>() {
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
+            }
+        };
+    }
+
     abstract class Implementation<A> implements MapEncoder<A> {
         private final Map<DynamicOps<?>, MapCompressor<?>> compressors = new Object2ObjectArrayMap<>();
 

@@ -87,6 +87,21 @@ public interface Decoder<A> {
         };
     }
 
+    default Decoder<A> withLifecycle(final Lifecycle lifecycle) {
+        final Decoder<A> self = this;
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return self.decode(ops, input).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
+            }
+        };
+    }
+
     static <A> Decoder<A> ofTerminal(final Terminal<? extends A> terminal) {
         return terminal.decoder().map(Function.identity());
     }

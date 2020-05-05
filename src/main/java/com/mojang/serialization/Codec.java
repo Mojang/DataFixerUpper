@@ -29,6 +29,35 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 public interface Codec<A> extends Encoder<A>, Decoder<A> {
+    @Override
+    default Codec<A> withLifecycle(final Lifecycle lifecycle) {
+        final Codec<A> self = this;
+        return new Codec<A>() {
+            @Override
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return self.decode(ops, input).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
+            }
+        };
+    }
+
+    default Codec<A> stable() {
+        return withLifecycle(Lifecycle.stable());
+    }
+
+    default Codec<A> deprecated(final int since) {
+        return withLifecycle(Lifecycle.deprecated(since));
+    }
+
     static <A extends Serializable> Codec<A> of(final Decoder<A> decoder) {
         return of(Encoder.of(), decoder);
     }
@@ -284,11 +313,24 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default <E> MapCodec<E> dispatch(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return partialDispatchCodec(typeKey, type.andThen(DataResult::success), codec);
+        return partialDispatch(typeKey, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
-    default <E> MapCodec<E> partialDispatchCodec(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return partialDispatch(typeKey, type, codec.andThen(DataResult::success));
+    default <E> MapCodec<E> dispatchStable(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+        return dispatchStable("type", type, codec);
+    }
+
+    default <E> MapCodec<E> dispatchStable(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+        return partialDispatch(typeKey, e -> DataResult.success(type.apply(e), Lifecycle.stable()), a -> DataResult.success(codec.apply(a), Lifecycle.stable()));
+    }
+
+    default <E> MapCodec<E> dispatchDeprecated(final int since, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+        return dispatchDeprecated(since, "type", type, codec);
+    }
+
+    default <E> MapCodec<E> dispatchDeprecated(final int since, final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+        final Lifecycle deprecated = Lifecycle.deprecated(since);
+        return partialDispatch(typeKey, e -> DataResult.success(type.apply(e), deprecated), a -> DataResult.success(codec.apply(a), deprecated));
     }
 
     default <E> MapCodec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends Codec<? extends E>>> codec) {
@@ -509,20 +551,20 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         public <T> DataResult<T> encode(final Dynamic<?> input, final DynamicOps<T> ops, final T prefix) {
             if (input.getValue() == input.getOps().empty()) {
                 // nothing to merge, return rest
-                return DataResult.success(prefix);
+                return DataResult.success(prefix, Lifecycle.experimental());
             }
 
             final T casted = input.convert(ops).getValue();
             if (prefix == ops.empty()) {
                 // no need to merge anything, return the old value
-                return DataResult.success(casted);
+                return DataResult.success(casted, Lifecycle.experimental());
             }
 
             final DataResult<T> toMap = ops.getMap(casted).flatMap(map -> ops.mergeToMap(prefix, map));
             return toMap.result().map(DataResult::success).orElseGet(() -> {
                 final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeToList(prefix, stream.collect(Collectors.toList())));
                 return toList.result().map(DataResult::success).orElseGet(() ->
-                    DataResult.error("Don't know how to merge " + prefix + " and " + casted, prefix)
+                    DataResult.error("Don't know how to merge " + prefix + " and " + casted, prefix, Lifecycle.experimental())
                 );
             });
         }

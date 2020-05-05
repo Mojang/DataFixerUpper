@@ -18,6 +18,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Lifecycle;
 import org.apache.commons.lang3.ObjectUtils;
 
 import javax.annotation.Nullable;
@@ -144,12 +145,12 @@ public final class RecursivePoint implements TypeTemplate {
             return new Codec<A>() {
                 @Override
                 public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                    return unfold().codec().decode(ops, input);
+                    return unfold().codec().decode(ops, input).setLifecycle(Lifecycle.experimental());
                 }
 
                 @Override
                 public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                    return unfold().codec().encode(input, ops, prefix);
+                    return unfold().codec().encode(input, ops, prefix).setLifecycle(Lifecycle.experimental());
                 }
             };
         }

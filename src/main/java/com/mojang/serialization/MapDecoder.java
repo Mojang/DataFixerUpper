@@ -50,7 +50,8 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
             };
             return decode(ops, map);
         }
-        return ops.getMap(input).flatMap(map -> decode(ops, map));
+        // will use the lifecycle of decode
+        return ops.getMap(input).setLifecycle(Lifecycle.stable()).flatMap(map -> decode(ops, map));
     }
 
     <T> MapCompressor<T> compressor(DynamicOps<T> ops);
@@ -99,6 +100,27 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
             @Override
             public String toString() {
                 return decoder.toString() + " * " + self.toString();
+            }
+        };
+    }
+
+    @Override
+    default MapDecoder<A> withLifecycle(final Lifecycle lifecycle) {
+        final MapDecoder<A> self = this;
+        return new MapDecoder.Implementation<A>() {
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
+            }
+
+            @Override
+            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return self.decode(ops, input).setLifecycle(lifecycle);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
             }
         };
     }
