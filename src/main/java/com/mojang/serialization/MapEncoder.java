@@ -44,6 +44,34 @@ public interface MapEncoder<A> extends Encoder<A>, Keyable {
     }
 
     @Override
+    default <B> MapEncoder<B> flatComap(final Function<? super B, ? extends DataResult<? extends A>> function) {
+        final MapEncoder<A> self = this;
+        return new MapEncoder.Implementation<B>() {
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(final B input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                final DataResult<? extends A> aResult = function.apply(input);
+                final RecordBuilder<T> builder = prefix.withErrorsFrom(aResult);
+                return aResult.map(r -> self.encode(r, ops, builder)).result().orElse(builder);
+            }
+
+            @Override
+            public <T> DataResult<T> encode(final B input, final DynamicOps<T> ops, final T prefix) {
+                return function.apply(input).flatMap(a -> self.encode(a, ops, prefix));
+            }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[flatComapped]";
+            }
+        };
+    }
+
+    @Override
     default <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
         return encode(input, ops, compressedBuilder(ops)).build(prefix);
     }

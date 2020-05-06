@@ -62,6 +62,27 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
     }
 
     @Override
+    default <B> MapDecoder<B> flatMap(final Function<? super A, ? extends DataResult<? extends B>> function) {
+        final MapDecoder<A> self = this;
+        return new Implementation<B>() {
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return self.keys(ops);
+            }
+
+            @Override
+            public <T> DataResult<B> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return self.decode(ops, input).flatMap(b -> function.apply(b).map(Function.identity()));
+            }
+
+            @Override
+            public String toString() {
+                return self.toString() + "[flatMapped]";
+            }
+        };
+    }
+
+    @Override
     default <B> MapDecoder<B> map(final Function<? super A, ? extends B> function) {
         final MapDecoder<A> self = this;
         return new Implementation<B>() {
