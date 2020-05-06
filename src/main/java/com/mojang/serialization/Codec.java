@@ -19,6 +19,7 @@ import com.mojang.serialization.codecs.SimpleMapCodec;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -182,6 +183,25 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     default MapCodec<Optional<A>> optionalFieldOf(final String name) {
         return optionalField(name, this);
+    }
+
+    default MapCodec<A> optionalFieldOf(final String name, final A defaultValue) {
+        return optionalField(name, this).xmap(
+            o -> o.orElse(defaultValue),
+            a -> Objects.equals(a, defaultValue) ? Optional.empty() : Optional.of(a)
+        );
+    }
+
+    default MapCodec<A> optionalFieldOf(final String name, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return optionalFieldOf(name, Lifecycle.experimental(), defaultValue, lifecycleOfDefault);
+    }
+
+    default MapCodec<A> optionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
+        return optionalField(name, this).stable().flatXmap(
+            o -> o.map(v-> DataResult.success(v, fieldLifecycle)).orElse(DataResult.success(defaultValue, lifecycleOfDefault)),
+            a -> Objects.equals(a, defaultValue) ? DataResult.success(Optional.empty(), lifecycleOfDefault) : DataResult.success(Optional.of(a), fieldLifecycle)
+        );
     }
 
     interface ResultFunction<A> {

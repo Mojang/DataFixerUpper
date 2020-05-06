@@ -82,8 +82,14 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         return withLifecycle(Lifecycle.deprecated(since));
     }
 
+    @Override
     public <S> MapCodec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
         return MapCodec.of(comap(from), map(to), toString() + "[comapped]");
+    }
+
+    @Override
+    public <S> MapCodec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
+        return Codec.of(flatComap(from), flatMap(to), toString() + "[flatXmapped]");
     }
 
     public <E> MapCodec<A> dependent(final MapCodec<E> initialInstance, final Function<A, Pair<E, MapCodec<E>>> splitter, final BiFunction<A, E, A> combiner) {
