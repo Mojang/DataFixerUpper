@@ -8,6 +8,7 @@ import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.ListBuilder;
 
 import java.util.List;
@@ -34,16 +35,16 @@ public final class ListCodec<A> implements Codec<List<A>> {
 
     @Override
     public <T> DataResult<Pair<List<A>, T>> decode(final DynamicOps<T> ops, final T input) {
-        return ops.getList(input).flatMap(stream -> {
+        return ops.getList(input).setLifecycle(Lifecycle.stable()).flatMap(stream -> {
             final ImmutableList.Builder<A> read = ImmutableList.builder();
             final ImmutableList.Builder<T> failed = ImmutableList.builder();
             final AtomicReference<DataResult<Unit>> result =
-                new AtomicReference<>(DataResult.success(Unit.INSTANCE));
+                new AtomicReference<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
 
             stream.accept(t -> {
                 final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);
                 element.error().ifPresent(e -> failed.add(t));
-                result.set(result.get().apply2((r, v) -> {
+                result.set(result.get().apply2stable((r, v) -> {
                     read.add(v.getFirst());
                     return r;
                 }, element));

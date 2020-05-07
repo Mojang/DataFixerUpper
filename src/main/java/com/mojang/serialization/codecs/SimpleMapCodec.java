@@ -10,6 +10,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Keyable;
+import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
@@ -17,6 +18,7 @@ import com.mojang.serialization.RecordBuilder;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> {
@@ -39,16 +41,16 @@ public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> {
     public <T> DataResult<Map<K, V>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
         final ImmutableMap.Builder<K, V> read = ImmutableMap.builder();
         final ImmutableList.Builder<Pair<T, T>> failed = ImmutableList.builder();
-        final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE));
+        final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
 
         input.entries().forEach(pair -> {
             final DataResult<K> k = keyCodec.parse(ops, pair.getFirst());
             final DataResult<V> v = elementCodec.parse(ops, pair.getSecond());
 
-            final DataResult<Pair<K, V>> entry = k.apply2(Pair::of, v);
+            final DataResult<Pair<K, V>> entry = k.apply2stable(Pair::of, v);
             entry.error().ifPresent(e -> failed.add(pair));
 
-            result.set(result.get().apply2((u, p) -> {
+            result.set(result.get().apply2stable((u, p) -> {
                 read.put(p.getFirst(), p.getSecond());
                 return u;
             }, entry));

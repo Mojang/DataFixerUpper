@@ -37,11 +37,11 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
                 final DataResult<K> k = keyCodec.parse(ops, key);
                 final DataResult<V> v = elementCodec.parse(ops, value);
 
-                final DataResult<Pair<K, V>> readEntry = k.apply2(Pair::new, v);
+                final DataResult<Pair<K, V>> readEntry = k.apply2stable(Pair::new, v);
 
                 readEntry.error().ifPresent(e -> failed.put(key, value));
 
-                result.set(result.get().apply2((u, e) -> {
+                result.set(result.get().apply2stable((u, e) -> {
                     read.add(e);
                     return u;
                 }, readEntry));

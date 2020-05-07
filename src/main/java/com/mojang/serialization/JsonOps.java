@@ -324,7 +324,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     private static final class ArrayBuilder implements ListBuilder<JsonElement> {
-        private DataResult<JsonArray> builder = DataResult.success(new JsonArray());
+        private DataResult<JsonArray> builder = DataResult.success(new JsonArray(), Lifecycle.stable());
 
         @Override
         public DynamicOps<JsonElement> ops() {
@@ -342,7 +342,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         @Override
         public ListBuilder<JsonElement> add(final DataResult<JsonElement> value) {
-            builder = builder.apply2((b, element) -> {
+            builder = builder.apply2stable((b, element) -> {
                 b.add(element);
                 return b;
             }, value);
@@ -373,10 +373,10 @@ public class JsonOps implements DynamicOps<JsonElement> {
                     array.addAll(prefix.getAsJsonArray());
                 }
                 array.addAll(b);
-                return DataResult.success(array);
+                return DataResult.success(array, Lifecycle.stable());
             });
 
-            builder = DataResult.success(new JsonArray());
+            builder = DataResult.success(new JsonArray(), Lifecycle.stable());
             return result;
         }
     }

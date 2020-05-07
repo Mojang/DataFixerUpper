@@ -47,7 +47,7 @@ public interface ListBuilder<T> {
 
     final class Builder<T> implements ListBuilder<T> {
         private final DynamicOps<T> ops;
-        private DataResult<ImmutableList.Builder<T>> builder = DataResult.success(ImmutableList.builder());
+        private DataResult<ImmutableList.Builder<T>> builder = DataResult.success(ImmutableList.builder(), Lifecycle.stable());
 
         public Builder(final DynamicOps<T> ops) {
             this.ops = ops;
@@ -66,7 +66,7 @@ public interface ListBuilder<T> {
 
         @Override
         public ListBuilder<T> add(final DataResult<T> value) {
-            builder = builder.apply2(ImmutableList.Builder::add, value);
+            builder = builder.apply2stable(ImmutableList.Builder::add, value);
             return this;
         }
 
@@ -85,7 +85,7 @@ public interface ListBuilder<T> {
         @Override
         public DataResult<T> build(final T prefix) {
             final DataResult<T> result = builder.flatMap(b -> ops.mergeToList(prefix, b.build()));
-            builder = DataResult.success(ImmutableList.builder());
+            builder = DataResult.success(ImmutableList.builder(), Lifecycle.stable());
             return result;
         }
     }
