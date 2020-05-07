@@ -163,6 +163,12 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return unbox(instance().apply2(function, this, second));
     }
 
+    public <R2, S> DataResult<S> apply2stable(final BiFunction<R, R2, S> function, final DataResult<R2> second) {
+        final Applicative<Mu, Instance.Mu> instance = instance();
+        final DataResult<BiFunction<R, R2, S>> f = unbox(instance.point(function)).setLifecycle(Lifecycle.stable());
+        return unbox(instance.ap2(f, this, second));
+    }
+
     public <R2, R3, S> DataResult<S> apply3(final Function3<R, R2, R3, S> function, final DataResult<R2> second, final DataResult<R3> third) {
         return unbox(instance().apply3(function, this, second, third));
     }

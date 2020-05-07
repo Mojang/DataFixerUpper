@@ -49,7 +49,7 @@ public interface RecordBuilder<T> {
 
     abstract class AbstractStringBuilder<T, R> implements RecordBuilder<T> {
         private final DynamicOps<T> ops;
-        protected DataResult<R> builder = DataResult.success(initBuilder());
+        protected DataResult<R> builder = DataResult.success(initBuilder(), Lifecycle.stable());
 
         protected AbstractStringBuilder(final DynamicOps<T> ops) {
             this.ops = ops;
@@ -74,14 +74,14 @@ public interface RecordBuilder<T> {
 
         @Override
         public RecordBuilder<T> add(final String key, final DataResult<T> value) {
-            builder = builder.apply2((b, v) -> append(key, v, b), value);
+            builder = builder.apply2stable((b, v) -> append(key, v, b), value);
             return this;
         }
 
         @Override
         public DataResult<T> build(final T prefix) {
             final DataResult<T> result = builder.flatMap(b -> build(b, prefix));
-            builder = DataResult.success(initBuilder());
+            builder = DataResult.success(initBuilder(), Lifecycle.stable());
             return result;
         }
 
@@ -151,13 +151,13 @@ public interface RecordBuilder<T> {
 
         @Override
         public RecordBuilder<T> add(final T key, final DataResult<T> value) {
-            builder = builder.apply2((b, v) -> append(key, v, b), value);
+            builder = builder.apply2stable((b, v) -> append(key, v, b), value);
             return this;
         }
 
         @Override
         public RecordBuilder<T> add(final DataResult<T> key, final DataResult<T> value) {
-            builder = builder.ap(key.apply2((k, v) -> b -> append(k, v, b), value));
+            builder = builder.ap(key.apply2stable((k, v) -> b -> append(k, v, b), value));
             return this;
         }
     }
