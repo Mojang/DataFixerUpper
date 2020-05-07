@@ -16,6 +16,7 @@ import com.mojang.serialization.codecs.PairCodec;
 import com.mojang.serialization.codecs.PairMapCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.SimpleMapCodec;
+import com.mojang.serialization.codecs.UnboundedMapCodec;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -146,6 +147,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <K, V> SimpleMapCodec<K, V> simpleMap(final Codec<K> keyCodec, final Codec<V> elementCodec, final Keyable keys) {
         return new SimpleMapCodec<>(keyCodec, elementCodec, keys);
+    }
+
+    static <K, V> UnboundedMapCodec<K, V> unboundedMap(final Codec<K> keyCodec, final Codec<V> elementCodec) {
+        return new UnboundedMapCodec<>(keyCodec, elementCodec);
     }
 
     static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {

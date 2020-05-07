@@ -2,30 +2,25 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.Keyable;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.MapLike;
-import com.mojang.serialization.RecordBuilder;
+import com.mojang.serialization.Lifecycle;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
- * Key and value decoded independently, statically known set of keys
+ * Key and value decoded independently, unknown set of keys
  */
-public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> implements BaseMapCodec<K, V> {
+public final class UnboundedMapCodec<K, V> implements BaseMapCodec<K, V> {
     private final Codec<K> keyCodec;
     private final Codec<V> elementCodec;
-    private final Keyable keys;
 
-    public SimpleMapCodec(final Codec<K> keyCodec, final Codec<V> elementCodec, final Keyable keys) {
+    public UnboundedMapCodec(final Codec<K> keyCodec, final Codec<V> elementCodec) {
         this.keyCodec = keyCodec;
         this.elementCodec = elementCodec;
-        this.keys = keys;
     }
 
     @Override
@@ -39,19 +34,13 @@ public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> implements B
     }
 
     @Override
-    public <T> Stream<T> keys(final DynamicOps<T> ops) {
-        return keys.keys(ops);
-    }
-
-
-    @Override
-    public <T> DataResult<Map<K, V>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        return BaseMapCodec.super.decode(ops, input);
+    public <T> DataResult<Pair<Map<K, V>, T>> decode(final DynamicOps<T> ops, final T input) {
+        return ops.getMap(input).setLifecycle(Lifecycle.stable()).flatMap(map -> decode(ops, map)).map(r -> Pair.of(r, input));
     }
 
     @Override
-    public <T> RecordBuilder<T> encode(final Map<K, V> input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-        return BaseMapCodec.super.encode(input, ops, prefix);
+    public  <T> DataResult<T> encode(final Map<K, V> input, final DynamicOps<T> ops, final T prefix) {
+        return encode(input, ops, ops.mapBuilder()).build(prefix);
     }
 
     @Override
@@ -62,7 +51,7 @@ public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> implements B
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final SimpleMapCodec<?, ?> that = (SimpleMapCodec<?, ?>) o;
+        final UnboundedMapCodec<?, ?> that = (UnboundedMapCodec<?, ?>) o;
         return Objects.equals(keyCodec, that.keyCodec) && Objects.equals(elementCodec, that.elementCodec);
     }
 
@@ -73,6 +62,6 @@ public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> implements B
 
     @Override
     public String toString() {
-        return "SimpleMapCodec[" + keyCodec + " -> " + elementCodec + ']';
+        return "UnboundedMapCodec[" + keyCodec + " -> " + elementCodec + ']';
     }
 }
