@@ -225,7 +225,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
                         @Override
                         public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                            return Stream.concat(aEncoder.keys(ops), Stream.concat(bEncoder.keys(ops), fEncoder.keys(ops)));
+                            return Stream.of(
+                                fEncoder.keys(ops),
+                                aEncoder.keys(ops),
+                                bEncoder.keys(ops)
+                            ).flatMap(Function.identity());
                         }
 
                         @Override
@@ -246,7 +250,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
                     @Override
                     public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                        return Stream.concat(fa.decoder.keys(ops), Stream.concat(fb.decoder.keys(ops), function.decoder.keys(ops)));
+                        return Stream.of(
+                            function.decoder.keys(ops),
+                            fa.decoder.keys(ops),
+                            fb.decoder.keys(ops)
+                        ).flatMap(Function.identity());
                     }
 
                     @Override
@@ -291,10 +299,12 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
                         @Override
                         public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                            return Stream.concat(
-                                Stream.concat(e1.keys(ops), e2.keys(ops)),
-                                Stream.concat(e3.keys(ops), fEncoder.keys(ops))
-                            );
+                            return Stream.of(
+                                fEncoder.keys(ops),
+                                e1.keys(ops),
+                                e2.keys(ops),
+                                e3.keys(ops)
+                            ).flatMap(Function.identity());
                         }
 
                         @Override
@@ -316,10 +326,12 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
                     @Override
                     public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                        return Stream.concat(
-                            Stream.concat(f1.decoder.keys(ops), f2.decoder.keys(ops)),
-                            Stream.concat(f3.decoder.keys(ops), function.decoder.keys(ops))
-                        );
+                        return Stream.of(
+                            function.decoder.keys(ops),
+                            f1.decoder.keys(ops),
+                            f2.decoder.keys(ops),
+                            f3.decoder.keys(ops)
+                        ).flatMap(Function.identity());
                     }
 
                     @Override
@@ -369,13 +381,13 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
                         @Override
                         public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                            return Stream.concat(
-                                Stream.concat(
-                                    Stream.concat(e1.keys(ops), e2.keys(ops)),
-                                    Stream.concat(e3.keys(ops), e4.keys(ops))
-                                ),
-                                fEncoder.keys(ops)
-                            );
+                            return Stream.of(
+                                fEncoder.keys(ops),
+                                e1.keys(ops),
+                                e2.keys(ops),
+                                e3.keys(ops),
+                                e4.keys(ops)
+                            ).flatMap(Function.identity());
                         }
 
                         @Override
@@ -398,13 +410,13 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
 
                     @Override
                     public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                        return Stream.concat(
-                            Stream.concat(
-                                Stream.concat(f1.decoder.keys(ops), f2.decoder.keys(ops)),
-                                Stream.concat(f3.decoder.keys(ops), f4.decoder.keys(ops))
-                            ),
-                            function.decoder.keys(ops)
-                        );
+                        return Stream.of(
+                            function.decoder.keys(ops),
+                            f1.decoder.keys(ops),
+                            f2.decoder.keys(ops),
+                            f3.decoder.keys(ops),
+                            f4.decoder.keys(ops)
+                        ).flatMap(Function.identity());
                     }
 
                     @Override
