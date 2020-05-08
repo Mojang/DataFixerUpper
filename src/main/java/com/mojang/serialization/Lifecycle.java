@@ -53,6 +53,9 @@ public class Lifecycle {
             }
             return this;
         }
+        if (other instanceof Deprecated) {
+            return other;
+        }
         return STABLE;
     }
 }
