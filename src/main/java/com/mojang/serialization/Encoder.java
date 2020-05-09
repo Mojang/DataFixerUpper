@@ -63,20 +63,6 @@ public interface Encoder<A> {
         };
     }
 
-    static <A extends Serializable> Encoder<A> of() {
-        return new Encoder<A>() {
-            @Override
-            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return input.serialize(ops, prefix);
-            }
-
-            @Override
-            public String toString() {
-                return "SerializableEncoder";
-            }
-        };
-    }
-
     static <A> MapEncoder<A> empty() {
         return new MapEncoder.Implementation<A>() {
             @Override

@@ -231,14 +231,6 @@ public interface DynamicOps<T> {
         return new ListBuilder.Builder<>(this);
     }
 
-    default DataResult<T> list(final Iterable<? extends Serializable> list) {
-        return list(list, empty(), empty());
-    }
-
-    default DataResult<T> list(final Iterable<? extends Serializable> list, final T prefix, final T elementPrefix) {
-        return list(list, prefix, e -> e.serialize(this, elementPrefix));
-    }
-
     default <E> DataResult<T> list(final Iterable<E> list, final T prefix, final Encoder<E> encoder) {
         final ListBuilder<T> builder = listBuilder();
         builder.addAll(list, encoder);

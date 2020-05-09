@@ -35,14 +35,6 @@ public interface RecordBuilder<T> {
         return add(ops().createString(key), value);
     }
 
-    default RecordBuilder<T> add(final String key, final Serializable value) {
-        return add(key, value, ops().empty());
-    }
-
-    default RecordBuilder<T> add(final String key, final Serializable value, final T elementPrefix) {
-        return add(key, value.serialize(ops(), elementPrefix));
-    }
-
     default <E> RecordBuilder<T> add(final String key, final E value, final Encoder<E> encoder) {
         return add(key, encoder.encodeStart(ops(), value));
     }
