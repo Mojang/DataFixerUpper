@@ -16,7 +16,7 @@ import com.mojang.serialization.RecordBuilder;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-public interface BaseMapCodec<K, V> extends Codec<Map<K, V>> {
+public interface BaseMapCodec<K, V> {
 
     Codec<K> keyCodec();
 

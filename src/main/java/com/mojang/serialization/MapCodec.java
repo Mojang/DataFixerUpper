@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implements MapEncoder<A>, Codec<A> {
+public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implements MapEncoder<A> {
     public final <O> RecordCodecBuilder<O, A> forGetter(final Function<O, A> getter) {
         return RecordCodecBuilder.of(getter, this);
     }
@@ -45,6 +45,10 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         };
     }
 
+    public MapCodec<A> fieldOf(final String name) {
+        return codec().fieldOf(name);
+    }
+
     @Override
     public MapCodec<A> withLifecycle(final Lifecycle lifecycle) {
         final MapCodec<A> self = this;
@@ -72,22 +76,49 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         };
     }
 
-    @Override
+    public static final class MapCodecCodec<A> implements Codec<A> {
+        private final MapCodec<A> codec;
+
+        public MapCodecCodec(final MapCodec<A> codec) {
+            this.codec = codec;
+        }
+
+        public MapCodec<A> codec() {
+            return codec;
+        }
+
+        @Override
+        public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+            return codec.compressedDecode(ops, input).map(r -> Pair.of(r, input));
+        }
+
+        @Override
+        public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+            return codec.encode(input, ops, codec.compressedBuilder(ops)).build(prefix);
+        }
+
+        @Override
+        public String toString() {
+            return codec.toString();
+        }
+    }
+
+    public Codec<A> codec() {
+        return new MapCodecCodec<>(this);
+    }
+
     public MapCodec<A> stable() {
         return withLifecycle(Lifecycle.stable());
     }
 
-    @Override
     public MapCodec<A> deprecated(final int since) {
         return withLifecycle(Lifecycle.deprecated(since));
     }
 
-    @Override
     public <S> MapCodec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
         return MapCodec.of(comap(from), map(to), toString() + "[comapped]");
     }
 
-    @Override
     public <S> MapCodec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
         return Codec.of(flatComap(from), flatMap(to), toString() + "[flatXmapped]");
     }
@@ -165,12 +196,10 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         };
     }
 
-    @Override
     public MapCodec<A> withDefault(final Consumer<String> onError, final A value) {
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    @Override
     public MapCodec<A> withDefault(final Function<String, String> onError, final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
@@ -190,12 +219,10 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         });
     }
 
-    @Override
     public MapCodec<A> withDefault(final Consumer<String> onError, final Supplier<? extends A> value) {
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    @Override
     public MapCodec<A> withDefault(final Function<String, String> onError, final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
@@ -215,7 +242,6 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         });
     }
 
-    @Override
     public MapCodec<A> withDefault(final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
@@ -235,7 +261,6 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         });
     }
 
-    @Override
     public MapCodec<A> withDefault(final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
@@ -253,5 +278,13 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
                 return "WithDefault[" + value.get() + "]";
             }
         });
+    }
+
+    static <A> MapCodec<A> unit(final A defaultValue) {
+        return unit(() -> defaultValue);
+    }
+
+    static <A> MapCodec<A> unit(final Supplier<A> defaultValue) {
+        return MapCodec.of(Encoder.empty(), Decoder.unit(defaultValue));
     }
 }

@@ -131,11 +131,6 @@ public interface Decoder<A> {
             }
 
             @Override
-            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return DataResult.success(Pair.of(instance.get(), input));
-            }
-
-            @Override
             public String toString() {
                 return "UnitDecoder[" + instance.get() + "]";
             }

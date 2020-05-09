@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public interface MapEncoder<A> extends Encoder<A>, Keyable {
+public interface MapEncoder<A> extends Keyable {
     <T> RecordBuilder<T> encode(A input, DynamicOps<T> ops, RecordBuilder<T> prefix);
 
     default <T> RecordBuilder<T> compressedBuilder(final DynamicOps<T> ops) {
@@ -22,7 +22,6 @@ public interface MapEncoder<A> extends Encoder<A>, Keyable {
 
     <T> MapCompressor<T> compressor(final DynamicOps<T> ops);
 
-    @Override
     default <B> MapEncoder<B> comap(final Function<? super B, ? extends A> function) {
         final MapEncoder<A> self = this;
         return new MapEncoder.Implementation<B>() {
@@ -43,7 +42,6 @@ public interface MapEncoder<A> extends Encoder<A>, Keyable {
         };
     }
 
-    @Override
     default <B> MapEncoder<B> flatComap(final Function<? super B, ? extends DataResult<? extends A>> function) {
         final MapEncoder<A> self = this;
         return new MapEncoder.Implementation<B>() {
@@ -60,23 +58,27 @@ public interface MapEncoder<A> extends Encoder<A>, Keyable {
             }
 
             @Override
-            public <T> DataResult<T> encode(final B input, final DynamicOps<T> ops, final T prefix) {
-                return function.apply(input).flatMap(a -> self.encode(a, ops, prefix));
-            }
-
-            @Override
             public String toString() {
                 return self.toString() + "[flatComapped]";
             }
         };
     }
 
-    @Override
-    default <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-        return encode(input, ops, compressedBuilder(ops)).build(prefix);
+    default Encoder<A> encoder() {
+        final MapEncoder<A> self = this;
+        return new Encoder<A>() {
+            @Override
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                return self.encode(input, ops, compressedBuilder(ops)).build(prefix);
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
+            }
+        };
     }
 
-    @Override
     default MapEncoder<A> withLifecycle(final Lifecycle lifecycle) {
         final MapEncoder<A> self = this;
         return new Implementation<A>() {

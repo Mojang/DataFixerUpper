@@ -90,11 +90,6 @@ public interface Encoder<A> {
             }
 
             @Override
-            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return DataResult.success(prefix);
-            }
-
-            @Override
             public String toString() {
                 return "EmptyEncoder";
             }

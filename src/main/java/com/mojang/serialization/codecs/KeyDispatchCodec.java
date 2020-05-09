@@ -7,8 +7,6 @@ import com.mojang.serialization.Decoder;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Encoder;
 import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.MapDecoder;
-import com.mojang.serialization.MapEncoder;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
@@ -55,8 +53,8 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
                     }
                     return c.parse(ops, value).map(Function.identity());
                 }
-                if (c instanceof MapDecoder<?>) {
-                    return ((MapDecoder<? extends V>) c).decode(ops, input).map(Function.identity());
+                if (c instanceof MapCodecCodec<?>) {
+                    return ((MapCodecCodec<? extends V>) c).codec().decode(ops, input).map(Function.identity());
                 }
                 return c.decode(ops, ops.createMap(input.entries())).map(Pair::getFirst);
             });
@@ -77,8 +75,8 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
                 .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)))
                 .add(valueKey, c.encodeStart(ops, input));
         }
-        if (c instanceof MapEncoder<?>) {
-            return ((MapEncoder<V>) c).encode(input, ops, prefix)
+        if (c instanceof MapCodecCodec<?>) {
+            return ((MapCodecCodec<V>) c).codec().encode(input, ops, prefix)
                 .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
         }
 

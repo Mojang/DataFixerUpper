@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public interface MapDecoder<A> extends Decoder<A>, Keyable {
+public interface MapDecoder<A> extends Keyable {
     <T> DataResult<A> decode(DynamicOps<T> ops, MapLike<T> input);
 
     default <T> DataResult<A> compressedDecode(final DynamicOps<T> ops, final T input) {
@@ -56,12 +56,21 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
 
     <T> MapCompressor<T> compressor(DynamicOps<T> ops);
 
-    @Override
-    default <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-        return compressedDecode(ops, input).map(r -> Pair.of(r, input));
+    default Decoder<A> decoder() {
+        final MapDecoder<A> self = this;
+        return new Decoder<A>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                return compressedDecode(ops, input).map(r -> Pair.of(r, input));
+            }
+
+            @Override
+            public String toString() {
+                return self.toString();
+            }
+        };
     }
 
-    @Override
     default <B> MapDecoder<B> flatMap(final Function<? super A, ? extends DataResult<? extends B>> function) {
         final MapDecoder<A> self = this;
         return new Implementation<B>() {
@@ -82,7 +91,6 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
         };
     }
 
-    @Override
     default <B> MapDecoder<B> map(final Function<? super A, ? extends B> function) {
         final MapDecoder<A> self = this;
         return new Implementation<B>() {
@@ -125,7 +133,6 @@ public interface MapDecoder<A> extends Decoder<A>, Keyable {
         };
     }
 
-    @Override
     default MapDecoder<A> withLifecycle(final Lifecycle lifecycle) {
         final MapDecoder<A> self = this;
         return new MapDecoder.Implementation<A>() {
