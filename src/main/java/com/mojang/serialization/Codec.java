@@ -60,10 +60,6 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return withLifecycle(Lifecycle.deprecated(since));
     }
 
-    static <A extends Serializable> Codec<A> of(final Decoder<A> decoder) {
-        return of(Encoder.of(), decoder);
-    }
-
     static <A> Codec<A> of(final Encoder<A> encoder, final Decoder<A> decoder) {
         return of(encoder, decoder, "Codec[" + encoder + " " + decoder + "]");
     }

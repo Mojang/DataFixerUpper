@@ -23,21 +23,8 @@ public interface ListBuilder<T> {
         return prefix.flatMap(this::build);
     }
 
-    default ListBuilder<T> add(final Serializable value) {
-        return add(value, ops().empty());
-    }
-
-    default ListBuilder<T> add(final Serializable value, final T elementPrefix) {
-        return add(value.serialize(ops(), elementPrefix));
-    }
-
     default <E> ListBuilder<T> add(final E value, final Encoder<E> encoder) {
         return add(encoder.encodeStart(ops(), value));
-    }
-
-    default ListBuilder<T> addAll(final Iterable<? extends Serializable> values) {
-        values.forEach(this::add);
-        return this;
     }
 
     default <E> ListBuilder<T> addAll(final Iterable<E> values, final Encoder<E> encoder) {
