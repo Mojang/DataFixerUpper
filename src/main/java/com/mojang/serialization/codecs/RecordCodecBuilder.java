@@ -69,7 +69,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         return new RecordCodecBuilder<>(o -> instance, o -> Encoder.<F>empty().withLifecycle(lifecycle), Decoder.unit(instance).withLifecycle(lifecycle));
     }
 
-    public static <O> MapCodec<O> create(final Function<Instance<O>, ? extends App<RecordCodecBuilder.Mu<O>, O>> builder) {
+    public static <O> Codec<O> create(final Function<Instance<O>, ? extends App<RecordCodecBuilder.Mu<O>, O>> builder) {
+        return build(builder.apply(instance())).codec();
+    }
+
+    public static <O> MapCodec<O> mapCodec(final Function<Instance<O>, ? extends App<RecordCodecBuilder.Mu<O>, O>> builder) {
         return build(builder.apply(instance()));
     }
 

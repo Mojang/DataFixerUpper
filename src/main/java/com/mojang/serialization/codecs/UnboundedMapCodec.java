@@ -14,7 +14,7 @@ import java.util.Objects;
 /**
  * Key and value decoded independently, unknown set of keys
  */
-public final class UnboundedMapCodec<K, V> implements BaseMapCodec<K, V> {
+public final class UnboundedMapCodec<K, V> implements BaseMapCodec<K, V>, Codec<Map<K, V>> {
     private final Codec<K> keyCodec;
     private final Codec<V> elementCodec;
 

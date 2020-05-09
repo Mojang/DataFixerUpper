@@ -170,7 +170,7 @@ public final class Tag implements TypeTemplate {
 
         @Override
         protected Codec<A> buildCodec() {
-            return element.codec().fieldOf(name);
+            return element.codec().fieldOf(name).codec();
         }
 
         @Override

@@ -33,6 +33,6 @@ public final class EmptyPart extends com.mojang.datafixers.types.Type<Unit> {
 
     @Override
     protected Codec<Unit> buildCodec() {
-        return Codec.EMPTY;
+        return Codec.EMPTY.codec();
     }
 }

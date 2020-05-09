@@ -45,7 +45,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
             return Codec.list(Codec.SAVING);
         }
         if (input instanceof JsonNull) {
-            return Codec.EMPTY;
+            return Codec.EMPTY.codec();
         }
         final JsonPrimitive primitive = input.getAsJsonPrimitive();
         if (primitive.isString()) {

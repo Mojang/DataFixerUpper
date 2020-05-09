@@ -188,13 +188,13 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         protected Codec<Pair<K, ?>> buildCodec() {
-            return new KeyDispatchCodec<>(
+            return new KeyDispatchCodec<K, Pair<K, ?>>(
                 name,
                 keyType.codec(),
                 p -> DataResult.success(p.getFirst()),
                 k -> getCodec(k).map(c -> c.map(v -> Pair.of(k, v))),
                 this::encoder
-            );
+            ).codec();
         }
 
         private DataResult<? extends Codec<?>> getCodec(final K k) {
