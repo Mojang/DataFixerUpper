@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -356,7 +356,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
         }
 
         @Override
-        public ListBuilder<JsonElement> mapError(final Function<String, String> onError) {
+        public ListBuilder<JsonElement> mapError(final UnaryOperator<String> onError) {
             builder = builder.mapError(onError);
             return this;
         }

@@ -4,7 +4,7 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public interface RecordBuilder<T> {
     DynamicOps<T> ops();
@@ -19,7 +19,7 @@ public interface RecordBuilder<T> {
 
     RecordBuilder<T> setLifecycle(Lifecycle lifecycle);
 
-    RecordBuilder<T> mapError(Function<String, String> onError);
+    RecordBuilder<T> mapError(UnaryOperator<String> onError);
 
     DataResult<T> build(T prefix);
 
@@ -117,7 +117,7 @@ public interface RecordBuilder<T> {
         }
 
         @Override
-        public RecordBuilder<T> mapError(final Function<String, String> onError) {
+        public RecordBuilder<T> mapError(final UnaryOperator<String> onError) {
             builder = builder.mapError(onError);
             return this;
         }

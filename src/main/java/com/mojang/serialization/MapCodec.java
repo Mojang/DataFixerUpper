@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implements MapEncoder<A> {
@@ -200,7 +201,7 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    public MapCodec<A> withDefault(final Function<String, String> onError, final A value) {
+    public MapCodec<A> withDefault(final UnaryOperator<String> onError, final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a) {
@@ -223,7 +224,7 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    public MapCodec<A> withDefault(final Function<String, String> onError, final Supplier<? extends A> value) {
+    public MapCodec<A> withDefault(final UnaryOperator<String> onError, final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a) {

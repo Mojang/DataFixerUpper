@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -230,7 +231,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    default Codec<A> withDefault(final Function<String, String> onError, final A value) {
+    default Codec<A> withDefault(final UnaryOperator<String> onError, final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
@@ -253,7 +254,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return withDefault(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    default Codec<A> withDefault(final Function<String, String> onError, final Supplier<? extends A> value) {
+    default Codec<A> withDefault(final UnaryOperator<String> onError, final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
