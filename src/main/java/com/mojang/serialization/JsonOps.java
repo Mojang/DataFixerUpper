@@ -37,42 +37,42 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
-    public Codec<?> getType(final JsonElement input) {
+    public <U> U convertTo(final DynamicOps<U> outOps, final JsonElement input) {
         if (input instanceof JsonObject) {
-            return Codec.compoundList(Codec.PASSTHROUGH, Codec.PASSTHROUGH);
+            return convertMap(outOps, input);
         }
         if (input instanceof JsonArray) {
-            return Codec.list(Codec.PASSTHROUGH);
+            return convertList(outOps, input);
         }
         if (input instanceof JsonNull) {
-            return Codec.EMPTY.codec();
+            return outOps.empty();
         }
         final JsonPrimitive primitive = input.getAsJsonPrimitive();
         if (primitive.isString()) {
-            return Codec.STRING;
+            return outOps.createString(primitive.getAsString());
         }
         if (primitive.isBoolean()) {
-            return Codec.BOOL;
+            return outOps.createBoolean(primitive.getAsBoolean());
         }
         final BigDecimal value = primitive.getAsBigDecimal();
         try {
             final long l = value.longValueExact();
             if ((byte) l == l) {
-                return Codec.BYTE;
+                return outOps.createByte((byte) l);
             }
             if ((short) l == l) {
-                return Codec.SHORT;
+                return outOps.createShort((short) l);
             }
             if ((int) l == l) {
-                return Codec.INT;
+                return outOps.createInt((int) l);
             }
-            return Codec.LONG;
+            return outOps.createLong(l);
         } catch (final ArithmeticException e) {
             final double d = value.doubleValue();
             if ((float) d == d) {
-                return Codec.FLOAT;
+                return outOps.createFloat((float) d);
             }
-            return Codec.DOUBLE;
+            return outOps.createDouble(d);
         }
     }
 

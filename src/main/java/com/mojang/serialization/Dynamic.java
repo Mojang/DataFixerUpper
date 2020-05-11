@@ -190,51 +190,7 @@ public class Dynamic<T> extends DynamicLike<T> {
         if (Objects.equals(inOps, outOps)) {
             return (T) input;
         }
-        final Codec<?> type = inOps.getType(input);
-        if (Objects.equals(type, Codec.EMPTY)) {
-            return outOps.empty();
-        }
-        if (Objects.equals(type, Codec.BYTE)) {
-            return outOps.createByte(inOps.getNumberValue(input, 0).byteValue());
-        }
-        if (Objects.equals(type, Codec.SHORT)) {
-            return outOps.createShort(inOps.getNumberValue(input, 0).shortValue());
-        }
-        if (Objects.equals(type, Codec.INT)) {
-            return outOps.createInt(inOps.getNumberValue(input, 0).intValue());
-        }
-        if (Objects.equals(type, Codec.LONG)) {
-            return outOps.createLong(inOps.getNumberValue(input, 0).longValue());
-        }
-        if (Objects.equals(type, Codec.FLOAT)) {
-            return outOps.createFloat(inOps.getNumberValue(input, 0).floatValue());
-        }
-        if (Objects.equals(type, Codec.DOUBLE)) {
-            return outOps.createDouble(inOps.getNumberValue(input, 0).doubleValue());
-        }
-        if (Objects.equals(type, Codec.BOOL)) {
-            return outOps.createBoolean(inOps.getBooleanValue(input).result().orElse(false));
-        }
-        if (Objects.equals(type, Codec.STRING)) {
-            return outOps.createString(inOps.getStringValue(input).result().orElse(""));
-        }
-        if (Objects.equals(type, Codec.list(Codec.BYTE))) {
-            return outOps.createByteList(inOps.getByteBuffer(input).result().orElse(ByteBuffer.wrap(new byte[0])));
-        }
-        if (Objects.equals(type, Codec.list(Codec.INT))) {
-            return outOps.createIntList(inOps.getIntStream(input).result().orElse(IntStream.empty()));
-        }
-        if (Objects.equals(type, Codec.list(Codec.LONG))) {
-            return outOps.createLongList(inOps.getLongStream(input).result().orElse(LongStream.empty()));
-        }
-        if (Objects.equals(type, Codec.list(Codec.PASSTHROUGH))) {
-            return outOps.createList(inOps.getStream(input).result().orElse(Stream.empty()).map(e -> convert(inOps, outOps, e)));
-        }
-        if (Objects.equals(type, Codec.compoundList(Codec.PASSTHROUGH, Codec.PASSTHROUGH))) {
-            return outOps.createMap(inOps.getMapValues(input).result().orElse(Stream.empty()).map(e ->
-                Pair.of(convert(inOps, outOps, e.getFirst()), convert(inOps, outOps, e.getSecond()))
-            ));
-        }
-        throw new IllegalStateException("Could not convert value of type " + type);
+
+        return inOps.convertTo(outOps, input);
     }
 }

@@ -3,6 +3,7 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
 
@@ -31,7 +32,7 @@ public interface DynamicOps<T> {
         return createList(Stream.empty());
     }
 
-    Codec<?> getType(final T input);
+    <U> U convertTo(DynamicOps<U> outOps, T input);
 
     DataResult<Number> getNumberValue(T input);
 
@@ -271,5 +272,15 @@ public interface DynamicOps<T> {
 
     default <E> Function<T, DataResult<E>> withParser(final Decoder<E> decoder) {
         return t -> decoder.parse(this, t);
+    }
+
+    default <U> U convertList(final DynamicOps<U> outOps, final T input) {
+        return outOps.createList(getStream(input).result().orElse(Stream.empty()).map(e -> convertTo(outOps, e)));
+    }
+
+    default <U> U convertMap(final DynamicOps<U> outOps, final T input) {
+        return outOps.createMap(getMapValues(input).result().orElse(Stream.empty()).map(e ->
+            Pair.of(convertTo(outOps, e.getFirst()), convertTo(outOps, e.getSecond()))
+        ));
     }
 }
