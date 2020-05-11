@@ -80,10 +80,17 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
                 .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
         }
 
-        prefix.add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
+        final T typeString = ops.createString(typeKey);
+
         final DataResult<MapLike<T>> element = c.encodeStart(ops, input).flatMap(ops::getMap);
         return element.map(map -> {
-            map.entries().forEach(pair -> prefix.add(pair.getFirst(), pair.getSecond()));
+            map.entries().forEach(pair -> {
+                if (pair.getFirst().equals(typeString)) {
+                    prefix.add(typeString, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
+                } else {
+                    prefix.add(pair.getFirst(), pair.getSecond());
+                }
+            });
             return prefix;
         }).result().orElseGet(() -> prefix.withErrorsFrom(element));
     }
