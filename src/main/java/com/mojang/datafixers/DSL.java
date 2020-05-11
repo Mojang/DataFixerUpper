@@ -7,7 +7,7 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.constant.EmptyPart;
-import com.mojang.datafixers.types.constant.EmptyPartSaving;
+import com.mojang.datafixers.types.constant.EmptyPartPassthrough;
 import com.mojang.datafixers.types.templates.Check;
 import com.mojang.datafixers.types.templates.CompoundList;
 import com.mojang.datafixers.types.templates.Const;
@@ -84,11 +84,11 @@ public interface DSL {
     }
 
     static TypeTemplate remainder() {
-        return constType(Instances.NIL_SAVE);
+        return constType(Instances.EMPTY_PASSTHROUGH);
     }
 
     static Type<Dynamic<?>> remainderType() {
-        return Instances.NIL_SAVE;
+        return Instances.EMPTY_PASSTHROUGH;
     }
 
     static TypeTemplate check(final String name, final int index, final TypeTemplate element) {
@@ -443,7 +443,7 @@ public interface DSL {
         private static final Type<Double> DOUBLE_TYPE = new Const.PrimitiveType<>(Codec.DOUBLE);
         private static final Type<String> STRING_TYPE = new Const.PrimitiveType<>(Codec.STRING);
         private static final Type<Unit> EMPTY_PART = new EmptyPart();
-        private static final Type<Dynamic<?>> NIL_SAVE = new EmptyPartSaving();
+        private static final Type<Dynamic<?>> EMPTY_PASSTHROUGH = new EmptyPartPassthrough();
 
         private static final OpticFinder<Dynamic<?>> REMAINDER_FINDER = remainderType().finder();
 

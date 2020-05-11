@@ -10,7 +10,6 @@ import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -228,10 +227,10 @@ public class Dynamic<T> extends DynamicLike<T> {
         if (Objects.equals(type, Codec.list(Codec.LONG))) {
             return outOps.createLongList(inOps.getLongStream(input).result().orElse(LongStream.empty()));
         }
-        if (Objects.equals(type, Codec.list(Codec.SAVING))) {
+        if (Objects.equals(type, Codec.list(Codec.PASSTHROUGH))) {
             return outOps.createList(inOps.getStream(input).result().orElse(Stream.empty()).map(e -> convert(inOps, outOps, e)));
         }
-        if (Objects.equals(type, Codec.compoundList(Codec.SAVING, Codec.SAVING))) {
+        if (Objects.equals(type, Codec.compoundList(Codec.PASSTHROUGH, Codec.PASSTHROUGH))) {
             return outOps.createMap(inOps.getMapValues(input).result().orElse(Stream.empty()).map(e ->
                 Pair.of(convert(inOps, outOps, e.getFirst()), convert(inOps, outOps, e.getSecond()))
             ));
