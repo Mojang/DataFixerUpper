@@ -48,8 +48,8 @@ public class Lifecycle {
             return EXPERIMENTAL;
         }
         if (this instanceof Deprecated) {
-            if (other instanceof Deprecated) {
-                return new Deprecated(Math.min(((Deprecated) this).since, ((Deprecated) other).since));
+            if (other instanceof Deprecated && ((Deprecated) other).since < ((Deprecated) this).since) {
+                return other;
             }
             return this;
         }
