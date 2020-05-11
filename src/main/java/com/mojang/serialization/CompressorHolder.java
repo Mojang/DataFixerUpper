@@ -7,11 +7,11 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import java.util.Map;
 
 public abstract class CompressorHolder implements Compressable {
-    private final Map<DynamicOps<?>, MapCompressor<?>> compressors = new Object2ObjectArrayMap<>();
+    private final Map<DynamicOps<?>, KeyCompressor<?>> compressors = new Object2ObjectArrayMap<>();
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> MapCompressor<T> compressor(final DynamicOps<T> ops) {
-        return (MapCompressor<T>) compressors.computeIfAbsent(ops, k -> new MapCompressor<>(ops, keys(ops)));
+    public <T> KeyCompressor<T> compressor(final DynamicOps<T> ops) {
+        return (KeyCompressor<T>) compressors.computeIfAbsent(ops, k -> new KeyCompressor<>(ops, keys(ops)));
     }
 }

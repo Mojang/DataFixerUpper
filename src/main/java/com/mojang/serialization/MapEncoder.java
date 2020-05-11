@@ -17,7 +17,7 @@ public interface MapEncoder<A> extends Keyable {
         return ops.mapBuilder();
     }
 
-    <T> MapCompressor<T> compressor(final DynamicOps<T> ops);
+    <T> KeyCompressor<T> compressor(final DynamicOps<T> ops);
 
     default <B> MapEncoder<B> comap(final Function<? super B, ? extends A> function) {
         return new MapEncoder.Implementation<B>() {
@@ -95,7 +95,7 @@ public interface MapEncoder<A> extends Keyable {
     abstract class Implementation<A> extends CompressorHolder implements MapEncoder<A> {
     }
 
-    static <T> RecordBuilder<T> makeCompressedBuilder(final DynamicOps<T> ops, final MapCompressor<T> compressor) {
+    static <T> RecordBuilder<T> makeCompressedBuilder(final DynamicOps<T> ops, final KeyCompressor<T> compressor) {
         class CompressedRecordBuilder extends RecordBuilder.AbstractBuilder<T, List<T>> {
             private CompressedRecordBuilder() {
                 super(ops);
