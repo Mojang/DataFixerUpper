@@ -52,27 +52,26 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
     @Override
     public MapCodec<A> withLifecycle(final Lifecycle lifecycle) {
-        final MapCodec<A> self = this;
 
         return new MapCodec<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapCodec.this.keys(ops);
             }
 
             @Override
             public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                return self.decode(ops, input).setLifecycle(lifecycle);
+                return MapCodec.this.decode(ops, input).setLifecycle(lifecycle);
             }
 
             @Override
             public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+                return MapCodec.this.encode(input, ops, prefix).setLifecycle(lifecycle);
             }
 
             @Override
             public String toString() {
-                return self.toString();
+                return MapCodec.this.toString();
             }
         };
     }
@@ -172,27 +171,26 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
     }
 
     private MapCodec<A> mapResult(final MapCodec.ResultFunction<A> function) {
-        final MapCodec<A> self = this;
 
         return new MapCodec<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapCodec.this.keys(ops);
             }
 
             @Override
             public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-                return function.coApply(ops, input, self.encode(input, ops, prefix));
+                return function.coApply(ops, input, MapCodec.this.encode(input, ops, prefix));
             }
 
             @Override
             public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                return function.apply(ops, input, self.decode(ops, input));
+                return function.apply(ops, input, MapCodec.this.decode(ops, input));
             }
 
             @Override
             public String toString() {
-                return self + "[mapResult " + function + "]";
+                return MapCodec.this + "[mapResult " + function + "]";
             }
         };
     }

@@ -34,21 +34,20 @@ import java.util.stream.Stream;
 public interface Codec<A> extends Encoder<A>, Decoder<A> {
     @Override
     default Codec<A> withLifecycle(final Lifecycle lifecycle) {
-        final Codec<A> self = this;
         return new Codec<A>() {
             @Override
             public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+                return Codec.this.encode(input, ops, prefix).setLifecycle(lifecycle);
             }
 
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return self.decode(ops, input).setLifecycle(lifecycle);
+                return Codec.this.decode(ops, input).setLifecycle(lifecycle);
             }
 
             @Override
             public String toString() {
-                return self.toString();
+                return Codec.this.toString();
             }
         };
     }
@@ -207,22 +206,20 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default Codec<A> mapResult(final ResultFunction<A> function) {
-        final Codec<A> self = this;
-
         return new Codec<A>() {
             @Override
             public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return function.coApply(ops, input, self.encode(input, ops, prefix));
+                return function.coApply(ops, input, Codec.this.encode(input, ops, prefix));
             }
 
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return function.apply(ops, input, self.decode(ops, input));
+                return function.apply(ops, input, Codec.this.decode(ops, input));
             }
 
             @Override
             public String toString() {
-                return self + "[mapResult " + function + "]";
+                return Codec.this + "[mapResult " + function + "]";
             }
         };
     }

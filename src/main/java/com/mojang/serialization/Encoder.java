@@ -19,46 +19,43 @@ public interface Encoder<A> {
     }
 
     default <B> Encoder<B> comap(final Function<? super B, ? extends A> function) {
-        final Encoder<A> self = this;
         return new Encoder<B>() {
             @Override
             public <T> DataResult<T> encode(final B input, final DynamicOps<T> ops, final T prefix) {
-                return self.encode(function.apply(input), ops, prefix);
+                return Encoder.this.encode(function.apply(input), ops, prefix);
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[comapped]";
+                return Encoder.this.toString() + "[comapped]";
             }
         };
     }
 
     default <B> Encoder<B> flatComap(final Function<? super B, ? extends DataResult<? extends A>> function) {
-        final Encoder<A> self = this;
         return new Encoder<B>() {
             @Override
             public <T> DataResult<T> encode(final B input, final DynamicOps<T> ops, final T prefix) {
-                return function.apply(input).flatMap(a -> self.encode(a, ops, prefix));
+                return function.apply(input).flatMap(a -> Encoder.this.encode(a, ops, prefix));
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[flatComapped]";
+                return Encoder.this.toString() + "[flatComapped]";
             }
         };
     }
 
     default Encoder<A> withLifecycle(final Lifecycle lifecycle) {
-        final Encoder<A> self = this;
         return new Encoder<A>() {
             @Override
             public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+                return Encoder.this.encode(input, ops, prefix).setLifecycle(lifecycle);
             }
 
             @Override
             public String toString() {
-                return self.toString();
+                return Encoder.this.toString();
             }
         };
     }
