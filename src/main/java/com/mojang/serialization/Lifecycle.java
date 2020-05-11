@@ -19,7 +19,7 @@ public class Lifecycle {
     private Lifecycle() {
     }
 
-    protected static final class Deprecated extends Lifecycle {
+    public static final class Deprecated extends Lifecycle {
         private final int since;
 
         public Deprecated(final int since) {
