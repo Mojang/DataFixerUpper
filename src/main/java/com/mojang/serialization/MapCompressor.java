@@ -7,8 +7,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class MapCompressor<T> {
@@ -20,21 +18,22 @@ public final class MapCompressor<T> {
 
     public MapCompressor(final DynamicOps<T> ops, final Stream<T> keyStream) {
         this.ops = ops;
-        final List<T> keys = keyStream.distinct().collect(Collectors.toList());
 
         compressString.defaultReturnValue(-1);
 
-        for (int i = 0; i < keys.size(); i++) {
-            final T key = keys.get(i);
-            compress.put(key, i);
-            final int finalI = i;
+        keyStream.forEach(key -> {
+            if (compress.containsKey(key)) {
+                return;
+            }
+            final int next = compress.size();
+            compress.put(key, next);
             ops.getStringValue(key).result().ifPresent(k ->
-                compressString.put(k, finalI)
+                compressString.put(k, next)
             );
-            decompress.put(i, key);
-        }
+            decompress.put(next, key);
+        });
 
-        size = keys.size();
+        size = compress.size();
     }
 
     public T decompress(final int key) {
