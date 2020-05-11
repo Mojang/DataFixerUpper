@@ -117,7 +117,7 @@ public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implement
     }
 
     public <S> MapCodec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
-        return MapCodec.of(comap(from), map(to), toString() + "[comapped]");
+        return MapCodec.of(comap(from), map(to), toString() + "[xmapped]");
     }
 
     public <S> MapCodec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
