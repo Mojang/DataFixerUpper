@@ -117,7 +117,7 @@ public interface MapEncoder<A> extends Keyable {
 
             @Override
             protected List<T> initBuilder() {
-                final ArrayList<T> list = new ArrayList<>(compressor.size());
+                final List<T> list = new ArrayList<>(compressor.size());
                 for (int i = 0; i < compressor.size(); i++) {
                     list.add(null);
                 }
