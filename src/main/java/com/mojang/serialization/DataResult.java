@@ -120,6 +120,10 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         );
     }
 
+    private static String appendMessages(final String first, final String second) {
+        return first + "; " + second;
+    }
+
     /**
      * Applies the function to either full or partial result, in case of partial concatenates errors.
      */
@@ -134,7 +138,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
                     final DataResult<R2> second = function.apply(value);
                     return create(Either.right(second.get().map(
                         l2 -> new PartialResult<>(r.message, Optional.of(l2)),
-                        r2 -> new PartialResult<>(r.message + "; " + r2.message, r2.partialResult)
+                        r2 -> new PartialResult<>(appendMessages(r.message, r2.message), r2.partialResult)
                     )), lifecycle.add(second.lifecycle));
                 })
                 .orElseGet(
@@ -152,7 +156,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             argError -> Either.right(functionResult.result.map(
                 func -> new PartialResult<>(argError.message, argError.partialResult.map(func)),
                 funcError -> new PartialResult<>(
-                    argError.message + "; " + funcError.message,
+                    appendMessages(argError.message, funcError.message),
                     argError.partialResult.flatMap(a -> funcError.partialResult.map(f -> f.apply(a)))
                 )
             ))
@@ -239,7 +243,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         public <R2> PartialResult<R2> flatMap(final Function<R, PartialResult<R2>> function) {
             if (partialResult.isPresent()) {
                 final PartialResult<R2> result = function.apply(partialResult.get());
-                return new PartialResult<>(message + "; " + result.message, result.partialResult);
+                return new PartialResult<>(appendMessages(message, result.message), result.partialResult);
             }
             return new PartialResult<>(message, Optional.empty());
         }
