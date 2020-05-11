@@ -5,8 +5,8 @@ package com.mojang.datafixers;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public class DataFixUtils {
     private DataFixUtils() {
@@ -95,7 +95,7 @@ public class DataFixUtils {
         return key % 10;
     }
 
-    public static <T> Function<T, T> consumerToFunction(final Consumer<T> consumer) {
+    public static <T> UnaryOperator<T> consumerToFunction(final Consumer<T> consumer) {
         return s -> {
             consumer.accept(s);
             return s;

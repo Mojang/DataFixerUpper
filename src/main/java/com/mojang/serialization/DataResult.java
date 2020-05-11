@@ -14,6 +14,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  * Represents either a successful operation, or a partial operation with an error message and a partial result (if available)
@@ -185,7 +186,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return create(result.mapRight(r -> new PartialResult<>(r.message, Optional.of(partial))), lifecycle);
     }
 
-    public DataResult<R> mapError(final Function<String, String> function) {
+    public DataResult<R> mapError(final UnaryOperator<String> function) {
         return create(result.mapRight(r -> new PartialResult<>(function.apply(r.message), r.partialResult)), lifecycle);
     }
 
