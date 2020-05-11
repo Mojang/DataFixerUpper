@@ -39,10 +39,10 @@ public class JsonOps implements DynamicOps<JsonElement> {
     @Override
     public Codec<?> getType(final JsonElement input) {
         if (input instanceof JsonObject) {
-            return Codec.compoundList(Codec.SAVING, Codec.SAVING);
+            return Codec.compoundList(Codec.PASSTHROUGH, Codec.PASSTHROUGH);
         }
         if (input instanceof JsonArray) {
-            return Codec.list(Codec.SAVING);
+            return Codec.list(Codec.PASSTHROUGH);
         }
         if (input instanceof JsonNull) {
             return Codec.EMPTY.codec();

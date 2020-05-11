@@ -586,7 +586,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         }
     };
 
-    Codec<Dynamic<?>> SAVING = new Codec<Dynamic<?>>() {
+    Codec<Dynamic<?>> PASSTHROUGH = new Codec<Dynamic<?>>() {
         @Override
         public <T> DataResult<Pair<Dynamic<?>, T>> decode(final DynamicOps<T> ops, final T input) {
             return DataResult.success(Pair.of(new Dynamic<>(ops, input), ops.empty()));
@@ -616,7 +616,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
         @Override
         public String toString() {
-            return "saving";
+            return "passthrough";
         }
     };
 

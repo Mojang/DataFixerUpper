@@ -10,10 +10,10 @@ import com.mojang.serialization.DynamicOps;
 
 import java.util.Optional;
 
-public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dynamic<?>> {
+public final class EmptyPartPassthrough extends com.mojang.datafixers.types.Type<Dynamic<?>> {
     @Override
     public String toString() {
-        return "EmptyPartSaving";
+        return "EmptyPartPassthrough";
     }
 
     @Override
@@ -33,6 +33,6 @@ public final class EmptyPartSaving extends com.mojang.datafixers.types.Type<Dyna
 
     @Override
     public Codec<Dynamic<?>> buildCodec() {
-        return Codec.SAVING;
+        return Codec.PASSTHROUGH;
     }
 }
