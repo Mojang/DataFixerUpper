@@ -9,14 +9,14 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
 import java.util.stream.Stream;
 
-public final class MapCompressor<T> {
+public final class KeyCompressor<T> {
     private final Int2ObjectMap<T> decompress = new Int2ObjectArrayMap<>();
     private final Object2IntMap<T> compress = new Object2IntArrayMap<>();
     private final Object2IntMap<String> compressString = new Object2IntArrayMap<>();
     private final int size;
     private final DynamicOps<T> ops;
 
-    public MapCompressor(final DynamicOps<T> ops, final Stream<T> keyStream) {
+    public KeyCompressor(final DynamicOps<T> ops, final Stream<T> keyStream) {
         this.ops = ops;
 
         compressString.defaultReturnValue(-1);

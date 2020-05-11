@@ -3,5 +3,5 @@
 package com.mojang.serialization;
 
 public interface Compressable extends Keyable {
-    <T> MapCompressor<T> compressor(final DynamicOps<T> ops);
+    <T> KeyCompressor<T> compressor(final DynamicOps<T> ops);
 }

@@ -24,7 +24,7 @@ public interface MapDecoder<A> extends Keyable {
                 return DataResult.error("Input is not a list");
             }
 
-            final MapCompressor<T> compressor = compressor(ops);
+            final KeyCompressor<T> compressor = compressor(ops);
             final List<T> entries = new ArrayList<>();
             inputList.get().accept(entries::add);
 
@@ -52,7 +52,7 @@ public interface MapDecoder<A> extends Keyable {
         return ops.getMap(input).setLifecycle(Lifecycle.stable()).flatMap(map -> decode(ops, map));
     }
 
-    <T> MapCompressor<T> compressor(DynamicOps<T> ops);
+    <T> KeyCompressor<T> compressor(DynamicOps<T> ops);
 
     default Decoder<A> decoder() {
         return new Decoder<A>() {
