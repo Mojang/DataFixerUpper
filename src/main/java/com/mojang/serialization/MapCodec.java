@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-public abstract class MapCodec<A> extends MapDecoder.Implementation<A> implements MapEncoder<A> {
+public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder<A>, MapEncoder<A> {
     public final <O> RecordCodecBuilder<O, A> forGetter(final Function<O, A> getter) {
         return RecordCodecBuilder.of(getter, this);
     }
