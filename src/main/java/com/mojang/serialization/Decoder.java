@@ -43,61 +43,57 @@ public interface Decoder<A> {
     }
 
     default <B> Decoder<B> flatMap(final Function<? super A, ? extends DataResult<? extends B>> function) {
-        final Decoder<A> self = this;
         return new Decoder<B>() {
             @Override
             public <T> DataResult<Pair<B, T>> decode(final DynamicOps<T> ops, final T input) {
-                return self.decode(ops, input).flatMap(p -> function.apply(p.getFirst()).map(r -> Pair.of(r, p.getSecond())));
+                return Decoder.this.decode(ops, input).flatMap(p -> function.apply(p.getFirst()).map(r -> Pair.of(r, p.getSecond())));
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[flatMapped]";
+                return Decoder.this.toString() + "[flatMapped]";
             }
         };
     }
 
     default <B> Decoder<B> map(final Function<? super A, ? extends B> function) {
-        final Decoder<A> self = this;
         return new Decoder<B>() {
             @Override
             public <T> DataResult<Pair<B, T>> decode(final DynamicOps<T> ops, final T input) {
-                return self.decode(ops, input).map(p -> p.mapFirst(function));
+                return Decoder.this.decode(ops, input).map(p -> p.mapFirst(function));
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[mapped]";
+                return Decoder.this.toString() + "[mapped]";
             }
         };
     }
 
     default Decoder<A> promotePartial(final Consumer<String> onError) {
-        final Decoder<A> self = this;
         return new Decoder<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return self.decode(ops, input).promotePartial(onError);
+                return Decoder.this.decode(ops, input).promotePartial(onError);
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[promotePartial]";
+                return Decoder.this.toString() + "[promotePartial]";
             }
         };
     }
 
     default Decoder<A> withLifecycle(final Lifecycle lifecycle) {
-        final Decoder<A> self = this;
         return new Decoder<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return self.decode(ops, input).setLifecycle(lifecycle);
+                return Decoder.this.decode(ops, input).setLifecycle(lifecycle);
             }
 
             @Override
             public String toString() {
-                return self.toString();
+                return Decoder.this.toString();
             }
         };
     }

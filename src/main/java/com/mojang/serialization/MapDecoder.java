@@ -55,7 +55,6 @@ public interface MapDecoder<A> extends Keyable {
     <T> MapCompressor<T> compressor(DynamicOps<T> ops);
 
     default Decoder<A> decoder() {
-        final MapDecoder<A> self = this;
         return new Decoder<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
@@ -64,89 +63,85 @@ public interface MapDecoder<A> extends Keyable {
 
             @Override
             public String toString() {
-                return self.toString();
+                return MapDecoder.this.toString();
             }
         };
     }
 
     default <B> MapDecoder<B> flatMap(final Function<? super A, ? extends DataResult<? extends B>> function) {
-        final MapDecoder<A> self = this;
         return new Implementation<B>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapDecoder.this.keys(ops);
             }
 
             @Override
             public <T> DataResult<B> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                return self.decode(ops, input).flatMap(b -> function.apply(b).map(Function.identity()));
+                return MapDecoder.this.decode(ops, input).flatMap(b -> function.apply(b).map(Function.identity()));
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[flatMapped]";
+                return MapDecoder.this.toString() + "[flatMapped]";
             }
         };
     }
 
     default <B> MapDecoder<B> map(final Function<? super A, ? extends B> function) {
-        final MapDecoder<A> self = this;
         return new Implementation<B>() {
             @Override
             public <T> DataResult<B> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                return self.decode(ops, input).map(function);
+                return MapDecoder.this.decode(ops, input).map(function);
             }
 
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapDecoder.this.keys(ops);
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[mapped]";
+                return MapDecoder.this.toString() + "[mapped]";
             }
         };
     }
 
     default <E> MapDecoder<E> ap(final MapDecoder<Function<? super A, ? extends E>> decoder) {
-        final MapDecoder<A> self = this;
         return new Implementation<E>() {
             @Override
             public <T> DataResult<E> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                return self.decode(ops, input).flatMap(f ->
+                return MapDecoder.this.decode(ops, input).flatMap(f ->
                     decoder.decode(ops, input).map(e -> e.apply(f))
                 );
             }
 
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return Stream.concat(self.keys(ops), decoder.keys(ops));
+                return Stream.concat(MapDecoder.this.keys(ops), decoder.keys(ops));
             }
 
             @Override
             public String toString() {
-                return decoder.toString() + " * " + self.toString();
+                return decoder.toString() + " * " + MapDecoder.this.toString();
             }
         };
     }
 
     default MapDecoder<A> withLifecycle(final Lifecycle lifecycle) {
-        final MapDecoder<A> self = this;
         return new MapDecoder.Implementation<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapDecoder.this.keys(ops);
             }
 
             @Override
             public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-                return self.decode(ops, input).setLifecycle(lifecycle);
+                return MapDecoder.this.decode(ops, input).setLifecycle(lifecycle);
             }
 
             @Override
             public String toString() {
-                return self.toString();
+                return MapDecoder.this.toString();
             }
         };
     }

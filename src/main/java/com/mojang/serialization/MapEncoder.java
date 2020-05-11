@@ -20,78 +20,74 @@ public interface MapEncoder<A> extends Keyable {
     <T> MapCompressor<T> compressor(final DynamicOps<T> ops);
 
     default <B> MapEncoder<B> comap(final Function<? super B, ? extends A> function) {
-        final MapEncoder<A> self = this;
         return new MapEncoder.Implementation<B>() {
             @Override
             public <T> RecordBuilder<T> encode(final B input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-                return self.encode(function.apply(input), ops, prefix);
+                return MapEncoder.this.encode(function.apply(input), ops, prefix);
             }
 
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapEncoder.this.keys(ops);
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[comapped]";
+                return MapEncoder.this.toString() + "[comapped]";
             }
         };
     }
 
     default <B> MapEncoder<B> flatComap(final Function<? super B, ? extends DataResult<? extends A>> function) {
-        final MapEncoder<A> self = this;
         return new MapEncoder.Implementation<B>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapEncoder.this.keys(ops);
             }
 
             @Override
             public <T> RecordBuilder<T> encode(final B input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                 final DataResult<? extends A> aResult = function.apply(input);
                 final RecordBuilder<T> builder = prefix.withErrorsFrom(aResult);
-                return aResult.map(r -> self.encode(r, ops, builder)).result().orElse(builder);
+                return aResult.map(r -> MapEncoder.this.encode(r, ops, builder)).result().orElse(builder);
             }
 
             @Override
             public String toString() {
-                return self.toString() + "[flatComapped]";
+                return MapEncoder.this.toString() + "[flatComapped]";
             }
         };
     }
 
     default Encoder<A> encoder() {
-        final MapEncoder<A> self = this;
         return new Encoder<A>() {
             @Override
             public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return self.encode(input, ops, compressedBuilder(ops)).build(prefix);
+                return MapEncoder.this.encode(input, ops, compressedBuilder(ops)).build(prefix);
             }
 
             @Override
             public String toString() {
-                return self.toString();
+                return MapEncoder.this.toString();
             }
         };
     }
 
     default MapEncoder<A> withLifecycle(final Lifecycle lifecycle) {
-        final MapEncoder<A> self = this;
         return new Implementation<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
-                return self.keys(ops);
+                return MapEncoder.this.keys(ops);
             }
 
             @Override
             public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-                return self.encode(input, ops, prefix).setLifecycle(lifecycle);
+                return MapEncoder.this.encode(input, ops, prefix).setLifecycle(lifecycle);
             }
 
             @Override
             public String toString() {
-                return self.toString();
+                return MapEncoder.this.toString();
             }
         };
     }
