@@ -233,10 +233,6 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             this.partialResult = partialResult;
         }
 
-        public RuntimeException error() {
-            return new RuntimeException(message);
-        }
-
         public <R2> PartialResult<R2> map(final Function<? super R, ? extends R2> function) {
             return new PartialResult<>(message, partialResult.map(function));
         }
