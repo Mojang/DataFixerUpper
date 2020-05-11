@@ -3,12 +3,10 @@
 package com.mojang.serialization;
 
 import com.mojang.datafixers.util.Pair;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -153,13 +151,6 @@ public interface MapDecoder<A> extends Keyable {
         };
     }
 
-    abstract class Implementation<A> implements MapDecoder<A> {
-        private final Map<DynamicOps<?>, MapCompressor<?>> compressors = new Object2ObjectArrayMap<>();
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public <T> MapCompressor<T> compressor(final DynamicOps<T> ops) {
-            return (MapCompressor<T>) compressors.computeIfAbsent(ops, k -> new MapCompressor<>(ops, keys(ops)));
-        }
+    abstract class Implementation<A> extends CompressorHolder implements MapDecoder<A> {
     }
 }
