@@ -5,11 +5,11 @@ package com.mojang.datafixers.functions;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.View;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.Map;
 import java.util.Objects;

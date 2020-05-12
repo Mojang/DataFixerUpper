@@ -24,7 +24,6 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.codecs.CompoundListCodec;
 
 import javax.annotation.Nullable;
 import java.util.List;

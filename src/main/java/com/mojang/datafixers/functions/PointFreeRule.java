@@ -4,8 +4,6 @@ package com.mojang.datafixers.functions;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.RewriteResult;
@@ -20,6 +18,8 @@ import com.mojang.datafixers.types.constant.EmptyPart;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.families.ListAlgebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.BitSet;

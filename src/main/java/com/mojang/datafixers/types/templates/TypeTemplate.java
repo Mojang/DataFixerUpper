@@ -2,12 +2,12 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
 
 import javax.annotation.Nullable;
 import java.util.function.IntFunction;

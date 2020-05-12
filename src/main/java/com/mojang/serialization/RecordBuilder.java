@@ -127,7 +127,6 @@ public interface RecordBuilder<T> {
             });
             return this;
         }
-
     }
 
     abstract class AbstractUniversalBuilder<T, R> extends AbstractBuilder<T, R> {

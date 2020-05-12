@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.optics.Adapter;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Proj1;
@@ -12,6 +10,8 @@ import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.Tag;
 import com.mojang.datafixers.types.templates.TaggedChoice;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.Nullable;
 import java.util.Objects;

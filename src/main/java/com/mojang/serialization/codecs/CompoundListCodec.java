@@ -68,7 +68,6 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
         return builder.build(prefix);
     }
 
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

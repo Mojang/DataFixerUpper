@@ -3,8 +3,6 @@
 package com.mojang.datafixers.optics.profunctors;
 
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.App2;
@@ -13,6 +11,8 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
 import com.mojang.datafixers.kinds.Traversable;
 import com.mojang.datafixers.optics.Wander;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 
 public interface TraversalP<P extends K2, Mu extends TraversalP.Mu> extends AffineP<P, Mu>/*, Monoidal<P, Mu>*/ {
     static <P extends K2, Proof extends TraversalP.Mu> TraversalP<P, Proof> unbox(final App<Proof, P> proofBox) {
@@ -54,12 +54,12 @@ public interface TraversalP<P extends K2, Mu extends TraversalP.Mu> extends Affi
 
     @Override
     default <A, B, C> App2<P, Pair<A, C>, Pair<B, C>> first(final App2<P, A, B> input) {
-        return dimap(traverse(new Pair.Instance<C>(), input), box -> box, Pair::unbox);
+        return dimap(traverse(new Pair.Instance<>(), input), box -> box, Pair::unbox);
     }
 
     @Override
     default <A, B, C> App2<P, Either<A, C>, Either<B, C>> left(final App2<P, A, B> input) {
-        return dimap(traverse(new Either.Instance<C>(), input), box -> box, Either::unbox);
+        return dimap(traverse(new Either.Instance<>(), input), box -> box, Either::unbox);
     }
 
     default FunctorProfunctor<Traversable.Mu, P, FunctorProfunctor.Mu<Traversable.Mu>> toFP3() {

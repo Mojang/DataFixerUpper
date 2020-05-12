@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
-import com.mojang.serialization.DynamicOps;
 import com.mojang.datafixers.types.Type;
+import com.mojang.serialization.DynamicOps;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;

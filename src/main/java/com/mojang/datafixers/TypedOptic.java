@@ -5,8 +5,6 @@ package com.mojang.datafixers;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.K1;
@@ -25,8 +23,11 @@ import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.TaggedChoice;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -167,7 +168,7 @@ public final class TypedOptic<S, T, A, B> {
         );
     }
 
-    public static <K, V, K2> TypedOptic<java.util.List<Pair<K, V>>, java.util.List<Pair<K2, V>>, K, K2> compoundListKeys(final Type<K> aType, final Type<K2> bType, final Type<V> valueType) {
+    public static <K, V, K2> TypedOptic<List<Pair<K, V>>, List<Pair<K2, V>>, K, K2> compoundListKeys(final Type<K> aType, final Type<K2> bType, final Type<V> valueType) {
         return new TypedOptic<>(
             TraversalP.Mu.TYPE_TOKEN,
             DSL.compoundList(aType, valueType),
@@ -178,7 +179,7 @@ public final class TypedOptic<S, T, A, B> {
         );
     }
 
-    public static <K, V, V2> TypedOptic<java.util.List<Pair<K, V>>, java.util.List<Pair<K, V2>>, V, V2> compoundListElements(final Type<K> keyType, final Type<V> aType, final Type<V2> bType) {
+    public static <K, V, V2> TypedOptic<List<Pair<K, V>>, List<Pair<K, V2>>, V, V2> compoundListElements(final Type<K> keyType, final Type<V> aType, final Type<V2> bType) {
         return new TypedOptic<>(
             TraversalP.Mu.TYPE_TOKEN,
             DSL.compoundList(keyType, aType),
@@ -189,7 +190,7 @@ public final class TypedOptic<S, T, A, B> {
         );
     }
 
-    public static <A, B> TypedOptic<java.util.List<A>, java.util.List<B>, A, B> list(final Type<A> aType, final Type<B> bType) {
+    public static <A, B> TypedOptic<List<A>, List<B>, A, B> list(final Type<A> aType, final Type<B> bType) {
         return new TypedOptic<>(
             TraversalP.Mu.TYPE_TOKEN,
             DSL.list(aType),

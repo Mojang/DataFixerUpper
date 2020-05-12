@@ -15,8 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
-    public static final class Mu<R> implements K1 {
-    }
+    public static final class Mu<R> implements K1 {}
 
     public static <L, R> Either<L, R> unbox(final App<Mu<R>, L> box) {
         return (Either<L, R>) box;
@@ -193,8 +192,7 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
     }
 
     public static final class Instance<R2> implements Applicative<Mu<R2>, Instance.Mu<R2>>, Traversable<Mu<R2>, Instance.Mu<R2>>, CocartesianLike<Mu<R2>, R2, Instance.Mu<R2>> {
-        public static final class Mu<R2> implements Applicative.Mu, Traversable.Mu, CocartesianLike.Mu {
-        }
+        public static final class Mu<R2> implements Applicative.Mu, Traversable.Mu, CocartesianLike.Mu {}
 
         @Override
         public <T, R> App<Either.Mu<R2>, R> map(final Function<? super T, ? extends R> func, final App<Either.Mu<R2>, T> ts) {

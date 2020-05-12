@@ -21,7 +21,6 @@ import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.codecs.ListCodec;
 
 import javax.annotation.Nullable;
 import java.util.Objects;

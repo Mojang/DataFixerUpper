@@ -18,7 +18,7 @@ public interface Decoder<A> {
         return decode(ops, input).map(Pair::getFirst);
     }
 
-    default  <T> DataResult<Pair<A, T>> decode(final Dynamic<T> input) {
+    default <T> DataResult<Pair<A, T>> decode(final Dynamic<T> input) {
         return decode(input.getOps(), input.getValue());
     }
 
