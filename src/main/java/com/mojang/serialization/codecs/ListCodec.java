@@ -14,6 +14,7 @@ import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public final class ListCodec<A> implements Codec<List<A>> {
     private final Codec<A> elementCodec;
@@ -37,7 +38,7 @@ public final class ListCodec<A> implements Codec<List<A>> {
     public <T> DataResult<Pair<List<A>, T>> decode(final DynamicOps<T> ops, final T input) {
         return ops.getList(input).setLifecycle(Lifecycle.stable()).flatMap(stream -> {
             final ImmutableList.Builder<A> read = ImmutableList.builder();
-            final ImmutableList.Builder<T> failed = ImmutableList.builder();
+            final Stream.Builder<T> failed = Stream.builder();
             // TODO: AtomicReference.getPlain/setPlain in java9+
             final MutableObject<DataResult<Unit>> result =
                 new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
@@ -52,7 +53,7 @@ public final class ListCodec<A> implements Codec<List<A>> {
             });
 
             final ImmutableList<A> elements = read.build();
-            final T errors = ops.createList(failed.build().stream());
+            final T errors = ops.createList(failed.build());
 
             final Pair<List<A>, T> pair = Pair.of(elements, errors);
 
