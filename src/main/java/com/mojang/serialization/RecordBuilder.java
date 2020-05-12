@@ -39,11 +39,11 @@ public interface RecordBuilder<T> {
         return add(key, encoder.encodeStart(ops(), value));
     }
 
-    abstract class AbstractStringBuilder<T, R> implements RecordBuilder<T> {
+    abstract class AbstractBuilder<T, R> implements RecordBuilder<T> {
         private final DynamicOps<T> ops;
         protected DataResult<R> builder = DataResult.success(initBuilder(), Lifecycle.stable());
 
-        protected AbstractStringBuilder(final DynamicOps<T> ops) {
+        protected AbstractBuilder(final DynamicOps<T> ops) {
             this.ops = ops;
         }
 
@@ -56,52 +56,11 @@ public interface RecordBuilder<T> {
 
         protected abstract DataResult<T> build(final R builder, final T prefix);
 
-        protected abstract R append(String key, T value, R builder);
-
-        @Override
-        public RecordBuilder<T> add(final String key, final T value) {
-            builder = builder.map(b -> append(key, value, b));
-            return this;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final String key, final DataResult<T> value) {
-            builder = builder.apply2stable((b, v) -> append(key, v, b), value);
-            return this;
-        }
-
         @Override
         public DataResult<T> build(final T prefix) {
             final DataResult<T> result = builder.flatMap(b -> build(b, prefix));
             builder = DataResult.success(initBuilder(), Lifecycle.stable());
             return result;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final T key, final T value) {
-            builder = ops.getStringValue(key).flatMap(k -> {
-                add(k, value);
-                return builder;
-            });
-            return this;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final T key, final DataResult<T> value) {
-            builder = ops.getStringValue(key).flatMap(k -> {
-                add(k, value);
-                return builder;
-            });
-            return this;
-        }
-
-        @Override
-        public RecordBuilder<T> add(final DataResult<T> key, final DataResult<T> value) {
-            builder = key.flatMap(ops::getStringValue).flatMap(k -> {
-                add(k, value);
-                return builder;
-            });
-            return this;
         }
 
         @Override
@@ -123,17 +82,62 @@ public interface RecordBuilder<T> {
         }
     }
 
-    abstract class AbstractBuilder<T, R> extends AbstractStringBuilder<T, R> {
-        protected AbstractBuilder(final DynamicOps<T> ops) {
+    abstract class AbstractStringBuilder<T, R> extends AbstractBuilder<T, R> {
+        protected DataResult<R> builder = DataResult.success(initBuilder(), Lifecycle.stable());
+
+        protected AbstractStringBuilder(final DynamicOps<T> ops) {
+            super(ops);
+        }
+
+        protected abstract R append(String key, T value, R builder);
+
+        @Override
+        public RecordBuilder<T> add(final String key, final T value) {
+            builder = builder.map(b -> append(key, value, b));
+            return this;
+        }
+
+        @Override
+        public RecordBuilder<T> add(final String key, final DataResult<T> value) {
+            builder = builder.apply2stable((b, v) -> append(key, v, b), value);
+            return this;
+        }
+
+        @Override
+        public RecordBuilder<T> add(final T key, final T value) {
+            builder = ops().getStringValue(key).flatMap(k -> {
+                add(k, value);
+                return builder;
+            });
+            return this;
+        }
+
+        @Override
+        public RecordBuilder<T> add(final T key, final DataResult<T> value) {
+            builder = ops().getStringValue(key).flatMap(k -> {
+                add(k, value);
+                return builder;
+            });
+            return this;
+        }
+
+        @Override
+        public RecordBuilder<T> add(final DataResult<T> key, final DataResult<T> value) {
+            builder = key.flatMap(ops()::getStringValue).flatMap(k -> {
+                add(k, value);
+                return builder;
+            });
+            return this;
+        }
+
+    }
+
+    abstract class AbstractUniversalBuilder<T, R> extends AbstractBuilder<T, R> {
+        protected AbstractUniversalBuilder(final DynamicOps<T> ops) {
             super(ops);
         }
 
         protected abstract R append(T key, T value, R builder);
-
-        @Override
-        protected R append(final String key, final T value, final R builder) {
-            return append(ops().createString(key), value, builder);
-        }
 
         @Override
         public RecordBuilder<T> add(final T key, final T value) {
@@ -154,7 +158,7 @@ public interface RecordBuilder<T> {
         }
     }
 
-    final class MapBuilder<T> extends AbstractBuilder<T, ImmutableMap.Builder<T, T>> {
+    final class MapBuilder<T> extends AbstractUniversalBuilder<T, ImmutableMap.Builder<T, T>> {
         public MapBuilder(final DynamicOps<T> ops) {
             super(ops);
         }
