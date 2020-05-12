@@ -3,6 +3,7 @@
 package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.DSL;
+import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
@@ -10,7 +11,7 @@ import com.mojang.serialization.DynamicOps;
 
 import java.util.Optional;
 
-public final class EmptyPartPassthrough extends com.mojang.datafixers.types.Type<Dynamic<?>> {
+public final class EmptyPartPassthrough extends Type<Dynamic<?>> {
     @Override
     public String toString() {
         return "EmptyPartPassthrough";

@@ -194,7 +194,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     default MapCodec<A> optionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
         // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
         return optionalField(name, this).stable().flatXmap(
-            o -> o.map(v-> DataResult.success(v, fieldLifecycle)).orElse(DataResult.success(defaultValue, lifecycleOfDefault)),
+            o -> o.map(v -> DataResult.success(v, fieldLifecycle)).orElse(DataResult.success(defaultValue, lifecycleOfDefault)),
             a -> Objects.equals(a, defaultValue) ? DataResult.success(Optional.empty(), lifecycleOfDefault) : DataResult.success(Optional.of(a), fieldLifecycle)
         );
     }
@@ -533,7 +533,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         @Override
         public <T> DataResult<ByteBuffer> read(final DynamicOps<T> ops, final T input) {
             return ops
-                    .getByteBuffer(input);
+                .getByteBuffer(input);
         }
 
         @Override
@@ -551,7 +551,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         @Override
         public <T> DataResult<IntStream> read(final DynamicOps<T> ops, final T input) {
             return ops
-                    .getIntStream(input);
+                .getIntStream(input);
         }
 
         @Override
@@ -569,7 +569,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         @Override
         public <T> DataResult<LongStream> read(final DynamicOps<T> ops, final T input) {
             return ops
-                    .getLongStream(input);
+                .getLongStream(input);
         }
 
         @Override

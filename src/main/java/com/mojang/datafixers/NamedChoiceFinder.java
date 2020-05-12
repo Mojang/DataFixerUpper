@@ -2,10 +2,10 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.Tag;
 import com.mojang.datafixers.types.templates.TaggedChoice;
+import com.mojang.datafixers.util.Either;
 
 import java.util.Objects;
 

@@ -43,7 +43,6 @@ public final class SimpleMapCodec<K, V> extends MapCodec<Map<K, V>> implements B
         return keys.keys(ops);
     }
 
-
     @Override
     public <T> DataResult<Map<K, V>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
         return BaseMapCodec.super.decode(ops, input);

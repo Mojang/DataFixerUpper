@@ -12,7 +12,7 @@ final class Id<A> extends PointFree<Function<A, A>> {
 
     @Override
     public boolean equals(final Object obj) {
-        return obj instanceof com.mojang.datafixers.functions.Id<?>;
+        return obj instanceof Id<?>;
     }
 
     @Override

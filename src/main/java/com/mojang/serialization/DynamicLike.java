@@ -53,7 +53,7 @@ public abstract class DynamicLike<T> {
         return asMapOpt().map(map -> {
             final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
             map.forEach(entry ->
-                    builder.put(keyDeserializer.apply(entry.getFirst()), valueDeserializer.apply(entry.getSecond()))
+                builder.put(keyDeserializer.apply(entry.getFirst()), valueDeserializer.apply(entry.getSecond()))
             );
             return builder.build();
         });
@@ -65,8 +65,8 @@ public abstract class DynamicLike<T> {
 
     public <E> DataResult<List<E>> readList(final Decoder<E> decoder) {
         return asStreamOpt()
-                .map(s -> s.map(d -> d.read(decoder)).collect(Collectors.<App<DataResult.Mu, E>>toList()))
-                .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
+            .map(s -> s.map(d -> d.read(decoder)).collect(Collectors.<App<DataResult.Mu, E>>toList()))
+            .flatMap(l -> DataResult.unbox(ListBox.flip(DataResult.instance(), l)));
     }
 
     public <E> DataResult<List<E>> readList(final Function<? super Dynamic<?>, ? extends DataResult<? extends E>> decoder) {

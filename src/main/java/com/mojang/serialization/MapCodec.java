@@ -52,7 +52,6 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
     @Override
     public MapCodec<A> withLifecycle(final Lifecycle lifecycle) {
-
         return new MapCodec<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
@@ -124,7 +123,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
     }
 
     public <E> MapCodec<A> dependent(final MapCodec<E> initialInstance, final Function<A, Pair<E, MapCodec<E>>> splitter, final BiFunction<A, E, A> combiner) {
-        return new Dependent<A, E>(this, initialInstance, splitter, combiner);
+        return new Dependent<>(this, initialInstance, splitter, combiner);
     }
 
     private static class Dependent<O, E> extends MapCodec<O> {
@@ -170,8 +169,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         <T> RecordBuilder<T> coApply(final DynamicOps<T> ops, final A input, final RecordBuilder<T> t);
     }
 
-    private MapCodec<A> mapResult(final MapCodec.ResultFunction<A> function) {
-
+    private MapCodec<A> mapResult(final ResultFunction<A> function) {
         return new MapCodec<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {

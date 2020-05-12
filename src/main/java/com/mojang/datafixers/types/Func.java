@@ -39,10 +39,10 @@ public final class Func<A, B> extends Type<Function<A, B>> {
 
     @Override
     public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
-        if (!(obj instanceof com.mojang.datafixers.types.Func<?, ?>)) {
+        if (!(obj instanceof Func<?, ?>)) {
             return false;
         }
-        final com.mojang.datafixers.types.Func<?, ?> that = (com.mojang.datafixers.types.Func<?, ?>) obj;
+        final Func<?, ?> that = (Func<?, ?>) obj;
         return first.equals(that.first, ignoreRecursionPoints, checkIndex) && second.equals(that.second, ignoreRecursionPoints, checkIndex);
     }
 

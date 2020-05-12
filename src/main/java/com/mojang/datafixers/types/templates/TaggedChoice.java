@@ -132,15 +132,13 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public RewriteResult<Pair<K, ?>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
-            final Map<K, ? extends RewriteResult<?, ?>> results = types.entrySet().stream().map(
-                e -> rule.rewrite(e.getValue()).map(v -> Pair.of(e.getKey(), v))
-            ).filter(
-                e -> e.isPresent() && !Objects.equals(e.get().getSecond().view().function(), Functions.id())
-            ).map(
-                Optional::get
-            ).collect(
-                Pair.toMap()
-            );
+            final Map<K, ? extends RewriteResult<?, ?>> results = types.entrySet().stream()
+                .map(e -> rule.rewrite(e.getValue()).map(v -> Pair.of(e.getKey(), v)))
+                .filter(e -> e.isPresent() && !Objects.equals(e.get().getSecond().view().function(), Functions.id()))
+                .map(Optional::get)
+                .collect(Pair.toMap())
+                ;
+
             if (results.isEmpty()) {
                 return RewriteResult.nop(this);
             } else if (results.size() == 1) {
@@ -220,13 +218,12 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public <FT, FR> Either<TypedOptic<Pair<K, ?>, ?, FT, FR>, FieldNotFoundException> findTypeInChildren(final Type<FT> type, final Type<FR> resultType, final TypeMatcher<FT, FR> matcher, final boolean recurse) {
-            final Map<K, ? extends TypedOptic<?, ?, FT, FR>> optics = types.entrySet().stream().map(
-                e -> Pair.of(e.getKey(), e.getValue().findType(type, resultType, matcher, recurse))
-            ).filter(
-                e -> e.getSecond().left().isPresent()
-            ).map(
-                e -> e.mapSecond(o -> o.left().get())
-            ).collect(Pair.toMap());
+            final Map<K, ? extends TypedOptic<?, ?, FT, FR>> optics = types.entrySet().stream()
+                .map(e -> Pair.of(e.getKey(), e.getValue().findType(type, resultType, matcher, recurse)))
+                .filter(e -> e.getSecond().left().isPresent())
+                .map(e -> e.mapSecond(o -> o.left().get()))
+                .collect(Pair.toMap())
+                ;
 
             if (optics.isEmpty()) {
                 return Either.right(new FieldNotFoundException("Not found in any choices"));
@@ -360,7 +357,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
             if (this == obj) {
                 return true;
             }
-            if (!(obj instanceof TaggedChoice.TaggedChoiceType)) {
+            if (!(obj instanceof TaggedChoiceType)) {
                 return false;
             }
             final TaggedChoiceType<?> other = (TaggedChoiceType<?>) obj;

@@ -142,9 +142,9 @@ public class JsonOps implements DynamicOps<JsonElement> {
         }
 
         final JsonArray result = new JsonArray();
-       if (list != empty()) {
-           result.addAll(list.getAsJsonArray());
-       }
+        if (list != empty()) {
+            result.addAll(list.getAsJsonArray());
+        }
         result.add(value);
         return DataResult.success(result);
     }

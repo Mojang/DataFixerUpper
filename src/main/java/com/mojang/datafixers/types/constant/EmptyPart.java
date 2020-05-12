@@ -3,6 +3,7 @@
 package com.mojang.datafixers.types.constant;
 
 import com.mojang.datafixers.DSL;
+import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
@@ -10,7 +11,7 @@ import com.mojang.serialization.DynamicOps;
 
 import java.util.Optional;
 
-public final class EmptyPart extends com.mojang.datafixers.types.Type<Unit> {
+public final class EmptyPart extends Type<Unit> {
     @Override
     public String toString() {
         return "EmptyPart";

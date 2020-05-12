@@ -128,7 +128,7 @@ public interface MapDecoder<A> extends Keyable {
     }
 
     default MapDecoder<A> withLifecycle(final Lifecycle lifecycle) {
-        return new MapDecoder.Implementation<A>() {
+        return new Implementation<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
                 return MapDecoder.this.keys(ops);

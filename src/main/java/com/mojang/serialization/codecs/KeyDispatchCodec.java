@@ -110,4 +110,3 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
         return "KeyDispatchCodec[" + keyCodec.toString() + " " + type + " " + decoder + "]";
     }
 }
-

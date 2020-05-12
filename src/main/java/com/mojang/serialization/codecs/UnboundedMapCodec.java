@@ -39,7 +39,7 @@ public final class UnboundedMapCodec<K, V> implements BaseMapCodec<K, V>, Codec<
     }
 
     @Override
-    public  <T> DataResult<T> encode(final Map<K, V> input, final DynamicOps<T> ops, final T prefix) {
+    public <T> DataResult<T> encode(final Map<K, V> input, final DynamicOps<T> ops, final T prefix) {
         return encode(input, ops, ops.mapBuilder()).build(prefix);
     }
 

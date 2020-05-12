@@ -16,7 +16,6 @@ import com.mojang.serialization.RecordBuilder;
 import java.util.Map;
 
 public interface BaseMapCodec<K, V> {
-
     Codec<K> keyCodec();
 
     Codec<V> elementCodec();

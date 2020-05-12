@@ -113,7 +113,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
     }
 
     public final <T> DataResult<Pair<A, Dynamic<T>>> read(final Dynamic<T> input) {
-        return codec().decode(input.getOps(), input.getValue()).map(v -> v.mapSecond(t -> new Dynamic<T>(input.getOps(), t)));
+        return codec().decode(input.getOps(), input.getValue()).map(v -> v.mapSecond(t -> new Dynamic<>(input.getOps(), t)));
     }
 
     public final Codec<A> codec() {

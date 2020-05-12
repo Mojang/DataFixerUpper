@@ -24,8 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu<O>, F> {
-    public static final class Mu<O> implements K1 {
-    }
+    public static final class Mu<O> implements K1 {}
 
     public static <O, F> RecordCodecBuilder<O, F> unbox(final App<Mu<O>, F> box) {
         return ((RecordCodecBuilder<O, F>) box);
@@ -69,11 +68,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         return new RecordCodecBuilder<>(o -> instance, o -> Encoder.<F>empty().withLifecycle(lifecycle), Decoder.unit(instance).withLifecycle(lifecycle));
     }
 
-    public static <O> Codec<O> create(final Function<Instance<O>, ? extends App<RecordCodecBuilder.Mu<O>, O>> builder) {
+    public static <O> Codec<O> create(final Function<Instance<O>, ? extends App<Mu<O>, O>> builder) {
         return build(builder.apply(instance())).codec();
     }
 
-    public static <O> MapCodec<O> mapCodec(final Function<Instance<O>, ? extends App<RecordCodecBuilder.Mu<O>, O>> builder) {
+    public static <O> MapCodec<O> mapCodec(final Function<Instance<O>, ? extends App<Mu<O>, O>> builder) {
         return build(builder.apply(instance()));
     }
 
@@ -100,7 +99,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         );
     }
 
-    public static <O> MapCodec<O> build(final App<RecordCodecBuilder.Mu<O>, O> builderBox) {
+    public static <O> MapCodec<O> build(final App<Mu<O>, O> builderBox) {
         final RecordCodecBuilder<O, O> builder = unbox(builderBox);
         return new MapCodec<O>() {
             @Override
@@ -126,8 +125,7 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
     }
 
     public static final class Instance<O> implements Applicative<Mu<O>, Instance.Mu<O>> {
-        private static final class Mu<O> implements Applicative.Mu {
-        }
+        private static final class Mu<O> implements Applicative.Mu {}
 
         public <A> App<RecordCodecBuilder.Mu<O>, A> stable(final A a) {
             return RecordCodecBuilder.stable(a);
@@ -460,4 +458,3 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
         }
     }
 }
-

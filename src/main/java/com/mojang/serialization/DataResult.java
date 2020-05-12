@@ -23,7 +23,7 @@ import java.util.function.UnaryOperator;
 public class DataResult<R> implements App<DataResult.Mu, R> {
     public static final class Mu implements K1 {}
 
-    public static <R> DataResult<R> unbox(final App<DataResult.Mu, R> box) {
+    public static <R> DataResult<R> unbox(final App<Mu, R> box) {
         return (DataResult<R>) box;
     }
 
@@ -276,7 +276,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         }
     }
 
-    public enum Instance implements Applicative<DataResult.Mu, DataResult.Instance.Mu> {
+    public enum Instance implements Applicative<Mu, Instance.Mu> {
         INSTANCE;
 
         public static final class Mu implements Applicative.Mu {}
@@ -310,7 +310,8 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             // for less recursion
             if (fr.result.left().isPresent()
                 && ra.result.left().isPresent()
-                && rb.result.left().isPresent()){
+                && rb.result.left().isPresent()
+            ) {
                 return new DataResult<>(Either.left(fr.result.left().get().apply(
                     ra.result.left().get(),
                     rb.result.left().get()
@@ -331,7 +332,8 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             if (fr.result.left().isPresent()
                 && dr1.result.left().isPresent()
                 && dr2.result.left().isPresent()
-                && dr3.result.left().isPresent()) {
+                && dr3.result.left().isPresent()
+            ) {
                 return new DataResult<>(Either.left(fr.result.left().get().apply(
                     dr1.result.left().get(),
                     dr2.result.left().get(),

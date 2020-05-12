@@ -40,8 +40,7 @@ public final class ListCodec<A> implements Codec<List<A>> {
             final ImmutableList.Builder<A> read = ImmutableList.builder();
             final Stream.Builder<T> failed = Stream.builder();
             // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<Unit>> result =
-                new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
+            final MutableObject<DataResult<Unit>> result = new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
 
             stream.accept(t -> {
                 final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);

@@ -20,7 +20,7 @@ public interface MapEncoder<A> extends Keyable {
     <T> KeyCompressor<T> compressor(final DynamicOps<T> ops);
 
     default <B> MapEncoder<B> comap(final Function<? super B, ? extends A> function) {
-        return new MapEncoder.Implementation<B>() {
+        return new Implementation<B>() {
             @Override
             public <T> RecordBuilder<T> encode(final B input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
                 return MapEncoder.this.encode(function.apply(input), ops, prefix);
@@ -39,7 +39,7 @@ public interface MapEncoder<A> extends Keyable {
     }
 
     default <B> MapEncoder<B> flatComap(final Function<? super B, ? extends DataResult<? extends A>> function) {
-        return new MapEncoder.Implementation<B>() {
+        return new Implementation<B>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
                 return MapEncoder.this.keys(ops);
