@@ -3,16 +3,15 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
+import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -102,12 +101,13 @@ public interface DynamicOps<T> {
     }
 
     default DataResult<T> mergeToMap(final T map, final MapLike<T> values) {
-        final AtomicReference<DataResult<T>> result = new AtomicReference<>(DataResult.success(map));
+        // TODO: AtomicReference.getPlain/setPlain in java9+
+        final MutableObject<DataResult<T>> result = new MutableObject<>(DataResult.success(map));
 
         values.entries().forEach(entry ->
-            result.set(result.get().flatMap(r -> mergeToMap(r, entry.getFirst(), entry.getSecond())))
+            result.setValue(result.getValue().flatMap(r -> mergeToMap(r, entry.getFirst(), entry.getSecond())))
         );
-        return result.get();
+        return result.getValue();
     }
 
     /**
@@ -256,9 +256,10 @@ public interface DynamicOps<T> {
 
     default <R> DataResult<R> readMap(final T input, final DataResult<R> empty, final Function3<R, T, T, DataResult<R>> combiner) {
         return getMapValues(input).flatMap(stream -> {
-            final AtomicReference<DataResult<R>> result = new AtomicReference<>(empty);
-            stream.forEach(p -> result.set(result.get().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
-            return result.get();
+            // TODO: AtomicReference.getPlain/setPlain in java9+
+            final MutableObject<DataResult<R>> result = new MutableObject<>(empty);
+            stream.forEach(p -> result.setValue(result.getValue().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
+            return result.getValue();
         });
     }
 
