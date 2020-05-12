@@ -379,41 +379,21 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new KeyDispatchCodec<>(typeKey, this, type, codec);
     }
 
-    PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {
+    PrimitiveCodec<Boolean> BOOL = new PrimitiveCodec<Boolean>() {
         @Override
-        public <T> DataResult<Float> read(final DynamicOps<T> ops, final T input) {
+        public <T> DataResult<Boolean> read(final DynamicOps<T> ops, final T input) {
             return ops
-                .getNumberValue(input)
-                .map(Number::floatValue);
+                .getBooleanValue(input);
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final Float value) {
-            return ops.createFloat(value);
+        public <T> T write(final DynamicOps<T> ops, final Boolean value) {
+            return ops.createBoolean(value);
         }
 
         @Override
         public String toString() {
-            return "Float";
-        }
-    };
-
-    PrimitiveCodec<Integer> INT = new PrimitiveCodec<Integer>() {
-        @Override
-        public <T> DataResult<Integer> read(final DynamicOps<T> ops, final T input) {
-            return ops
-                .getNumberValue(input)
-                .map(Number::intValue);
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final Integer value) {
-            return ops.createInt(value);
-        }
-
-        @Override
-        public String toString() {
-            return "Int";
+            return "Bool";
         }
     };
 
@@ -436,43 +416,6 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         }
     };
 
-    PrimitiveCodec<Long> LONG = new PrimitiveCodec<Long>() {
-        @Override
-        public <T> DataResult<Long> read(final DynamicOps<T> ops, final T input) {
-            return ops
-                .getNumberValue(input)
-                .map(Number::longValue);
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final Long value) {
-            return ops.createLong(value);
-        }
-
-        @Override
-        public String toString() {
-            return "Long";
-        }
-    };
-
-    PrimitiveCodec<Boolean> BOOL = new PrimitiveCodec<Boolean>() {
-        @Override
-        public <T> DataResult<Boolean> read(final DynamicOps<T> ops, final T input) {
-            return ops
-                .getBooleanValue(input);
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final Boolean value) {
-            return ops.createBoolean(value);
-        }
-
-        @Override
-        public String toString() {
-            return "Bool";
-        }
-    };
-
     PrimitiveCodec<Short> SHORT = new PrimitiveCodec<Short>() {
         @Override
         public <T> DataResult<Short> read(final DynamicOps<T> ops, final T input) {
@@ -492,21 +435,60 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         }
     };
 
-    PrimitiveCodec<String> STRING = new PrimitiveCodec<String>() {
+    PrimitiveCodec<Integer> INT = new PrimitiveCodec<Integer>() {
         @Override
-        public <T> DataResult<String> read(final DynamicOps<T> ops, final T input) {
+        public <T> DataResult<Integer> read(final DynamicOps<T> ops, final T input) {
             return ops
-                .getStringValue(input);
+                .getNumberValue(input)
+                .map(Number::intValue);
         }
 
         @Override
-        public <T> T write(final DynamicOps<T> ops, final String value) {
-            return ops.createString(value);
+        public <T> T write(final DynamicOps<T> ops, final Integer value) {
+            return ops.createInt(value);
         }
 
         @Override
         public String toString() {
-            return "String";
+            return "Int";
+        }
+    };
+
+    PrimitiveCodec<Long> LONG = new PrimitiveCodec<Long>() {
+        @Override
+        public <T> DataResult<Long> read(final DynamicOps<T> ops, final T input) {
+            return ops
+                .getNumberValue(input)
+                .map(Number::longValue);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final Long value) {
+            return ops.createLong(value);
+        }
+
+        @Override
+        public String toString() {
+            return "Long";
+        }
+    };
+
+    PrimitiveCodec<Float> FLOAT = new PrimitiveCodec<Float>() {
+        @Override
+        public <T> DataResult<Float> read(final DynamicOps<T> ops, final T input) {
+            return ops
+                .getNumberValue(input)
+                .map(Number::floatValue);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final Float value) {
+            return ops.createFloat(value);
+        }
+
+        @Override
+        public String toString() {
+            return "Float";
         }
     };
 
@@ -526,6 +508,24 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         @Override
         public String toString() {
             return "Double";
+        }
+    };
+
+    PrimitiveCodec<String> STRING = new PrimitiveCodec<String>() {
+        @Override
+        public <T> DataResult<String> read(final DynamicOps<T> ops, final T input) {
+            return ops
+                .getStringValue(input);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final String value) {
+            return ops.createString(value);
+        }
+
+        @Override
+        public String toString() {
+            return "String";
         }
     };
 
