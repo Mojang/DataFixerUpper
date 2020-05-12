@@ -165,8 +165,7 @@ public interface DynamicOps<T> {
     }
 
     default T createByteList(final ByteBuffer input) {
-        final int[] i = {0};
-        return createList(Stream.generate(() -> createByte(input.get(i[0]++))).limit(input.capacity()));
+        return createList(IntStream.range(0, input.capacity()).mapToObj(i -> createByte(input.get(i))));
     }
 
     default DataResult<IntStream> getIntStream(final T input) {
