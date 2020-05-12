@@ -96,7 +96,7 @@ public interface MapEncoder<A> extends Keyable {
     }
 
     static <T> RecordBuilder<T> makeCompressedBuilder(final DynamicOps<T> ops, final KeyCompressor<T> compressor) {
-        class CompressedRecordBuilder extends RecordBuilder.AbstractBuilder<T, List<T>> {
+        class CompressedRecordBuilder extends RecordBuilder.AbstractUniversalBuilder<T, List<T>> {
             private CompressedRecordBuilder() {
                 super(ops);
             }
@@ -112,12 +112,6 @@ public interface MapEncoder<A> extends Keyable {
 
             @Override
             protected List<T> append(final T key, final T value, final List<T> builder) {
-                builder.set(compressor.compress(key), value);
-                return builder;
-            }
-
-            @Override
-            protected List<T> append(final String key, final T value, final List<T> builder) {
                 builder.set(compressor.compress(key), value);
                 return builder;
             }
