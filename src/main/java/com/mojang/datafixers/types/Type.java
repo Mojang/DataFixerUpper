@@ -5,9 +5,6 @@ package com.mojang.datafixers.types;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.Dynamic;
 import com.mojang.datafixers.FieldFinder;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.OpticFinder;
@@ -25,7 +22,11 @@ import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class Type<A> implements App<Type.Mu, A> {
     private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
@@ -177,15 +177,16 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         if (rewrite != null) {
             return (Optional<RewriteResult<A, ?>>) rewrite;
         }
-        final AtomicReference<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new AtomicReference<>();
+        // TODO: AtomicReference.getPlain/setPlain in java9+
+        final MutableObject<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new MutableObject<>();
 
         final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending = PENDING_REWRITE_CACHE.computeIfAbsent(key, k -> {
             final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> value = new CompletableFuture<>();
-            ref.set(value);
+            ref.setValue(value);
             return value;
         });
 
-        if (ref.get() != null) {
+        if (ref.getValue() != null) {
             Optional<RewriteResult<A, ?>> result = rule.rewrite(this).flatMap(r -> r.view().rewrite(fRule).map(view -> RewriteResult.create(view, r.recData())));
             REWRITE_CACHE.put(key, result);
             pending.complete(result);
