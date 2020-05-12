@@ -83,8 +83,6 @@ public interface RecordBuilder<T> {
     }
 
     abstract class AbstractStringBuilder<T, R> extends AbstractBuilder<T, R> {
-        protected DataResult<R> builder = DataResult.success(initBuilder(), Lifecycle.stable());
-
         protected AbstractStringBuilder(final DynamicOps<T> ops) {
             super(ops);
         }
