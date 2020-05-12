@@ -62,6 +62,6 @@ public final class EitherMapCodec<F, S> extends MapCodec<Either<F, S>> {
 
     @Override
     public <T> Stream<T> keys(final DynamicOps<T> ops) {
-        return null;
+        return Stream.concat(first.keys(ops), second.keys(ops));
     }
 }
