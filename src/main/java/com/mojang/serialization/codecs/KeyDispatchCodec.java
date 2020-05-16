@@ -21,19 +21,29 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
     private final Function<? super K, ? extends DataResult<? extends Decoder<? extends V>>> decoder;
     private final Function<? super V, ? extends DataResult<? extends Encoder<V>>> encoder;
 
-    public KeyDispatchCodec(final String typeKey, final Codec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends Decoder<? extends V>>> decoder, final Function<? super V, ? extends DataResult<? extends Encoder<V>>> encoder) {
+    private final boolean assumeMap;
+
+    /**
+     * Will assume that the result of all elements is a map
+     */
+    public static <K, V> KeyDispatchCodec<K, V> unsafe(final String typeKey, final Codec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends Decoder<? extends V>>> decoder, final Function<? super V, ? extends DataResult<? extends Encoder<V>>> encoder) {
+        return new KeyDispatchCodec<>(typeKey, keyCodec, type, decoder, encoder, true);
+    }
+
+    protected KeyDispatchCodec(final String typeKey, final Codec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends Decoder<? extends V>>> decoder, final Function<? super V, ? extends DataResult<? extends Encoder<V>>> encoder, final boolean assumeMap) {
         this.typeKey = typeKey;
         this.keyCodec = keyCodec;
         this.type = type;
         this.decoder = decoder;
         this.encoder = encoder;
+        this.assumeMap = assumeMap;
     }
 
     /**
      * Assumes codec(type(V)) is Codec<V>
      */
     public KeyDispatchCodec(final String typeKey, final Codec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends Codec<? extends V>>> codec) {
-        this(typeKey, keyCodec, type, codec, v -> getCodec(type, codec, v));
+        this(typeKey, keyCodec, type, codec, v -> getCodec(type, codec, v), false);
     }
 
     @Override
@@ -56,7 +66,10 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
                 if (c instanceof MapCodecCodec<?>) {
                     return ((MapCodecCodec<? extends V>) c).codec().decode(ops, input).map(Function.identity());
                 }
-                return c.decode(ops, ops.createMap(input.entries())).map(Pair::getFirst);
+                if (assumeMap) {
+                    return c.decode(ops, ops.createMap(input.entries())).map(Pair::getFirst);
+                }
+                return c.decode(ops, input.get(valueKey)).map(Pair::getFirst);
             });
         });
     }
@@ -82,17 +95,22 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
 
         final T typeString = ops.createString(typeKey);
 
-        final DataResult<MapLike<T>> element = c.encodeStart(ops, input).flatMap(ops::getMap);
-        return element.map(map -> {
-            map.entries().forEach(pair -> {
-                if (pair.getFirst().equals(typeString)) {
-                    prefix.add(typeString, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
-                } else {
-                    prefix.add(pair.getFirst(), pair.getSecond());
-                }
-            });
-            return prefix;
-        }).result().orElseGet(() -> prefix.withErrorsFrom(element));
+        final DataResult<T> result = c.encodeStart(ops, input);
+        if (assumeMap) {
+            final DataResult<MapLike<T>> element = result.flatMap(ops::getMap);
+            return element.map(map -> {
+                prefix.add(typeString, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
+                map.entries().forEach(pair -> {
+                    if (!pair.getFirst().equals(typeString)) {
+                        prefix.add(pair.getFirst(), pair.getSecond());
+                    }
+                });
+                return prefix;
+            }).result().orElseGet(() -> prefix.withErrorsFrom(element));
+        }
+        prefix.add(typeString, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
+        prefix.add(valueKey, result);
+        return prefix;
     }
 
     @Override

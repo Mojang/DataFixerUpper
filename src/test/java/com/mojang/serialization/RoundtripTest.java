@@ -33,7 +33,7 @@ public class RoundtripTest {
 
         Day(final String name, final Codec<? extends DayData> codec) {
             this.name = name;
-            this.codec = codec.fieldOf("data").codec();
+            this.codec = codec;
         }
 
         public Codec<? extends DayData> codec() {

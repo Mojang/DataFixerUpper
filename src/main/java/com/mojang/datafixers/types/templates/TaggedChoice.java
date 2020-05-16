@@ -186,7 +186,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         protected Codec<Pair<K, ?>> buildCodec() {
-            return new KeyDispatchCodec<K, Pair<K, ?>>(
+            return KeyDispatchCodec.<K, Pair<K, ?>>unsafe(
                 name,
                 keyType.codec(),
                 p -> DataResult.success(p.getFirst()),
