@@ -84,10 +84,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder) {
-        return of(encoder, decoder, "MapCodec[" + encoder + " " + decoder + "]");
+        return of(encoder, decoder, () -> "MapCodec[" + encoder + " " + decoder + "]");
     }
 
-    static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder, final String name) {
+    static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder, final Supplier<String> name) {
         return new MapCodec<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
@@ -106,7 +106,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return name;
+                return name.get();
             }
         };
     }
@@ -172,7 +172,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return MapCodec.of(
             Encoder.super.fieldOf(name),
             Decoder.super.fieldOf(name),
-            "Field[" + name + ": " + toString() + "]"
+            () -> "Field[" + name + ": " + toString() + "]"
         );
     }
 

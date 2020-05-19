@@ -19,10 +19,10 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
     }
 
     public static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder) {
-        return of(encoder, decoder, "MapCodec[" + encoder + " " + decoder + "]");
+        return of(encoder, decoder, () -> "MapCodec[" + encoder + " " + decoder + "]");
     }
 
-    public static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder, final String name) {
+    public static <A> MapCodec<A> of(final MapEncoder<A> encoder, final MapDecoder<A> decoder, final Supplier<String> name) {
         return new MapCodec<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
@@ -41,7 +41,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
             @Override
             public String toString() {
-                return name;
+                return name.get();
             }
         };
     }
@@ -115,11 +115,11 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
     }
 
     public <S> MapCodec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
-        return MapCodec.of(comap(from), map(to), toString() + "[xmapped]");
+        return MapCodec.of(comap(from), map(to), () -> toString() + "[xmapped]");
     }
 
     public <S> MapCodec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
-        return Codec.of(flatComap(from), flatMap(to), toString() + "[flatXmapped]");
+        return Codec.of(flatComap(from), flatMap(to), () -> toString() + "[flatXmapped]");
     }
 
     public <E> MapCodec<A> dependent(final MapCodec<E> initialInstance, final Function<A, Pair<E, MapCodec<E>>> splitter, final BiFunction<A, E, A> combiner) {
