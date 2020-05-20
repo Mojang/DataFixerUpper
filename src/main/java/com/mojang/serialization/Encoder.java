@@ -88,7 +88,7 @@ public interface Encoder<A> {
 
             @Override
             public String toString() {
-                return "EmptyEncoder[" + error + "]";
+                return "ErrorEncoder[" + error + "]";
             }
         };
     }
