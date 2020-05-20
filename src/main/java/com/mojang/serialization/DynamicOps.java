@@ -3,7 +3,6 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
 import org.apache.commons.lang3.mutable.MutableObject;
 
@@ -231,35 +230,8 @@ public interface DynamicOps<T> {
         return new ListBuilder.Builder<>(this);
     }
 
-    default <E> DataResult<T> list(final Iterable<E> list, final T prefix, final Encoder<E> encoder) {
-        final ListBuilder<T> builder = listBuilder();
-        builder.addAll(list, encoder);
-        return builder.build(prefix);
-    }
-
-    default <E> DataResult<T> list(final Iterable<E> list, final T prefix, final Function<? super E, ? extends DataResult<T>> elementSerializer) {
-        final ListBuilder<T> builder = listBuilder();
-        list.forEach(element -> builder.add(elementSerializer.apply(element)));
-        return builder.build(prefix);
-    }
-
     default RecordBuilder<T> mapBuilder() {
         return new RecordBuilder.MapBuilder<>(this);
-    }
-
-    default <K, V> DataResult<T> map(final Map<K, V> map, final T prefix, final Function<? super K, ? extends DataResult<T>> keySerializer, final Function<? super V, ? extends DataResult<T>> elementSerializer) {
-        final RecordBuilder<T> builder = mapBuilder();
-        map.forEach((key, value) -> builder.add(keySerializer.apply(key), elementSerializer.apply(value)));
-        return builder.build(prefix);
-    }
-
-    default <R> DataResult<R> readMap(final T input, final DataResult<R> empty, final Function3<R, T, T, DataResult<R>> combiner) {
-        return getMapValues(input).flatMap(stream -> {
-            // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<R>> result = new MutableObject<>(empty);
-            stream.forEach(p -> result.setValue(result.getValue().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
-            return result.getValue();
-        });
     }
 
     default <E> Function<E, DataResult<T>> withEncoder(final Encoder<E> encoder) {
