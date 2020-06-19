@@ -330,20 +330,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default <E> Codec<E> dispatchStable(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return dispatchStable("type", type, codec);
-    }
-
-    default <E> Codec<E> dispatchStable(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return partialDispatch(typeKey, e -> DataResult.success(type.apply(e), Lifecycle.stable()), a -> DataResult.success(codec.apply(a), Lifecycle.stable()));
-    }
-
-    default <E> Codec<E> dispatchDeprecated(final int since, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return dispatchDeprecated(since, "type", type, codec);
-    }
-
-    default <E> Codec<E> dispatchDeprecated(final int since, final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        final Lifecycle deprecated = Lifecycle.deprecated(since);
-        return partialDispatch(typeKey, e -> DataResult.success(type.apply(e), deprecated), a -> DataResult.success(codec.apply(a), deprecated));
+        return partialDispatch("type", e -> DataResult.success(type.apply(e), Lifecycle.stable()), a -> DataResult.success(codec.apply(a), Lifecycle.stable()));
     }
 
     default <E> Codec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends Codec<? extends E>>> codec) {
@@ -355,28 +342,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default <E> MapCodec<E> dispatchMap(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return partialDispatchMap(typeKey, type.andThen(DataResult::success), codec.andThen(DataResult::success));
-    }
-
-    default <E> MapCodec<E> dispatchStableMap(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return dispatchStableMap("type", type, codec);
-    }
-
-    default <E> MapCodec<E> dispatchStableMap(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return partialDispatchMap(typeKey, e -> DataResult.success(type.apply(e), Lifecycle.stable()), a -> DataResult.success(codec.apply(a), Lifecycle.stable()));
-    }
-
-    default <E> MapCodec<E> dispatchDeprecatedMap(final int since, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        return dispatchDeprecatedMap(since, "type", type, codec);
-    }
-
-    default <E> MapCodec<E> dispatchDeprecatedMap(final int since, final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
-        final Lifecycle deprecated = Lifecycle.deprecated(since);
-        return partialDispatchMap(typeKey, e -> DataResult.success(type.apply(e), deprecated), a -> DataResult.success(codec.apply(a), deprecated));
-    }
-
-    default <E> MapCodec<E> partialDispatchMap(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends Codec<? extends E>>> codec) {
-        return new KeyDispatchCodec<>(typeKey, this, type, codec);
+        return new KeyDispatchCodec<>(typeKey, this, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
     PrimitiveCodec<Boolean> BOOL = new PrimitiveCodec<Boolean>() {
