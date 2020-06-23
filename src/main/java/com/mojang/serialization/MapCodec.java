@@ -163,13 +163,13 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
     @Override
     public abstract <T> Stream<T> keys(final DynamicOps<T> ops);
 
-    interface ResultFunction<A> {
+    public interface ResultFunction<A> {
         <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a);
 
         <T> RecordBuilder<T> coApply(final DynamicOps<T> ops, final A input, final RecordBuilder<T> t);
     }
 
-    private MapCodec<A> mapResult(final ResultFunction<A> function) {
+    public MapCodec<A> mapResult(final ResultFunction<A> function) {
         return new MapCodec<A>() {
             @Override
             public <T> Stream<T> keys(final DynamicOps<T> ops) {
@@ -277,11 +277,31 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         });
     }
 
-    static <A> MapCodec<A> unit(final A defaultValue) {
+    public MapCodec<A> setPartial(final Supplier<A> value) {
+        return mapResult(new ResultFunction<A>() {
+            @Override
+            public <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a) {
+                return a.setPartial(value);
+            }
+
+            @Override
+            public <T> RecordBuilder<T> coApply(final DynamicOps<T> ops, final A input, final RecordBuilder<T> t) {
+                return t;
+            }
+
+            @Override
+            public String toString() {
+                // FIXME: toString needs to be lazy everywhere, otherwise suppliers get resolved too early
+                return "SetPartial[" + value + "]";
+            }
+        });
+    }
+
+    public static <A> MapCodec<A> unit(final A defaultValue) {
         return unit(() -> defaultValue);
     }
 
-    static <A> MapCodec<A> unit(final Supplier<A> defaultValue) {
+    public static <A> MapCodec<A> unit(final Supplier<A> defaultValue) {
         return MapCodec.of(Encoder.empty(), Decoder.unit(defaultValue));
     }
 }
