@@ -345,6 +345,31 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new KeyDispatchCodec<>(typeKey, this, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
+    // private
+    static <N extends Number & Comparable<N>> Function<N, DataResult<N>> checkRange(final N minInclusive, final N maxInclusive) {
+        return value -> {
+            if (value.compareTo(minInclusive) >= 0 && value.compareTo(maxInclusive) <= 0) {
+                return DataResult.success(value);
+            }
+            return DataResult.error("Value " + value + " outside of range [" + minInclusive + ":" + maxInclusive + "]", value);
+        };
+    }
+
+    static Codec<Integer> intRange(final int minInclusive, final int maxInclusive) {
+        final Function<Integer, DataResult<Integer>> checker = checkRange(minInclusive, maxInclusive);
+        return Codec.INT.flatXmap(checker, checker);
+    }
+
+    static Codec<Float> floatRange(final float minInclusive, final float maxInclusive) {
+        final Function<Float, DataResult<Float>> checker = checkRange(minInclusive, maxInclusive);
+        return Codec.FLOAT.flatXmap(checker, checker);
+    }
+
+    static Codec<Double> doubleRange(final double minInclusive, final double maxInclusive) {
+        final Function<Double, DataResult<Double>> checker = checkRange(minInclusive, maxInclusive);
+        return Codec.DOUBLE.flatXmap(checker, checker);
+    }
+
     PrimitiveCodec<Boolean> BOOL = new PrimitiveCodec<Boolean>() {
         @Override
         public <T> DataResult<Boolean> read(final DynamicOps<T> ops, final T input) {
