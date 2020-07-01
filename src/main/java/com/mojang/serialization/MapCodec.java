@@ -193,11 +193,11 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         };
     }
 
-    public MapCodec<A> withDefault(final Consumer<String> onError, final A value) {
-        return withDefault(DataFixUtils.consumerToFunction(onError), value);
+    public MapCodec<A> orElse(final Consumer<String> onError, final A value) {
+        return orElse(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    public MapCodec<A> withDefault(final UnaryOperator<String> onError, final A value) {
+    public MapCodec<A> orElse(final UnaryOperator<String> onError, final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a) {
@@ -216,11 +216,11 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         });
     }
 
-    public MapCodec<A> withDefault(final Consumer<String> onError, final Supplier<? extends A> value) {
-        return withDefault(DataFixUtils.consumerToFunction(onError), value);
+    public MapCodec<A> orElseGet(final Consumer<String> onError, final Supplier<? extends A> value) {
+        return orElseGet(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    public MapCodec<A> withDefault(final UnaryOperator<String> onError, final Supplier<? extends A> value) {
+    public MapCodec<A> orElseGet(final UnaryOperator<String> onError, final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a) {
@@ -239,7 +239,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         });
     }
 
-    public MapCodec<A> withDefault(final A value) {
+    public MapCodec<A> orElse(final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a) {
@@ -258,7 +258,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         });
     }
 
-    public MapCodec<A> withDefault(final Supplier<? extends A> value) {
+    public MapCodec<A> orElseGet(final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<A> apply(final DynamicOps<T> ops, final MapLike<T> input, final DataResult<A> a) {
