@@ -224,11 +224,11 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         };
     }
 
-    default Codec<A> withDefault(final Consumer<String> onError, final A value) {
-        return withDefault(DataFixUtils.consumerToFunction(onError), value);
+    default Codec<A> orElse(final Consumer<String> onError, final A value) {
+        return orElse(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    default Codec<A> withDefault(final UnaryOperator<String> onError, final A value) {
+    default Codec<A> orElse(final UnaryOperator<String> onError, final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
@@ -247,11 +247,11 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         });
     }
 
-    default Codec<A> withDefault(final Consumer<String> onError, final Supplier<? extends A> value) {
-        return withDefault(DataFixUtils.consumerToFunction(onError), value);
+    default Codec<A> orElseGet(final Consumer<String> onError, final Supplier<? extends A> value) {
+        return orElseGet(DataFixUtils.consumerToFunction(onError), value);
     }
 
-    default Codec<A> withDefault(final UnaryOperator<String> onError, final Supplier<? extends A> value) {
+    default Codec<A> orElseGet(final UnaryOperator<String> onError, final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
@@ -270,7 +270,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         });
     }
 
-    default Codec<A> withDefault(final A value) {
+    default Codec<A> orElse(final A value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
@@ -289,7 +289,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         });
     }
 
-    default Codec<A> withDefault(final Supplier<? extends A> value) {
+    default Codec<A> orElseGet(final Supplier<? extends A> value) {
         return mapResult(new ResultFunction<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> apply(final DynamicOps<T> ops, final T input, final DataResult<Pair<A, T>> a) {
