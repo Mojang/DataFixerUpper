@@ -242,7 +242,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return "WithDefault[" + onError + " " + value + "]";
+                return "OrElse[" + onError + " " + value + "]";
             }
         });
     }
@@ -265,7 +265,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return "WithDefault[" + onError + " " + value.get() + "]";
+                return "OrElse[" + onError + " " + value.get() + "]";
             }
         });
     }
@@ -284,7 +284,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return "WithDefault[" + value + "]";
+                return "OrElse[" + value + "]";
             }
         });
     }
@@ -303,7 +303,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return "WithDefault[" + value.get() + "]";
+                return "OrElse[" + value.get() + "]";
             }
         });
     }
