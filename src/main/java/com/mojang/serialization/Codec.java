@@ -265,7 +265,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return "OrElse[" + onError + " " + value.get() + "]";
+                return "OrElseGet[" + onError + " " + value.get() + "]";
             }
         });
     }
@@ -303,7 +303,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
             @Override
             public String toString() {
-                return "OrElse[" + value.get() + "]";
+                return "OrElseGet[" + value.get() + "]";
             }
         });
     }
