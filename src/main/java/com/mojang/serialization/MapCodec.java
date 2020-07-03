@@ -234,7 +234,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
             @Override
             public String toString() {
-                return "OrElse[" + onError + " " + value.get() + "]";
+                return "OrElseGet[" + onError + " " + value.get() + "]";
             }
         });
     }
@@ -272,7 +272,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
             @Override
             public String toString() {
-                return "OrElse[" + value.get() + "]";
+                return "OrElseGet[" + value.get() + "]";
             }
         });
     }
