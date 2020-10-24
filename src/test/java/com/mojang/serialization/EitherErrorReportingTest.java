@@ -1,6 +1,11 @@
 package com.mojang.serialization;
 
+import java.util.stream.Stream;
+
+import com.google.gson.JsonElement;
+
 import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.junit.Test;
 
@@ -37,39 +42,64 @@ public class EitherErrorReportingTest
         }
     }
 
-    @Test
-    public void testEitherErrorNormal() {
-        testEitherError(JsonOps.INSTANCE);
-    }
+    private static final Codec<Either<Integer, TestData>> CODEC = Codec.either(Codec.intRange(0, 10), TestData.CODEC);
+    private static final Codec<Either<TestData, Integer>> CODEC_SWAPPED = Codec.either(TestData.CODEC, Codec.intRange(0, 10));
+    private static final Codec<Either<Integer, TestData>> MAP_CODEC = Codec.mapEither(Codec.intRange(0, 10).fieldOf("value"), TestData.CODEC.fieldOf("data")).codec();
+    private static final Codec<Either<TestData, Integer>> MAP_CODEC_SWAPPED = Codec.mapEither(TestData.CODEC.fieldOf("data"), Codec.intRange(0, 10).fieldOf("value")).codec();
 
     @Test
-    public void testEitherErrorCompressed() {
-        testEitherError(JsonOps.COMPRESSED);
-    }
-
-    @Test
-    public void testEitherErrorSwappedNormal() {
-        testEitherErrorSwapped(JsonOps.INSTANCE);
-    }
-
-    @Test
-    public void testEitherErrorSwappedCompressed() {
-        testEitherErrorSwapped(JsonOps.COMPRESSED);
-    }
-
-    private static <T> void testEitherError(final DynamicOps<T> ops) {
-        final Codec<Either<Integer, TestData>> codec = Codec.either(Codec.intRange(0, 10), TestData.CODEC);
-        final T invalidData = ops.createInt(15);
-        final DataResult<Either<Integer, TestData>> result = codec.parse(ops, invalidData);
+    public void testEitherNormal() {
+        final JsonElement invalidData = JsonOps.INSTANCE.createInt(15);
+        final DataResult<Either<Integer, TestData>> result = CODEC.parse(JsonOps.INSTANCE, invalidData);
 
         assertTrue(result.error().isPresent());
         System.out.println(result.error().get().message());
     }
 
-    private static <T> void testEitherErrorSwapped(final DynamicOps<T> ops) {
-        final Codec<Either<TestData, Integer>> codec = Codec.either(TestData.CODEC, Codec.intRange(0, 10));
-        final T invalidData = ops.createInt(15);
-        final DataResult<Either<TestData, Integer>> result = codec.parse(ops, invalidData);
+    @Test
+    public void testEitherSwappedNormal() {
+        final JsonElement invalidData = JsonOps.INSTANCE.createInt(15);
+        final DataResult<Either<TestData, Integer>> result = CODEC_SWAPPED.parse(JsonOps.INSTANCE, invalidData);
+
+        assertTrue(result.error().isPresent());
+        System.out.println(result.error().get().message());
+    }
+
+    @Test
+    public void testMapEitherNormal() {
+        final DynamicOps<JsonElement> ops = JsonOps.INSTANCE;
+        final JsonElement invalidData = ops.createMap(Stream.of(Pair.of(ops.createString("value"), ops.createInt(15))));
+        final DataResult<Either<Integer, TestData>> result = MAP_CODEC.parse(ops, invalidData);
+
+        assertTrue(result.error().isPresent());
+        System.out.println(result.error().get().message());
+    }
+
+    @Test
+    public void testMapEitherNormal2() {
+        final DynamicOps<JsonElement> ops = JsonOps.INSTANCE;
+        final JsonElement invalidData = ops.createMap(Stream.of(Pair.of(ops.createString("data"), ops.createString("oops"))));
+        final DataResult<Either<Integer, TestData>> result = MAP_CODEC.parse(ops, invalidData);
+
+        assertTrue(result.error().isPresent());
+        System.out.println(result.error().get().message());
+    }
+
+    @Test
+    public void testMapEitherSwappedNormal() {
+        final DynamicOps<JsonElement> ops = JsonOps.INSTANCE;
+        final JsonElement invalidData = ops.createMap(Stream.of(Pair.of(ops.createString("value"), ops.createInt(15))));
+        final DataResult<Either<TestData, Integer>> result = MAP_CODEC_SWAPPED.parse(ops, invalidData);
+
+        assertTrue(result.error().isPresent());
+        System.out.println(result.error().get().message());
+    }
+
+    @Test
+    public void testMapEitherSwappedNormal2() {
+        final DynamicOps<JsonElement> ops = JsonOps.INSTANCE;
+        final JsonElement invalidData = ops.createMap(Stream.of(Pair.of(ops.createString("data"), ops.createString("oops"))));
+        final DataResult<Either<TestData, Integer>> result = MAP_CODEC_SWAPPED.parse(ops, invalidData);
 
         assertTrue(result.error().isPresent());
         System.out.println(result.error().get().message());
