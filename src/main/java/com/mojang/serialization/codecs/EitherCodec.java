@@ -25,7 +25,11 @@ public final class EitherCodec<F, S> implements Codec<Either<F, S>> {
         if (firstRead.result().isPresent()) {
             return firstRead;
         }
-        return second.decode(ops, input).map(vo -> vo.mapFirst(Either::right));
+        final DataResult<Pair<Either<F, S>, T>> secondRead = second.decode(ops, input).map(vo -> vo.mapFirst(Either::right));
+        if (secondRead.result().isPresent()) {
+            return secondRead;
+        }
+        return firstRead.mapError(err -> secondRead.error().map(pr -> "Either [" + err + "; " + pr.message() + "]").orElse(err));
     }
 
     @Override

@@ -27,7 +27,11 @@ public final class EitherMapCodec<F, S> extends MapCodec<Either<F, S>> {
         if (firstRead.result().isPresent()) {
             return firstRead;
         }
-        return second.decode(ops, input).map(Either::right);
+        final DataResult<Either<F, S>> secondRead = second.decode(ops, input).map(Either::right);
+        if (secondRead.result().isPresent()) {
+            return secondRead;
+        }
+        return firstRead.mapError(err -> secondRead.error().map(pr -> "Either [" + err + "; " + pr.message() + "]").orElse(err));
     }
 
     @Override
