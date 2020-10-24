@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
 package com.mojang.serialization;
 
 import java.util.stream.Stream;
@@ -11,8 +13,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class EitherErrorReportingTest
-{
+public class EitherErrorReportingTest {
     private static class TestData {
         private static final Codec<TestData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.fieldOf("x").forGetter(c -> c.x)
