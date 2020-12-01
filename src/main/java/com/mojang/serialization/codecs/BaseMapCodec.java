@@ -32,11 +32,8 @@ public interface BaseMapCodec<K, V> {
 
                 final DataResult<Pair<K, V>> entry = k.apply2stable(Pair::of, v);
                 entry.error().ifPresent(e -> failed.add(pair));
-
-                return r.apply2stable((u, p) -> {
-                    read.put(p.getFirst(), p.getSecond());
-                    return u;
-                }, entry);
+                entry.result().ifPresent(e -> read.put(e.getFirst(), e.getSecond()));
+                return r.apply2stable((u, p) -> u, entry);
             },
             (r1, r2) -> r1.apply2stable((u1, u2) -> u1, r2)
         );
