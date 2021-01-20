@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -38,6 +39,7 @@ public abstract class DynamicLike<T> {
     public abstract DataResult<ByteBuffer> asByteBufferOpt();
     public abstract DataResult<IntStream> asIntStreamOpt();
     public abstract DataResult<LongStream> asLongStreamOpt();
+    public abstract DataResult<DoubleStream> asDoubleStreamOpt();
     public abstract OptionalDynamic<T> get(String key);
     public abstract DataResult<T> getGeneric(T key);
     public abstract DataResult<T> getElement(String key);
@@ -148,6 +150,10 @@ public abstract class DynamicLike<T> {
         return asLongStreamOpt().result().orElseGet(LongStream::empty);
     }
 
+    public DoubleStream asDoubleStream() {
+        return asDoubleStreamOpt().result().orElseGet(DoubleStream::empty);
+    }
+
     public <U> List<U> asList(final Function<Dynamic<T>, U> deserializer) {
         return asListOpt(deserializer).result().orElseGet(ImmutableList::of);
     }
@@ -230,5 +236,9 @@ public abstract class DynamicLike<T> {
 
     public Dynamic<?> createLongList(final LongStream input) {
         return new Dynamic<>(ops, ops.createLongList(input));
+    }
+
+    public Dynamic<?> createDoubleList(final DoubleStream input) {
+        return new Dynamic<>(ops, ops.createDoubleList(input));
     }
 }

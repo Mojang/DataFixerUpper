@@ -27,6 +27,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -571,6 +572,24 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         @Override
         public String toString() {
             return "LongStream";
+        }
+    };
+
+    PrimitiveCodec<DoubleStream> DOUBLE_STREAM = new PrimitiveCodec<DoubleStream>() {
+        @Override
+        public <T> DataResult<DoubleStream> read(final DynamicOps<T> ops, final T input) {
+            return ops
+                    .getDoubleStream(input);
+        }
+
+        @Override
+        public <T> T write(final DynamicOps<T> ops, final DoubleStream value) {
+            return ops.createDoubleList(value);
+        }
+
+        @Override
+        public String toString() {
+            return "DoubleStream";
         }
     };
 

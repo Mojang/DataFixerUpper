@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -106,6 +107,11 @@ public class Dynamic<T> extends DynamicLike<T> {
     @Override
     public DataResult<LongStream> asLongStreamOpt() {
         return ops.getLongStream(value);
+    }
+
+    @Override
+    public DataResult<DoubleStream> asDoubleStreamOpt() {
+        return ops.getDoubleStream(value);
     }
 
     @Override

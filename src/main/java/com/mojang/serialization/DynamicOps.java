@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -193,6 +194,20 @@ public interface DynamicOps<T> {
 
     default T createLongList(final LongStream input) {
         return createList(input.mapToObj(this::createLong));
+    }
+
+    default DataResult<DoubleStream> getDoubleStream(final T input) {
+        return getStream(input).flatMap(stream -> {
+            final List<T> list = stream.collect(Collectors.toList());
+            if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
+                return DataResult.success(list.stream().mapToDouble(element -> getNumberValue(element).result().get().doubleValue()));
+            }
+            return DataResult.error("Some elements are not doubles: " + input);
+        });
+    }
+
+    default T createDoubleList(final DoubleStream input) {
+        return createList(input.mapToObj(this::createDouble));
     }
 
     T remove(T input, String key);

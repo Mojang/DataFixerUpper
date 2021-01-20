@@ -7,6 +7,7 @@ import com.mojang.datafixers.util.Pair;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -69,6 +70,11 @@ public final class OptionalDynamic<T> extends DynamicLike<T> {
     @Override
     public DataResult<LongStream> asLongStreamOpt() {
         return flatMap(DynamicLike::asLongStreamOpt);
+    }
+
+    @Override
+    public DataResult<DoubleStream> asDoubleStreamOpt() {
+        return flatMap(DynamicLike::asDoubleStreamOpt);
     }
 
     @Override
