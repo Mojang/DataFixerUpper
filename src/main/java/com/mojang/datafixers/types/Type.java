@@ -22,6 +22,7 @@ import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Triple;
+import com.mojang.datafixers.util.ValueHolder;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
@@ -177,15 +178,15 @@ public abstract class Type<A> implements App<Type.Mu, A> {
             return (Optional<RewriteResult<A, ?>>) rewrite;
         }
         // TODO: AtomicReference.getPlain/setPlain in java9+
-        final AtomicReference<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new AtomicReference<>();
+        final ValueHolder<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new ValueHolder<>(null);
 
         final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending = PENDING_REWRITE_CACHE.computeIfAbsent(key, k -> {
             final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> value = new CompletableFuture<>();
-            ref.set(value);
+            ref.setValue(value);
             return value;
         });
 
-        if (ref.get() != null) {
+        if (ref.getValue() != null) {
             Optional<RewriteResult<A, ?>> result = rule.rewrite(this).flatMap(r -> r.view().rewrite(fRule).map(view -> RewriteResult.create(view, r.recData())));
             REWRITE_CACHE.put(key, result);
             pending.complete(result);

@@ -6,12 +6,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
+import com.mojang.datafixers.util.ValueHolder;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.RecordBuilder;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +32,7 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
             final ImmutableMap.Builder<T, T> failed = ImmutableMap.builder();
 
             // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<Unit>> result = new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.experimental()));
+            final ValueHolder<DataResult<Unit>> result = new ValueHolder<>(DataResult.success(Unit.INSTANCE, Lifecycle.experimental()));
 
             map.accept((key, value) -> {
                 final DataResult<K> k = keyCodec.parse(ops, key);

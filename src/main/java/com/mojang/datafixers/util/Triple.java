@@ -5,7 +5,6 @@ package com.mojang.datafixers.util;
 import java.util.Objects;
 
 public class Triple<F, S, T> {
-
     private final F first;
     private final S second;
     private final T third;
@@ -35,6 +34,9 @@ public class Triple<F, S, T> {
 
     @Override
     public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if (!(obj instanceof Triple)) {
             return false;
         }

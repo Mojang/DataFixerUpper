@@ -4,7 +4,7 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
-import org.apache.commons.lang3.mutable.MutableObject;
+import com.mojang.datafixers.util.ValueHolder;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -101,7 +101,7 @@ public interface DynamicOps<T> {
 
     default DataResult<T> mergeToMap(final T map, final MapLike<T> values) {
         // TODO: AtomicReference.getPlain/setPlain in java9+
-        final MutableObject<DataResult<T>> result = new MutableObject<>(DataResult.success(map));
+        final ValueHolder<DataResult<T>> result = new ValueHolder<>(DataResult.success(map));
 
         values.entries().forEach(entry ->
             result.setValue(result.getValue().flatMap(r -> mergeToMap(r, entry.getFirst(), entry.getSecond())))

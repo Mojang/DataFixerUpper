@@ -19,7 +19,6 @@ import com.mojang.datafixers.types.families.ListAlgebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.BitSet;
