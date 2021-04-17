@@ -8,7 +8,7 @@ import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.ListBox;
 import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
-import org.apache.commons.lang3.mutable.MutableObject;
+import com.mojang.datafixers.util.ValueHolder;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -90,7 +90,7 @@ public abstract class DynamicLike<T> {
     public <R> DataResult<R> readMap(final DataResult<R> empty, final Function3<R, Dynamic<T>, Dynamic<T>, DataResult<R>> combiner) {
         return asMapOpt().flatMap(stream -> {
             // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<R>> result = new MutableObject<>(empty);
+            final ValueHolder<DataResult<R>> result = new ValueHolder<>(empty);
             stream.forEach(p -> result.setValue(result.getValue().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
             return result.getValue();
         });

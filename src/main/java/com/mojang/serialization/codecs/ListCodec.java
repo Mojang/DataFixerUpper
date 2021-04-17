@@ -5,12 +5,12 @@ package com.mojang.serialization.codecs;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
+import com.mojang.datafixers.util.ValueHolder;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.ListBuilder;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.List;
 import java.util.Objects;
@@ -40,7 +40,7 @@ public final class ListCodec<A> implements Codec<List<A>> {
             final ImmutableList.Builder<A> read = ImmutableList.builder();
             final Stream.Builder<T> failed = Stream.builder();
             // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<Unit>> result = new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
+            final ValueHolder<DataResult<Unit>> result = new ValueHolder<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
 
             stream.accept(t -> {
                 final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);

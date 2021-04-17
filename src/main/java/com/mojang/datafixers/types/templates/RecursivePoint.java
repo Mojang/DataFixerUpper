@@ -19,7 +19,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
-import org.apache.commons.lang3.ObjectUtils;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
@@ -86,7 +85,7 @@ public final class RecursivePoint implements TypeTemplate {
         }
         final RecursivePointType<S> sType = (RecursivePointType<S>) sourceType;
         final RecursivePointType<T> tType = sType.family().buildMuType(result.view().newType(), null);
-        final BitSet bitSet = ObjectUtils.clone(result.recData());
+        final BitSet bitSet = (BitSet) result.recData().clone();
         bitSet.set(index);
         return RewriteResult.create(View.create(sType, tType, result.view().function()), bitSet);
     }

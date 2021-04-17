@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types;
 
-import com.google.common.collect.Maps;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FieldFinder;
@@ -22,22 +21,23 @@ import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Triple;
+import com.mojang.datafixers.util.ValueHolder;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
-import org.apache.commons.lang3.mutable.MutableObject;
-import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class Type<A> implements App<Type.Mu, A> {
-    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
-    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
+    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = new ConcurrentHashMap<>();
 
     public static class Mu implements K1 {}
 
@@ -178,7 +178,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
             return (Optional<RewriteResult<A, ?>>) rewrite;
         }
         // TODO: AtomicReference.getPlain/setPlain in java9+
-        final MutableObject<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new MutableObject<>();
+        final ValueHolder<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new ValueHolder<>(null);
 
         final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending = PENDING_REWRITE_CACHE.computeIfAbsent(key, k -> {
             final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> value = new CompletableFuture<>();

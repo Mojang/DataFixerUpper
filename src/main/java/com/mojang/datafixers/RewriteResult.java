@@ -4,7 +4,6 @@ package com.mojang.datafixers;
 
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.RecursivePoint;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.BitSet;
 import java.util.Objects;
@@ -30,7 +29,7 @@ public final class RewriteResult<A, B> {
         final BitSet newData;
         if (view.type() instanceof RecursivePoint.RecursivePointType<?> && that.view.type() instanceof RecursivePoint.RecursivePointType<?>) {
             // same family, merge results - not exactly accurate, but should be good enough
-            newData = ObjectUtils.clone(recData);
+            newData = (BitSet) recData.clone();
             newData.or(that.recData);
         } else {
             newData = recData;

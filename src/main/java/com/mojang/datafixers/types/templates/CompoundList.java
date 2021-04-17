@@ -3,7 +3,6 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
@@ -26,6 +25,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,7 +56,7 @@ public final class CompoundList implements TypeTemplate {
         return TypeFamily.familyOptic(
             i -> {
                 final OpticParts<A, B> optic = element.applyO(input, aType, bType).apply(i);
-                final Set<TypeToken<? extends K1>> bounds = Sets.newHashSet(optic.bounds());
+                final Set<TypeToken<? extends K1>> bounds = new HashSet<>(optic.bounds());
                 bounds.add(TraversalP.Mu.TYPE_TOKEN);
                 return new OpticParts<>(bounds, cap(optic.optic()));
             }
