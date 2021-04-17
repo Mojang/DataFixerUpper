@@ -4,7 +4,6 @@ package com.mojang.datafixers.types;
 
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
-import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.FieldFinder;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.OpticFinder;
@@ -23,6 +22,10 @@ import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Triple;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -30,7 +33,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class Type<A> implements App<Type.Mu, A> {
     private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = new ConcurrentHashMap<>();
@@ -44,6 +46,9 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     @Nullable
     private TypeTemplate template;
+
+    @Nullable
+    private Codec<A> codec;
 
     public RewriteResult<A, ?> rewriteOrNop(final TypeRewriteRule rule) {
         return DataFixUtils.orElseGet(rule.rewrite(this), () -> RewriteResult.nop(this));
@@ -106,55 +111,59 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         return Optional.empty();
     }
 
-    public final <T> Pair<Dynamic<T>, Optional<A>> read(final Dynamic<T> input) {
-        return read(input.getOps(), input.getValue()).mapFirst(v -> new Dynamic<>(input.getOps(), v));
+    public final <T> DataResult<Pair<A, Dynamic<T>>> read(final Dynamic<T> input) {
+        return codec().decode(input.getOps(), input.getValue()).map(v -> v.mapSecond(t -> new Dynamic<>(input.getOps(), t)));
     }
 
-    public abstract <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input);
-
-    public abstract <T> T write(final DynamicOps<T> ops, final T rest, final A value);
-
-    public final <T> T write(final DynamicOps<T> ops, final A value) {
-        return write(ops, ops.empty(), value);
+    public final Codec<A> codec() {
+        if (codec == null) {
+            codec = buildCodec();
+        }
+        return codec;
     }
 
-    public final <T> Dynamic<T> writeDynamic(final DynamicOps<T> ops, final T rest, final A value) {
-        return new Dynamic<>(ops, write(ops, rest, value));
+    protected abstract Codec<A> buildCodec();
+
+    public final <T> DataResult<T> write(final DynamicOps<T> ops, final A value) {
+        return codec().encode(value, ops, ops.empty());
     }
 
-    public final <T> Dynamic<T> writeDynamic(final DynamicOps<T> ops, final A value) {
-        return new Dynamic<>(ops, write(ops, value));
+    public final <T> DataResult<Dynamic<T>> writeDynamic(final DynamicOps<T> ops, final A value) {
+        return write(ops, value).map(result -> new Dynamic<>(ops, result));
     }
 
-    public <T> Pair<T, Optional<Typed<A>>> readTyped(final Dynamic<T> input) {
+    public <T> DataResult<Pair<Typed<A>, T>> readTyped(final Dynamic<T> input) {
         return readTyped(input.getOps(), input.getValue());
     }
 
-    public <T> Pair<T, Optional<Typed<A>>> readTyped(final DynamicOps<T> ops, final T input) {
-        return read(ops, input).mapSecond(vo -> vo.map(v -> new Typed<>(this, ops, v)));
+    public <T> DataResult<Pair<Typed<A>, T>> readTyped(final DynamicOps<T> ops, final T input) {
+        return codec().decode(ops, input).map(vo -> vo.mapFirst(v -> new Typed<>(this, ops, v)));
     }
 
-    public <T> Pair<T, Optional<?>> read(final DynamicOps<T> ops, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
-        return read(ops, input).mapSecond(vo -> vo.map(v ->
+    public <T> DataResult<Pair<Optional<?>, T>> read(final DynamicOps<T> ops, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
+        return codec().decode(ops, input).map(vo -> vo.mapFirst(v ->
             rewrite(rule, fRule).map(r -> r.view().function().evalCached().apply(ops).apply(v)
             )
         ));
     }
 
-    public <T> Optional<T> readAndWrite(final DynamicOps<T> ops, final Type<?> expectedType, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
-        final Pair<T, Optional<A>> po = read(ops, input);
-        return po.getSecond().flatMap(v ->
-            rewrite(rule, fRule).map(r ->
-                capWrite(ops, expectedType, po.getFirst(), v, r.view())
-            )
+    public <T> DataResult<T> readAndWrite(final DynamicOps<T> ops, final Type<?> expectedType, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
+        final Optional<RewriteResult<A, ?>> rewriteResult = rewrite(rule, fRule);
+        if (!rewriteResult.isPresent()) {
+            return DataResult.error("Could not build a rewrite rule: " + rule + " " + fRule, input);
+        }
+        final View<A, ?> view = rewriteResult.get().view();
+
+        return codec().decode(ops, input).flatMap(pair ->
+            capWrite(ops, expectedType, pair.getSecond(), pair.getFirst(), view)
         );
     }
 
-    public <T, B> T capWrite(final DynamicOps<T> ops, final Type<?> expectedType, final T rest, final A value, final View<A, B> f) {
+    private <T, B> DataResult<T> capWrite(final DynamicOps<T> ops, final Type<?> expectedType, final T rest, final A value, final View<A, B> f) {
         if (!expectedType.equals(f.newType(), true, true)) {
-            throw new IllegalStateException("Rewritten type doesn't match.");
+            return DataResult.error("Rewritten type doesn't match");
         }
-        return f.newType().write(ops, rest, f.function().evalCached().apply(ops).apply(value));
+        return f.newType().codec().encode(f.function().evalCached().apply(ops).apply(value), ops, rest);
     }
 
     @SuppressWarnings("unchecked")
@@ -167,6 +176,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         if (rewrite != null) {
             return (Optional<RewriteResult<A, ?>>) rewrite;
         }
+        // TODO: AtomicReference.getPlain/setPlain in java9+
         final AtomicReference<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new AtomicReference<>();
 
         final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending = PENDING_REWRITE_CACHE.computeIfAbsent(key, k -> {

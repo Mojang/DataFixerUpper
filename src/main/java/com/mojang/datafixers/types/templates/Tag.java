@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
@@ -11,18 +9,17 @@ import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.View;
 import com.mojang.datafixers.functions.Functions;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 public final class Tag implements TypeTemplate {
     private final String name;
@@ -172,22 +169,8 @@ public final class Tag implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
-            final Optional<Map<T, T>> map = ops.getMapValues(input);
-            final T nameObject = ops.createString(name);
-            final T elementValue;
-            if (map.isPresent() && (elementValue = map.get().get(nameObject)) != null) {
-                final Optional<A> value = element.read(ops, elementValue).getSecond();
-                if (value.isPresent()) {
-                    return Pair.of(ops.createMap(map.get().entrySet().stream().filter(e -> !Objects.equals(e.getKey(), nameObject)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))), value);
-                }
-            }
-            return Pair.of(input, Optional.empty());
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final A value) {
-            return ops.mergeInto(rest, ops.createString(name), element.write(ops, ops.empty(), value));
+        protected Codec<A> buildCodec() {
+            return element.codec().fieldOf(name).codec();
         }
 
         @Override
@@ -210,10 +193,6 @@ public final class Tag implements TypeTemplate {
         @Override
         public int hashCode() {
             return Objects.hash(name, element);
-        }
-
-        public <A2> TagType<A2> map(final Function<? super Type<A>, ? extends Type<A2>> function) {
-            return new TagType<>(name, function.apply(element));
         }
 
         @Override

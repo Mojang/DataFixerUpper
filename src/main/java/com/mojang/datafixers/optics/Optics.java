@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.optics;
 
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.App2;
@@ -15,6 +13,8 @@ import com.mojang.datafixers.optics.profunctors.Cocartesian;
 import com.mojang.datafixers.optics.profunctors.GetterP;
 import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 
 import java.util.Optional;
 import java.util.function.BiFunction;

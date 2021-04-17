@@ -5,7 +5,7 @@ package com.mojang.datafixers.functions;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.optics.Optic;
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.Objects;
 import java.util.function.Function;

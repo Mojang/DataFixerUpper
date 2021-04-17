@@ -3,24 +3,11 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.ObjectArrays;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.datafixers.util.Triple;
-import com.mojang.datafixers.util.Unit;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
-import com.mojang.datafixers.types.constant.BoolType;
-import com.mojang.datafixers.types.constant.ByteType;
-import com.mojang.datafixers.types.constant.DoubleType;
-import com.mojang.datafixers.types.constant.FloatType;
-import com.mojang.datafixers.types.constant.IntType;
-import com.mojang.datafixers.types.constant.LongType;
-import com.mojang.datafixers.types.constant.NamespacedStringType;
-import com.mojang.datafixers.types.constant.NilDrop;
-import com.mojang.datafixers.types.constant.NilSave;
-import com.mojang.datafixers.types.constant.ShortType;
-import com.mojang.datafixers.types.constant.StringType;
+import com.mojang.datafixers.types.constant.EmptyPart;
+import com.mojang.datafixers.types.constant.EmptyPartPassthrough;
 import com.mojang.datafixers.types.templates.Check;
 import com.mojang.datafixers.types.templates.CompoundList;
 import com.mojang.datafixers.types.templates.Const;
@@ -33,12 +20,17 @@ import com.mojang.datafixers.types.templates.Sum;
 import com.mojang.datafixers.types.templates.Tag;
 import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Triple;
+import com.mojang.datafixers.util.Unit;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Dynamic;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public interface DSL {
     interface TypeReference {
@@ -83,24 +75,20 @@ public interface DSL {
         return Instances.STRING_TYPE;
     }
 
-    static Type<String> namespacedString() {
-        return Instances.NAMESPACED_STRING_TYPE;
+    static TypeTemplate emptyPart() {
+        return constType(Instances.EMPTY_PART);
     }
 
-    static TypeTemplate nil() {
-        return constType(Instances.NIL_DROP);
-    }
-
-    static Type<Unit> nilType() {
-        return Instances.NIL_DROP;
+    static Type<Unit> emptyPartType() {
+        return Instances.EMPTY_PART;
     }
 
     static TypeTemplate remainder() {
-        return constType(Instances.NIL_SAVE);
+        return constType(Instances.EMPTY_PASSTHROUGH);
     }
 
     static Type<Dynamic<?>> remainderType() {
-        return Instances.NIL_SAVE;
+        return Instances.EMPTY_PASSTHROUGH;
     }
 
     static TypeTemplate check(final String name, final int index, final TypeTemplate element) {
@@ -207,11 +195,11 @@ public interface DSL {
     }
 
     static <K> TaggedChoice<K> taggedChoiceLazy(final String name, final Type<K> keyType, final Map<K, Supplier<TypeTemplate>> templates) {
-        return taggedChoice(name, keyType, templates.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().get())).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+        return taggedChoice(name, keyType, templates.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().get())).collect(Pair.toMap()));
     }
 
     @SuppressWarnings("unchecked")
-    static <K> Type<Pair<K, ?>> taggedChoiceType(final String name, final Type<K> keyType, final Map<K, Type<?>> types) {
+    static <K> Type<Pair<K, ?>> taggedChoiceType(final String name, final Type<K> keyType, final Map<K, ? extends Type<?>> types) {
         return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getFirst(), (Type<K>) k.getSecond(), (Map<K, Type<?>>) k.getThird()));
     }
 
@@ -222,11 +210,11 @@ public interface DSL {
     // Helpers
 
     static <A> Type<Either<A, Unit>> optional(final Type<A> type) {
-        return or(type, nilType());
+        return or(type, emptyPartType());
     }
 
     static TypeTemplate optional(final TypeTemplate value) {
-        return or(value, nil());
+        return or(value, emptyPart());
     }
 
     static TypeTemplate fields(
@@ -442,24 +430,23 @@ public interface DSL {
     }
 
     static Unit unit() {
-        return null;
+        return Unit.INSTANCE;
     }
 
     final class Instances {
-        private static final Type<Boolean> BOOL_TYPE = new BoolType();
-        private static final Type<Integer> INT_TYPE = new IntType();
-        private static final Type<Long> LONG_TYPE = new LongType();
-        private static final Type<Byte> BYTE_TYPE = new ByteType();
-        private static final Type<Short> SHORT_TYPE = new ShortType();
-        private static final Type<Float> FLOAT_TYPE = new FloatType();
-        private static final Type<Double> DOUBLE_TYPE = new DoubleType();
-        private static final Type<String> STRING_TYPE = new StringType();
-        private static final Type<String> NAMESPACED_STRING_TYPE = new NamespacedStringType();
-        private static final Type<Unit> NIL_DROP = new NilDrop();
-        private static final Type<Dynamic<?>> NIL_SAVE = new NilSave();
+        private static final Type<Boolean> BOOL_TYPE = new Const.PrimitiveType<>(Codec.BOOL);
+        private static final Type<Integer> INT_TYPE = new Const.PrimitiveType<>(Codec.INT);
+        private static final Type<Long> LONG_TYPE = new Const.PrimitiveType<>(Codec.LONG);
+        private static final Type<Byte> BYTE_TYPE = new Const.PrimitiveType<>(Codec.BYTE);
+        private static final Type<Short> SHORT_TYPE = new Const.PrimitiveType<>(Codec.SHORT);
+        private static final Type<Float> FLOAT_TYPE = new Const.PrimitiveType<>(Codec.FLOAT);
+        private static final Type<Double> DOUBLE_TYPE = new Const.PrimitiveType<>(Codec.DOUBLE);
+        private static final Type<String> STRING_TYPE = new Const.PrimitiveType<>(Codec.STRING);
+        private static final Type<Unit> EMPTY_PART = new EmptyPart();
+        private static final Type<Dynamic<?>> EMPTY_PASSTHROUGH = new EmptyPartPassthrough();
 
         private static final OpticFinder<Dynamic<?>> REMAINDER_FINDER = remainderType().finder();
 
-        private static final Map<Triple<String, Type<?>, Map<?, Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = new ConcurrentHashMap<>();
+        private static final Map<Triple<String, Type<?>, Map<?, ? extends Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = new ConcurrentHashMap<>();
     }
 }

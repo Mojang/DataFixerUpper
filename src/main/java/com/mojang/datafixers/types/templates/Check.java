@@ -2,19 +2,21 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.mojang.datafixers.functions.PointFreeRule;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.functions.Functions;
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -119,16 +121,18 @@ public final class Check implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<A>> read(final DynamicOps<T> ops, final T input) {
-            if (index != expectedIndex) {
-                return Pair.of(input, Optional.empty());
-            }
-            return delegate.read(ops, input);
+        protected Codec<A> buildCodec() {
+            return Codec.<A>of(
+                delegate.codec(),
+                this::read
+            );
         }
 
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final A value) {
-            return delegate.write(ops, rest, value);
+        private <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
+            if (index != expectedIndex) {
+                return DataResult.error("Index mismatch: " + index + " != " + expectedIndex);
+            }
+            return delegate.codec().decode(ops, input);
         }
 
         public static <A, B> RewriteResult<A, ?> fix(final CheckType<A> type, final RewriteResult<A, B> instance) {

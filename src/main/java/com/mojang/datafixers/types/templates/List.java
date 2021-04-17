@@ -4,8 +4,6 @@ package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.OpticParts;
@@ -16,10 +14,12 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 public final class List implements TypeTemplate {
     private final TypeTemplate element;
@@ -157,20 +156,8 @@ public final class List implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<java.util.List<A>>> read(final DynamicOps<T> ops, final T input) {
-            // TODO: read the same way we read CompoundList? (as much elements as possible)
-            return ops.getStream(input).map(stream -> {
-                final java.util.List<Optional<A>> list = stream.map(value -> element.read(ops, value).getSecond()).collect(Collectors.toList());
-                if (list.stream().anyMatch(o -> !o.isPresent())) {
-                    return Pair.of(input, Optional.<java.util.List<A>>empty());
-                }
-                return Pair.of(ops.empty(), Optional.of(list.stream().map(Optional::get).collect(Collectors.toList())));
-            }).orElseGet(() -> Pair.of(input, Optional.empty()));
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final java.util.List<A> value) {
-            return ops.merge(rest, ops.createList(value.stream().map(a -> element.write(ops, ops.empty(), a))));
+        public Codec<java.util.List<A>> buildCodec() {
+            return Codec.list(element.codec());
         }
 
         @Override

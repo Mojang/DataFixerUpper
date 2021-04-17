@@ -3,12 +3,12 @@
 package com.mojang.datafixers.optics.profunctors;
 
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.CocartesianLike;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
+import com.mojang.datafixers.util.Either;
 
 public interface Cocartesian<P extends K2, Mu extends Cocartesian.Mu> extends Profunctor<P, Mu> {
     static <P extends K2, Proof extends Cocartesian.Mu> Cocartesian<P, Proof> unbox(final App<Proof, P> proofBox) {

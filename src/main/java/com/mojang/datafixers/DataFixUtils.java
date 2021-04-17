@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public class DataFixUtils {
     private DataFixUtils() {
@@ -92,5 +93,12 @@ public class DataFixUtils {
 
     public static int getSubVersion(final int key) {
         return key % 10;
+    }
+
+    public static <T> UnaryOperator<T> consumerToFunction(final Consumer<T> consumer) {
+        return s -> {
+            consumer.accept(s);
+            return s;
+        };
     }
 }

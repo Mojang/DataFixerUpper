@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.types.Type;
+import com.mojang.datafixers.util.Either;
 
 import javax.annotation.Nullable;
 

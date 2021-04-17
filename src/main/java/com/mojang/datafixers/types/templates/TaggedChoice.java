@@ -4,10 +4,7 @@ package com.mojang.datafixers.types.templates;
 
 import com.google.common.base.Joiner;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
-import com.mojang.datafixers.DataFixerUpper;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.RewriteResult;
@@ -27,12 +24,16 @@ import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.AffineP;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Encoder;
+import com.mojang.serialization.codecs.KeyDispatchCodec;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -46,11 +47,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 
 public final class TaggedChoice<K> implements TypeTemplate {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     private final String name;
     private final Type<K> keyType;
     private final Map<K, TypeTemplate> templates;
@@ -72,7 +70,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
     @Override
     public TypeFamily apply(final TypeFamily family) {
         return index -> types.computeIfAbsent(Pair.of(family, index), key ->
-            DSL.taggedChoiceType(name, keyType, templates.entrySet().stream().map(e -> Pair.<K, Type<?>>of(e.getKey(), e.getValue().apply(key.getFirst()).apply(key.getSecond()))).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)))
+            DSL.taggedChoiceType(name, keyType, templates.entrySet().stream().map(e -> Pair.<K, Type<?>>of(e.getKey(), e.getValue().apply(key.getFirst()).apply(key.getSecond()))).collect(Pair.toMap()))
         );
     }
 
@@ -135,15 +133,13 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public RewriteResult<Pair<K, ?>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
-            final Map<K, ? extends RewriteResult<?, ?>> results = types.entrySet().stream().map(
-                e -> rule.rewrite(e.getValue()).map(v -> Pair.of(e.getKey(), v))
-            ).filter(
-                e -> e.isPresent() && !Objects.equals(e.get().getSecond().view().function(), Functions.id())
-            ).map(
-                Optional::get
-            ).collect(
-                Collectors.toMap(Pair::getFirst, Pair::getSecond)
-            );
+            final Map<K, ? extends RewriteResult<?, ?>> results = types.entrySet().stream()
+                .map(e -> rule.rewrite(e.getValue()).map(v -> Pair.of(e.getKey(), v)))
+                .filter(e -> e.isPresent() && !Objects.equals(e.get().getSecond().view().function(), Functions.id()))
+                .map(Optional::get)
+                .collect(Pair.toMap())
+                ;
+
             if (results.isEmpty()) {
                 return RewriteResult.nop(this);
             } else if (results.size() == 1) {
@@ -176,55 +172,32 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public Type<?> updateMu(final RecursiveTypeFamily newFamily) {
-            return DSL.taggedChoiceType(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().updateMu(newFamily))).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+            return DSL.taggedChoiceType(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().updateMu(newFamily))).collect(Pair.toMap()));
         }
 
         @Override
         public TypeTemplate buildTemplate() {
-            return DSL.taggedChoice(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().template())).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
-        }
-
-        @Override
-        public <T> Pair<T, Optional<Pair<K, ?>>> read(final DynamicOps<T> ops, final T input) {
-            final Optional<Map<T, T>> values = ops.getMapValues(input);
-            if (values.isPresent()) {
-                final Map<T, T> map = values.get();
-                final T nameObject = ops.createString(name);
-                final T mapValue = map.get(nameObject);
-                if (mapValue != null) {
-                    final Optional<K> key = keyType.read(ops, mapValue).getSecond();
-                    //noinspection OptionalIsPresent
-                    final K keyValue = key.isPresent() ? key.get() : null;
-                    final Type<?> type = keyValue != null ? types.get(keyValue) : null;
-                    if (type == null) {
-                        if (DataFixerUpper.ERRORS_ARE_FATAL) {
-                            throw new IllegalArgumentException("Unsupported key: " + keyValue + " in " + this);
-                        } else {
-                            LOGGER.warn("Unsupported key: {} in {}", keyValue, this);
-                            return Pair.of(input, Optional.empty());
-                        }
-                    }
-
-                    return type.read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(keyValue, v)));
-                }
-            }
-            return Pair.of(input, Optional.empty());
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Pair<K, ?> value) {
-            final Type<?> type = types.get(value.getFirst());
-            if (type == null) {
-                // TODO: better error handling?
-                // TODO: See todo in read method
-                throw new IllegalArgumentException("Unsupported key: " + value.getFirst() + " in " + this);
-            }
-            return capWrite(ops, type, value.getFirst(), value.getSecond(), rest);
+            return DSL.taggedChoice(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().template())).collect(Pair.toMap()));
         }
 
         @SuppressWarnings("unchecked")
-        private <T, A> T capWrite(final DynamicOps<T> ops, final Type<A> type, final K key, final Object value, final T rest) {
-            return ops.mergeInto(type.write(ops, rest, (A) value), ops.createString(name), keyType.write(ops, ops.empty(), key));
+        private <V> DataResult<? extends Encoder<Pair<K, ?>>> encoder(final Pair<K, V> pair) {
+            return getCodec(pair.getFirst()).map(c -> ((Encoder<V>) c).comap(p -> (V) p.getSecond()));
+        }
+
+        @Override
+        protected Codec<Pair<K, ?>> buildCodec() {
+            return KeyDispatchCodec.<K, Pair<K, ?>>unsafe(
+                name,
+                keyType.codec(),
+                p -> DataResult.success(p.getFirst()),
+                k -> getCodec(k).map(c -> c.map(v -> Pair.of(k, v))),
+                this::encoder
+            ).codec();
+        }
+
+        private DataResult<? extends Codec<?>> getCodec(final K k) {
+            return Optional.ofNullable(types.get(k)).map(t -> DataResult.success(t.codec())).orElseGet(() -> DataResult.error("Unsupported key: " + k));
         }
 
         @Override
@@ -246,13 +219,12 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public <FT, FR> Either<TypedOptic<Pair<K, ?>, ?, FT, FR>, FieldNotFoundException> findTypeInChildren(final Type<FT> type, final Type<FR> resultType, final TypeMatcher<FT, FR> matcher, final boolean recurse) {
-            final Map<K, ? extends TypedOptic<?, ?, FT, FR>> optics = types.entrySet().stream().map(
-                e -> Pair.of(e.getKey(), e.getValue().findType(type, resultType, matcher, recurse))
-            ).filter(
-                e -> e.getSecond().left().isPresent()
-            ).map(
-                e -> e.mapSecond(o -> o.left().get())
-            ).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+            final Map<K, ? extends TypedOptic<?, ?, FT, FR>> optics = types.entrySet().stream()
+                .map(e -> Pair.of(e.getKey(), e.getValue().findType(type, resultType, matcher, recurse)))
+                .filter(e -> e.getSecond().left().isPresent())
+                .map(e -> e.mapSecond(o -> o.left().get()))
+                .collect(Pair.toMap())
+                ;
 
             if (optics.isEmpty()) {
                 return Either.right(new FieldNotFoundException("Not found in any choices"));
@@ -351,7 +323,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                     throw new IllegalStateException("Could not merge TaggedChoiceType optics, unknown bound: " + Arrays.toString(bounds.toArray()));
                 }
 
-                final Map<K, Type<?>> newTypes = types.entrySet().stream().map(e -> Pair.of(e.getKey(), optics.containsKey(e.getKey()) ? optics.get(e.getKey()).tType() : e.getValue())).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
+                final Map<K, Type<?>> newTypes = types.entrySet().stream().map(e -> Pair.of(e.getKey(), optics.containsKey(e.getKey()) ? optics.get(e.getKey()).tType() : e.getValue())).collect(Pair.toMap());
 
                 return Either.left(new TypedOptic<>(
                     bound,
@@ -386,7 +358,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
             if (this == obj) {
                 return true;
             }
-            if (!(obj instanceof TaggedChoice.TaggedChoiceType)) {
+            if (!(obj instanceof TaggedChoiceType)) {
                 return false;
             }
             final TaggedChoiceType<?> other = (TaggedChoiceType<?>) obj;

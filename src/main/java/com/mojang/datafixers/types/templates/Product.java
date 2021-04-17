@@ -4,8 +4,6 @@ package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
@@ -21,10 +19,13 @@ import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -100,7 +101,7 @@ public final class Product implements TypeTemplate {
             new Traversal<Pair<LS, RS>, Pair<LT, RT>, A, B>() {
                 @Override
                 public <F extends K1> FunctionType<Pair<LS, RS>, App<F, Pair<LT, RT>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
-                    return p -> applicative.ap2(Pair::of,
+                    return p -> applicative.ap2(applicative.point(Pair::of),
                         lt.wander(applicative, input).apply(p.getFirst()),
                         rt.wander(applicative, input).apply(p.getSecond())
                     );
@@ -211,20 +212,8 @@ public final class Product implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<Pair<F, G>>> read(final DynamicOps<T> ops, final T input) {
-            final Pair<T, Optional<F>> first = this.first.read(ops, input);
-            if (first.getSecond().isPresent()) {
-                final Pair<T, Optional<G>> second = this.second.read(ops, first.getFirst());
-                if (second.getSecond().isPresent()) {
-                    return Pair.of(second.getFirst(), Optional.of(Pair.of(first.getSecond().get(), second.getSecond().get())));
-                }
-            }
-            return Pair.of(input, Optional.empty());
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Pair<F, G> value) {
-            return second.write(ops, first.write(ops, rest, value.getFirst()), value.getSecond());
+        public Codec<Pair<F, G>> buildCodec() {
+            return Codec.pair(first.codec(), second.codec());
         }
 
         @Override

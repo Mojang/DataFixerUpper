@@ -4,8 +4,6 @@ package com.mojang.datafixers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.kinds.Const;
 import com.mojang.datafixers.kinds.IdF;
 import com.mojang.datafixers.kinds.Monoid;
@@ -17,9 +15,13 @@ import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.ReForgetC;
 import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.RecursivePoint;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.List;
 import java.util.Optional;
@@ -205,7 +207,7 @@ public final class Typed<A> {
         return value;
     }
 
-    public Dynamic<?> write() {
+    public DataResult<? extends Dynamic<?>> write() {
         return type.writeDynamic(ops, value);
     }
 }

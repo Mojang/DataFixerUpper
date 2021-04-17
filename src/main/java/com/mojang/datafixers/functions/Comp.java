@@ -3,9 +3,9 @@
 package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.DSL;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.Objects;
 import java.util.Optional;

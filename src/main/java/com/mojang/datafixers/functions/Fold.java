@@ -4,11 +4,11 @@ package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.View;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DynamicOps;
 
 import java.util.Map;
 import java.util.Objects;

@@ -3,8 +3,6 @@
 package com.mojang.datafixers.functions;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.RewriteResult;
@@ -15,10 +13,13 @@ import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
-import com.mojang.datafixers.types.constant.NilDrop;
+import com.mojang.datafixers.types.constant.EmptyPart;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.families.ListAlgebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -72,7 +73,7 @@ public interface PointFreeRule {
             }
             if (type instanceof Func<?, ?>) {
                 final Func<?, ?> func = (Func<?, ?>) type;
-                if (func.second() instanceof NilDrop) {
+                if (func.second() instanceof EmptyPart) {
                     return Optional.of((PointFree<A>) Functions.bang());
                 }
             }

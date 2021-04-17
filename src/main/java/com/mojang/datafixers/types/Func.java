@@ -2,11 +2,12 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types;
 
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.types.templates.TypeTemplate;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.Decoder;
+import com.mojang.serialization.Encoder;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 public final class Func<A, B> extends Type<Function<A, B>> {
@@ -24,13 +25,11 @@ public final class Func<A, B> extends Type<Function<A, B>> {
     }
 
     @Override
-    public <T> Pair<T, Optional<Function<A, B>>> read(final DynamicOps<T> ops, final T input) {
-        return Pair.of(input, Optional.empty());
-    }
-
-    @Override
-    public <T> T write(final DynamicOps<T> ops, final T rest, final Function<A, B> value) {
-        return rest;
+    protected Codec<Function<A, B>> buildCodec() {
+        return Codec.of(
+            Encoder.error("Cannot save a function"),
+            Decoder.error("Cannot read a function")
+        );
     }
 
     @Override
@@ -40,10 +39,10 @@ public final class Func<A, B> extends Type<Function<A, B>> {
 
     @Override
     public boolean equals(final Object obj, final boolean ignoreRecursionPoints, final boolean checkIndex) {
-        if (!(obj instanceof com.mojang.datafixers.types.Func<?, ?>)) {
+        if (!(obj instanceof Func<?, ?>)) {
             return false;
         }
-        final com.mojang.datafixers.types.Func<?, ?> that = (com.mojang.datafixers.types.Func<?, ?>) obj;
+        final Func<?, ?> that = (Func<?, ?>) obj;
         return first.equals(that.first, ignoreRecursionPoints, checkIndex) && second.equals(that.second, ignoreRecursionPoints, checkIndex);
     }
 

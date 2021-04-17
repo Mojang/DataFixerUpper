@@ -4,8 +4,6 @@ package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
@@ -15,15 +13,19 @@ import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.Lifecycle;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 
 public final class Named implements TypeTemplate {
@@ -138,16 +140,21 @@ public final class Named implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<Pair<String, A>>> read(final DynamicOps<T> ops, final T input) {
-            return element.read(ops, input).mapSecond(vo -> vo.map(v -> Pair.of(name, v)));
-        }
+        protected Codec<Pair<String, A>> buildCodec() {
+            return new Codec<Pair<String, A>>() {
+                @Override
+                public <T> DataResult<Pair<Pair<String, A>, T>> decode(final DynamicOps<T> ops, final T input) {
+                    return element.codec().decode(ops, input).map(vo -> vo.mapFirst(v -> Pair.of(name, v))).setLifecycle(Lifecycle.experimental());
+                }
 
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Pair<String, A> value) {
-            if (!Objects.equals(value.getFirst(), name)) {
-                throw new IllegalStateException("Named type name doesn't match: expected: " + name + ", got: " + value.getFirst());
-            }
-            return element.write(ops, rest, value.getSecond());
+                @Override
+                public <T> DataResult<T> encode(final Pair<String, A> input, final DynamicOps<T> ops, final T prefix) {
+                    if (!Objects.equals(input.getFirst(), name)) {
+                        return DataResult.error("Named type name doesn't match: expected: " + name + ", got: " + input.getFirst(), prefix);
+                    }
+                    return element.codec().encode(input.getSecond(), ops, prefix).setLifecycle(Lifecycle.experimental());
+                }
+            };
         }
 
         @Override
@@ -178,10 +185,6 @@ public final class Named implements TypeTemplate {
         @Override
         public int hashCode() {
             return Objects.hash(name, element);
-        }
-
-        public <A2> NamedType<A2> map(final Function<? super Type<A>, ? extends Type<A2>> function) {
-            return new NamedType<>(name, function.apply(element));
         }
 
         @Override

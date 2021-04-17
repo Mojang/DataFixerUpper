@@ -3,14 +3,17 @@
 package com.mojang.datafixers;
 
 import com.mojang.datafixers.schemas.Schema;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.DynamicOps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 public abstract class DataFix {
@@ -40,9 +43,17 @@ public abstract class DataFix {
     }
 
     protected <A, B> TypeRewriteRule writeFixAndRead(final String name, final Type<A> type, final Type<B> newType, final Function<Dynamic<?>, Dynamic<?>> fix) {
-        return fixTypeEverywhere(name, type, newType, ops -> input ->
-            newType.readTyped(fix.apply(type.writeDynamic(ops, input))).getSecond().orElseThrow(() -> new IllegalStateException("Could not read new type in \"" + name + "\"")).getValue()
-        );
+        return fixTypeEverywhere(name, type, newType, ops -> input -> {
+            final Optional<? extends Dynamic<?>> written = type.writeDynamic(ops, input).resultOrPartial(LOGGER::error);
+            if (!written.isPresent()) {
+                throw new RuntimeException("Could not write the object in " + name);
+            }
+            final Optional<? extends Pair<Typed<B>, ?>> read = newType.readTyped(fix.apply(written.get())).resultOrPartial(LOGGER::error);
+            if (!read.isPresent()) {
+                throw new RuntimeException("Could not read the new object in " + name);
+            }
+            return read.get().getFirst().getValue();
+        });
     }
 
     protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function) {

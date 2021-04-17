@@ -3,8 +3,8 @@
 package com.mojang.datafixers.functions;
 
 import com.google.common.base.Strings;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Optional;

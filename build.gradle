@@ -38,6 +38,7 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-api:2.8.1'
     compile 'com.google.guava:guava:21.0'
     compile 'it.unimi.dsi:fastutil:7.1.0'
+    testCompile 'junit:junit-dep:4.10'
 }
 
 task sourcesJar(type: Jar) {

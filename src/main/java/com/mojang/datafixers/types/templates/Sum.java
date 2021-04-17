@@ -4,8 +4,6 @@ package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
@@ -20,10 +18,12 @@ import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.Traversal;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
-import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -211,20 +211,8 @@ public final class Sum implements TypeTemplate {
         }
 
         @Override
-        public <T> Pair<T, Optional<Either<F, G>>> read(final DynamicOps<T> ops, final T input) {
-            final Pair<T, Optional<Either<F, G>>> firstRead = first.read(ops, input).mapSecond(vo -> vo.map(Either::<F, G>left));
-            if (firstRead.getSecond().isPresent()) {
-                return firstRead;
-            }
-            return second.read(ops, input).mapSecond(vo -> vo.map(Either::<F, G>right));
-        }
-
-        @Override
-        public <T> T write(final DynamicOps<T> ops, final T rest, final Either<F, G> value) {
-            return value.map(
-                value1 -> first.write(ops, rest, value1),
-                value2 -> second.write(ops, rest, value2)
-            );
+        protected Codec<Either<F, G>> buildCodec() {
+            return Codec.either(first.codec(), second.codec());
         }
 
         @Override

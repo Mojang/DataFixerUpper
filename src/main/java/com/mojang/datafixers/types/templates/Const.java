@@ -3,7 +3,6 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.OpticParts;
@@ -14,6 +13,8 @@ import com.mojang.datafixers.optics.profunctors.AffineP;
 import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.TypeFamily;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -95,7 +96,13 @@ public final class Const implements TypeTemplate {
         return type;
     }
 
-    public abstract static class ConstType<A> extends Type<A> {
+    public static final class PrimitiveType<A> extends Type<A> {
+        private final Codec<A> codec;
+
+        public PrimitiveType(final Codec<A> codec) {
+            this.codec = codec;
+        }
+
         @Override
         public boolean equals(final Object o, final boolean ignoreRecursionPoints, final boolean checkIndex) {
             return this == o;
@@ -104,6 +111,16 @@ public final class Const implements TypeTemplate {
         @Override
         public TypeTemplate buildTemplate() {
             return DSL.constType(this);
+        }
+
+        @Override
+        protected Codec<A> buildCodec() {
+            return codec;
+        }
+
+        @Override
+        public String toString() {
+            return codec.toString();
         }
     }
 }

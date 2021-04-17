@@ -3,20 +3,21 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.datafixers.functions.PointFreeRule;
+import com.mojang.datafixers.schemas.Schema;
+import com.mojang.datafixers.types.Type;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import com.mojang.datafixers.functions.PointFreeRule;
-import com.mojang.datafixers.schemas.Schema;
-import com.mojang.datafixers.types.Type;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /*
  * Optimizing functions
@@ -78,18 +79,11 @@ public class DataFixerUpper implements DataFixer {
 
     @Override
     public <T> Dynamic<T> update(final DSL.TypeReference type, final Dynamic<T> input, final int version, final int newVersion) {
-        try {
-            if (version < newVersion) {
-                final Type<?> dataType = getType(type, version);
-                final Optional<T> read = dataType.readAndWrite(input.getOps(), getType(type, newVersion), getRule(version, newVersion), OPTIMIZATION_RULE, input.getValue());
-                if (!read.isPresent()) {
-                    throw new IllegalStateException("Could not parse for fixing " + dataType);
-                }
-
-                return new Dynamic<>(input.getOps(), read.get());
-            }
-        } catch (final Throwable t) {
-            LOGGER.error("Something went wrong upgrading!", t);
+        if (version < newVersion) {
+            final Type<?> dataType = getType(type, version);
+            final DataResult<T> read = dataType.readAndWrite(input.getOps(), getType(type, newVersion), getRule(version, newVersion), OPTIMIZATION_RULE, input.getValue());
+            final T result = read.resultOrPartial(LOGGER::error).orElse(input.getValue());
+            return new Dynamic<>(input.getOps(), result);
         }
         return input;
     }

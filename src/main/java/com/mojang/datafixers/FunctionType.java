@@ -68,7 +68,7 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
         INSTANCE;
 
         public static final class Mu implements TraversalP.Mu, MonoidProfunctor.Mu, Mapping.Mu, Monoidal.Mu {
-            public static final TypeToken<Instance.Mu> TYPE_TOKEN = new TypeToken<Instance.Mu>() {};
+            public static final TypeToken<Mu> TYPE_TOKEN = new TypeToken<Mu>() {};
         }
 
         @Override
