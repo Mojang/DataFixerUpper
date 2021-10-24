@@ -7,10 +7,6 @@ apply plugin: 'maven-publish'
 group = 'com.mojang'
 version = project.hasProperty('buildNumber') ? "${project.majorMinor}.${project.buildNumber}" : "${project.majorMinor}.0-SNAPSHOT"
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.0'
-}
-
 buildscript {
     repositories {
         mavenCentral()
@@ -32,14 +28,14 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
-    compile 'com.google.code.gson:gson:2.8.9'
-    compile 'org.slf4j:slf4j-api:1.8.0-beta4'
-    compile 'com.google.guava:guava:31.0.1-jre'
-    compile 'org.apache.commons:commons-lang3:3.12.0'
-    compile 'it.unimi.dsi:fastutil:8.5.6'
-    testCompile 'junit:junit-dep:4.10'
-    testCompile "org.slf4j:slf4j-simple:1.8.0-beta4"
+    api 'com.google.code.findbugs:jsr305:3.0.2'
+    api 'com.google.code.gson:gson:2.8.9'
+    api 'org.slf4j:slf4j-api:1.8.0-beta4'
+    api 'com.google.guava:guava:31.0.1-jre'
+    api 'org.apache.commons:commons-lang3:3.12.0'
+    api 'it.unimi.dsi:fastutil:8.5.6'
+    testImplementation 'junit:junit-dep:4.10'
+    testImplementation "org.slf4j:slf4j-simple:1.8.0-beta4"
 }
 
 task sourcesJar(type: Jar) {
