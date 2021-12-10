@@ -35,7 +35,9 @@ repositories {
 dependencies {
     compile 'com.google.code.findbugs:jsr305:2.0.1'
     compile 'com.google.code.gson:gson:2.8.0'
-    compile 'org.apache.logging.log4j:log4j-api:2.8.1'
+    compile 'org.apache.logging.log4j:log4j-api:2.15.0'
+    compile 'org.apache.logging.log4j:log4j-core:2.15.0'
+    compile 'org.apache.logging.log4j:log4j-slf4j18-impl:2.15.0'
     compile 'com.google.guava:guava:21.0'
     compile 'org.apache.commons:commons-lang3:3.5'
     compile 'it.unimi.dsi:fastutil:7.1.0'
