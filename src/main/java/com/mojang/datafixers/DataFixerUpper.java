@@ -14,8 +14,8 @@ import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ import java.util.List;
 public class DataFixerUpper implements DataFixer {
     public static boolean ERRORS_ARE_FATAL = false;
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFixerUpper.class);
 
     protected static final PointFreeRule OPTIMIZATION_RULE = DataFixUtils.make(() -> {
         final PointFreeRule opSimple = PointFreeRule.orElse(
