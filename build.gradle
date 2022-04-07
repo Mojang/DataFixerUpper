@@ -9,6 +9,9 @@ apply plugin: 'maven-publish'
 group = 'com.mojang'
 version = project.hasProperty('buildNumber') ? "${project.majorMinor}.${project.buildNumber}" : "${project.majorMinor}.0-SNAPSHOT"
 
+sourceCompatibility = 17
+targetCompatibility = 17
+
 buildscript {
     repositories {
         mavenCentral()
