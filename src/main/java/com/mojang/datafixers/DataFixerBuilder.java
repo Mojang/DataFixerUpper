@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 
 public class DataFixerBuilder {
@@ -70,7 +69,7 @@ public class DataFixerBuilder {
         final DataFixerUpper fixerUpper = build();
 
         final Instant started = Instant.now();
-        final List<Future<Void>> futures = Lists.newArrayList();
+        final List<CompletableFuture<Void>> futures = Lists.newArrayList();
 
         final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
         while (iterator.hasNext()) {
