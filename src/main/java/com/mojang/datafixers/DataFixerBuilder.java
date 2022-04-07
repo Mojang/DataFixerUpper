@@ -13,10 +13,13 @@ import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
 public class DataFixerBuilder {
@@ -59,8 +62,16 @@ public class DataFixerBuilder {
         fixerVersions.add(fix.getVersionKey());
     }
 
-    public DataFixer build(final Executor executor) {
-        final DataFixerUpper fixerUpper = new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
+    public DataFixer buildUnoptimized() {
+        return build();
+    }
+
+    public DataFixer buildOptimized(final Executor executor) {
+        final DataFixerUpper fixerUpper = build();
+
+        final int nrOfTypes = schemas.values().size();
+        final AtomicInteger countDown = new AtomicInteger(nrOfTypes);
+        final Instant started = Instant.now();
 
         final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
         while (iterator.hasNext()) {
@@ -71,6 +82,10 @@ public class DataFixerBuilder {
                     final Type<?> dataType = schema.getType(() -> typeName);
                     final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
                     dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
+
+                    if (countDown.decrementAndGet() == 0) {
+                        LOGGER.info("{} Datafixer optimizations took {} milliseconds", nrOfTypes, Duration.between(started, Instant.now()).toMillis());
+                    }
                 }, executor).exceptionally(e -> {
                     LOGGER.error("Unable to build datafixers", e);
                     Runtime.getRuntime().exit(1);
@@ -80,5 +95,9 @@ public class DataFixerBuilder {
         }
 
         return fixerUpper;
+    }
+
+    private DataFixerUpper build() {
+        return new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
     }
 }
