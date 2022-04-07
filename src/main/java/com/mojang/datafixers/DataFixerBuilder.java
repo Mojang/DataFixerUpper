@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 
 public class DataFixerBuilder {
@@ -69,30 +69,30 @@ public class DataFixerBuilder {
     public DataFixer buildOptimized(final Executor executor) {
         final DataFixerUpper fixerUpper = build();
 
-        final int nrOfTypes = schemas.values().size();
-        final AtomicInteger countDown = new AtomicInteger(nrOfTypes);
         final Instant started = Instant.now();
+        final List<Future<Void>> futures = Lists.newArrayList();
 
         final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
         while (iterator.hasNext()) {
             final int versionKey = iterator.nextInt();
             final Schema schema = schemas.get(versionKey);
             for (final String typeName : schema.types()) {
-                CompletableFuture.runAsync(() -> {
+                final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                     final Type<?> dataType = schema.getType(() -> typeName);
                     final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
                     dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
-
-                    if (countDown.decrementAndGet() == 0) {
-                        LOGGER.info("{} Datafixer optimizations took {} milliseconds", nrOfTypes, Duration.between(started, Instant.now()).toMillis());
-                    }
                 }, executor).exceptionally(e -> {
                     LOGGER.error("Unable to build datafixers", e);
                     Runtime.getRuntime().exit(1);
                     return null;
                 });
+                futures.add(future);
             }
         }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept(ignored -> {
+            LOGGER.info("{} Datafixer optimizations took {} milliseconds", futures.size(), Duration.between(started, Instant.now()).toMillis());
+        });
 
         return fixerUpper;
     }
