@@ -89,7 +89,7 @@ public class DataFixerBuilder {
             }
         }
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept(ignored -> {
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenAccept(ignored -> {
             LOGGER.info("{} Datafixer optimizations took {} milliseconds", futures.size(), Duration.between(started, Instant.now()).toMillis());
         });
 
