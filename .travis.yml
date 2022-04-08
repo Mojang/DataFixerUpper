@@ -1,5 +1,5 @@
 sudo: false
-dist: trusty
+dist: focal
 language: java
 
 before_cache:
@@ -11,7 +11,7 @@ cache:
     - $HOME/.gradle/wrapper/
 
 jdk:
-  - oraclejdk8
+  - oraclejdk17
 
 script:
   - ./gradlew check --info -S --parallel
