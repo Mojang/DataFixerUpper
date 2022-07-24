@@ -3,13 +3,13 @@
 
 package com.mojang.serialization.codecs;
 
+import java.util.Map;
+import java.util.Objects;
+
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-
-import java.util.Map;
-import java.util.Objects;
 
 public final class MapEntryCodec<K, V> implements Codec<Map.Entry<K, V>> {
 	private final Codec<K> first;
@@ -57,4 +57,6 @@ public final class MapEntryCodec<K, V> implements Codec<Map.Entry<K, V>> {
 	public String toString() {
 		return "Map.EntryCodec[" + this.first + ", " + this.second + ']';
 	}
+	
+	
 }

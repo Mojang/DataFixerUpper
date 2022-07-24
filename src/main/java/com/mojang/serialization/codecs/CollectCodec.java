@@ -41,8 +41,8 @@ public final class CollectCodec<T, A, R> implements Codec<R> {
 		return new CollectCodec<>(collector, iteratorFunction, element);
 	}
 	
-	public static <T, A, R extends Collection<T>> Codec<R> of(Collector<T, A, R> collector, Codec<T> element) {
-		return new CollectCodec<>(collector, Collection::iterator, element);
+	public static <T, A, R extends Iterable<T>> Codec<R> of(Collector<T, A, R> collector, Codec<T> element) {
+		return new CollectCodec<>(collector, Iterable::iterator, element);
 	}
 	
 	/**
