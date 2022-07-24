@@ -3,13 +3,20 @@
 
 package com.mojang.serialization.codecs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.gson.JsonArray;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.Lifecycle;
+import com.mojang.serialization.ListBuilder;
+import org.apache.commons.lang3.mutable.MutableInt;
 
 public final class MapEntryCodec<K, V> implements Codec<Map.Entry<K, V>> {
 	private final Codec<K> first;
@@ -26,14 +33,26 @@ public final class MapEntryCodec<K, V> implements Codec<Map.Entry<K, V>> {
 	
 	@Override
 	public <T> DataResult<Pair<Map.Entry<K, V>, T>> decode(final DynamicOps<T> ops, final T input) {
-		return this.first
-				.decode(ops, input)
-				.flatMap(p1 -> this.second.decode(ops, p1.getSecond()).map(p2 -> Pair.of(Map.entry(p1.getFirst(), p2.getFirst()), p2.getSecond())));
+		return ops.getList(input).setLifecycle(Lifecycle.stable()).flatMap(consumer -> {
+			List<T> inputs = new ArrayList<>(3);
+			consumer.accept(inputs::add);
+			if(inputs.size() == 2) {
+				inputs.add(ops.empty());
+			} else if(inputs.size() < 2) {
+				return DataResult.error("Expected atleast 2 elements for map entry, found " + inputs.size());
+			}
+			return this.first
+					.decode(ops, inputs.get(0))
+					.flatMap(p -> this.second.decode(ops, inputs.get(1)).map(p2 -> Pair.of(Map.entry(p.getFirst(), p2.getFirst()), inputs.get(2))));
+		});
 	}
 	
 	@Override
 	public <T> DataResult<T> encode(final Map.Entry<K, V> value, final DynamicOps<T> ops, final T rest) {
-		return this.second.encode(value.getValue(), ops, rest).flatMap(f -> this.first.encode(value.getKey(), ops, f));
+		ListBuilder<T> builder = ops.listBuilder();
+		builder.add(this.first.encodeStart(ops, value.getKey()));
+		builder.add(this.second.encodeStart(ops, value.getValue()));
+		return builder.build(rest);
 	}
 	
 	@Override
@@ -57,6 +76,4 @@ public final class MapEntryCodec<K, V> implements Codec<Map.Entry<K, V>> {
 	public String toString() {
 		return "Map.EntryCodec[" + this.first + ", " + this.second + ']';
 	}
-	
-	
 }
