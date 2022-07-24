@@ -18,7 +18,6 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
@@ -78,7 +77,7 @@ public final class CollectCodec<T, A, R> implements Codec<R> {
 	}
 	
 	public static <T> Codec<Set<T>> concurrentSet(Codec<T> element) {
-		return collection(() -> Collections.newSetFromMap(new ConcurrentHashMap<>()), element);
+		return collection(ConcurrentHashMap::newKeySet, element);
 	}
 	
 	/**
