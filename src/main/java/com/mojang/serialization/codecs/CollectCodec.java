@@ -104,8 +104,8 @@ public final class CollectCodec<T, A, R> implements Codec<R> {
 		}, supplier), m -> m.entrySet().iterator(), MapEntryCodec.of(key, value));
 	}
 	
-	public static <K, V> Codec<ConcurrentMap<K, V>> concurrentHashMap(Supplier<ConcurrentMap<K, V>> supplier, Codec<K> key, Codec<V> value) {
-		return concurrentMap(supplier, key, value);
+	public static <K, V> Codec<ConcurrentMap<K, V>> concurrentHashMap(Codec<K> key, Codec<V> value) {
+		return concurrentMap(ConcurrentHashMap::new, key, value);
 	}
 	
 	final Collector<T, A, R> collector;
