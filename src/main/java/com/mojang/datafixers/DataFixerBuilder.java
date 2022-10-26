@@ -9,9 +9,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +21,7 @@ import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 
 public class DataFixerBuilder {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFixerBuilder.class);
 
     private final int dataVersion;
     private final Int2ObjectSortedMap<Schema> schemas = new Int2ObjectAVLTreeMap<>();
@@ -58,15 +60,22 @@ public class DataFixerBuilder {
         fixerVersions.add(fix.getVersionKey());
     }
 
-    public DataFixer build(final Executor executor) {
-        final DataFixerUpper fixerUpper = new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
+    public DataFixer buildUnoptimized() {
+        return build();
+    }
+
+    public DataFixer buildOptimized(final Executor executor) {
+        final DataFixerUpper fixerUpper = build();
+
+        final Instant started = Instant.now();
+        final List<CompletableFuture<Void>> futures = Lists.newArrayList();
 
         final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
         while (iterator.hasNext()) {
             final int versionKey = iterator.nextInt();
             final Schema schema = schemas.get(versionKey);
             for (final String typeName : schema.types()) {
-                CompletableFuture.runAsync(() -> {
+                final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                     final Type<?> dataType = schema.getType(() -> typeName);
                     final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
                     dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
@@ -75,9 +84,18 @@ public class DataFixerBuilder {
                     Runtime.getRuntime().exit(1);
                     return null;
                 });
+                futures.add(future);
             }
         }
 
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenAccept(ignored -> {
+            LOGGER.info("{} Datafixer optimizations took {} milliseconds", futures.size(), Duration.between(started, Instant.now()).toMillis());
+        });
+
         return fixerUpper;
+    }
+
+    private DataFixerUpper build() {
+        return new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
     }
 }
