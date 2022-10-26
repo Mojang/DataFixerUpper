@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -12,6 +11,7 @@ import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -192,7 +192,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
             map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
         }
 
-        final List<JsonElement> missed = Lists.newArrayList();
+        final List<JsonElement> missed = new ArrayList<>();
 
         values.entries().forEach(entry -> {
             final JsonElement key = entry.getFirst();

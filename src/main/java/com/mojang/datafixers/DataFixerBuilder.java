@@ -68,7 +68,7 @@ public class DataFixerBuilder {
         final DataFixerUpper fixerUpper = build();
 
         final Instant started = Instant.now();
-        final List<CompletableFuture<Void>> futures = Lists.newArrayList();
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
         while (iterator.hasNext()) {
