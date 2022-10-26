@@ -3,8 +3,6 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
@@ -40,10 +38,13 @@ import com.mojang.serialization.codecs.KeyDispatchCodec;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -51,7 +52,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
     private final String name;
     private final Type<K> keyType;
     private final Map<K, TypeTemplate> templates;
-    private final Map<Pair<TypeFamily, Integer>, Type<?>> types = Maps.newConcurrentMap();
+    private final Map<Pair<TypeFamily, Integer>, Type<?>> types = new ConcurrentHashMap<>();
     private final int size;
 
     public TaggedChoice(final String name, final Type<K> keyType, final Map<K, TypeTemplate> templates) {
@@ -145,7 +146,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 final Map.Entry<K, ? extends RewriteResult<?, ?>> entry = results.entrySet().iterator().next();
                 return elementResult(entry.getKey(), this, entry.getValue());
             }
-            final Map<K, Type<?>> newTypes = Maps.newHashMap(types);
+            final Map<K, Type<?>> newTypes = new HashMap<>(types);
             final BitSet recData = new BitSet();
             for (final Map.Entry<K, ? extends RewriteResult<?, ?>> entry : results.entrySet()) {
                 newTypes.put(entry.getKey(), entry.getValue().view().newType());
@@ -231,7 +232,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 final Map.Entry<K, ? extends TypedOptic<?, ?, FT, FR>> entry = optics.entrySet().iterator().next();
                 return Either.left(cap(this, entry.getKey(), entry.getValue()));
             } else {
-                final Set<TypeToken<? extends K1>> bounds = Sets.newHashSet();
+                final Set<TypeToken<? extends K1>> bounds = new HashSet<>();
                 optics.values().forEach(o -> bounds.addAll(o.bounds()));
 
                 final Optic<?, Pair<K, ?>, Pair<K, ?>, FT, FR> optic;

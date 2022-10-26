@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.google.common.collect.Lists;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Type;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
@@ -26,7 +25,7 @@ public class DataFixerBuilder {
 
     private final int dataVersion;
     private final Int2ObjectSortedMap<Schema> schemas = new Int2ObjectAVLTreeMap<>();
-    private final List<DataFix> globalList = Lists.newArrayList();
+    private final List<DataFix> globalList = new ArrayList<>();
     private final IntSortedSet fixerVersions = new IntAVLTreeSet();
 
     public DataFixerBuilder(final int dataVersion) {
@@ -69,7 +68,7 @@ public class DataFixerBuilder {
         final DataFixerUpper fixerUpper = build();
 
         final Instant started = Instant.now();
-        final List<CompletableFuture<Void>> futures = Lists.newArrayList();
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
         while (iterator.hasNext()) {

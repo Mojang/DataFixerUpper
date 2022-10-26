@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.ObjectArrays;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
@@ -22,13 +22,13 @@ import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.types.templates.TypeTemplate;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Triple;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -155,7 +155,7 @@ public interface DSL {
     }
 
     static TypeTemplate allWithRemainder(final TypeTemplate first, final TypeTemplate... rest) {
-        return and(first, ArrayUtils.add(rest, remainder()));
+        return and(first, ObjectArrays.concat(rest, remainder()));
     }
 
     static <F, G> Type<Pair<F, G>> and(final Type<F> first, final Type<G> second) {
@@ -200,7 +200,7 @@ public interface DSL {
 
     @SuppressWarnings("unchecked")
     static <K> Type<Pair<K, ?>> taggedChoiceType(final String name, final Type<K> keyType, final Map<K, ? extends Type<?>> types) {
-        return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getLeft(), (Type<K>) k.getMiddle(), (Map<K, Type<?>>) k.getRight()));
+        return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getFirst(), (Type<K>) k.getSecond(), (Map<K, Type<?>>) k.getThird()));
     }
 
     static <A, B> Type<Function<A, B>> func(final Type<A> input, final Type<B> output) {
@@ -447,6 +447,6 @@ public interface DSL {
 
         private static final OpticFinder<Dynamic<?>> REMAINDER_FINDER = remainderType().finder();
 
-        private static final Map<Triple<String, Type<?>, Map<?, ? extends Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = Maps.newConcurrentMap();
+        private static final Map<Triple<String, Type<?>, Map<?, ? extends Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = new ConcurrentHashMap<>();
     }
 }

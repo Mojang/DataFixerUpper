@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.google.common.base.Strings;
 import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -44,7 +44,7 @@ public abstract class PointFree<T> {
     }
 
     public static String indent(final int level) {
-        return StringUtils.repeat("  ", level);
+        return Strings.repeat("  ", level);
     }
 
     public abstract String toString(int level);

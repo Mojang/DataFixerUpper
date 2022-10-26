@@ -3,7 +3,6 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
@@ -23,6 +22,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -65,7 +65,7 @@ public final class List implements TypeTemplate {
         return TypeFamily.familyOptic(
             i -> {
                 final OpticParts<A, B> pair = element.applyO(input, aType, bType).apply(i);
-                final Set<TypeToken<? extends K1>> bounds = Sets.newHashSet(pair.bounds());
+                final Set<TypeToken<? extends K1>> bounds = new HashSet<>(pair.bounds());
                 bounds.add(TraversalP.Mu.TYPE_TOKEN);
                 return new OpticParts<>(bounds, cap(pair.optic()));
             }
