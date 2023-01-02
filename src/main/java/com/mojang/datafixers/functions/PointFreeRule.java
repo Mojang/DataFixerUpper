@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
@@ -20,8 +19,8 @@ import com.mojang.datafixers.types.families.ListAlgebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
-import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
@@ -510,26 +509,25 @@ public interface PointFreeRule {
         }
     }*/
 
-    static PointFreeRule seq(final PointFreeRule first, final Supplier<PointFreeRule> second) {
-        return seq(ImmutableList.of(() -> first, second));
-    }
-
-    static PointFreeRule seq(final List<Supplier<PointFreeRule>> rules) {
+    static PointFreeRule seq(final PointFreeRule... rules) {
         return new Seq(rules);
     }
 
     final class Seq implements PointFreeRule {
-        private final List<Supplier<PointFreeRule>> rules;
+        private final PointFreeRule[] rules;
 
-        public Seq(final List<Supplier<PointFreeRule>> rules) {
-            this.rules = ImmutableList.copyOf(rules);
+        public Seq(final PointFreeRule... rules) {
+            this.rules = rules;
         }
 
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             Optional<? extends PointFree<A>> result = Optional.of(expr);
-            for (final Supplier<PointFreeRule> rule : rules) {
-                result = result.flatMap(pf -> rule.get().<A>rewrite(type, pf));
+            for (final PointFreeRule rule : rules) {
+                result = rule.rewrite(type, result.get());
+                if (result.isEmpty()) {
+                    return Optional.empty();
+                }
             }
             return result;
         }
@@ -543,28 +541,24 @@ public interface PointFreeRule {
                 return false;
             }
             final Seq that = (Seq) obj;
-            return Objects.equals(rules, that.rules);
+            return Arrays.equals(rules, that.rules);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(rules);
+            return Arrays.hashCode(rules);
         }
     }
 
     static PointFreeRule orElse(final PointFreeRule first, final PointFreeRule second) {
-        return new OrElse(first, () -> second);
-    }
-
-    static PointFreeRule orElseStrict(final PointFreeRule first, final Supplier<PointFreeRule> second) {
         return new OrElse(first, second);
     }
 
     final class OrElse implements PointFreeRule {
         protected final PointFreeRule first;
-        protected final Supplier<PointFreeRule> second;
+        protected final PointFreeRule second;
 
-        public OrElse(final PointFreeRule first, final Supplier<PointFreeRule> second) {
+        public OrElse(final PointFreeRule first, final PointFreeRule second) {
             this.first = first;
             this.second = second;
         }
@@ -575,7 +569,7 @@ public interface PointFreeRule {
             if (view.isPresent()) {
                 return view;
             }
-            return second.get().rewrite(type, expr);
+            return second.rewrite(type, expr);
         }
 
         @Override
