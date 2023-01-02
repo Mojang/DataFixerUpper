@@ -118,7 +118,7 @@ public final class FieldFinder<FT> implements OpticFinder<FT> {
                 (Type<Pair<FT, V>>) choiceType,
                 type,
                 type,
-                new Proj1<>()
+                Optics.proj1()
             );
         }
 

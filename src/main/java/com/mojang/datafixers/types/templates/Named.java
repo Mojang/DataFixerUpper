@@ -101,7 +101,7 @@ public final class Named implements TypeTemplate {
         }
 
         public static <A, B> RewriteResult<Pair<String, A>, ?> fix(final NamedType<A> type, final RewriteResult<A, B> instance) {
-            if (Objects.equals(instance.view().function(), Functions.id())) {
+            if (Functions.isId(instance.view().function())) {
                 return RewriteResult.nop(type);
             }
             return opticView(type, instance, wrapOptic(type.name, TypedOptic.adapter(instance.view().type(), instance.view().newType())));

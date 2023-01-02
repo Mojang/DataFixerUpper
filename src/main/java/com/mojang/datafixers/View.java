@@ -96,10 +96,10 @@ public final class View<A, B> implements App2<View.Mu, A, B> {
 
     @SuppressWarnings("unchecked")
     public <C> View<C, B> compose(final View<C, A> that) {
-        if (Objects.equals(function(), Functions.id())) {
+        if (Functions.isId(function())) {
             return new View<>(that.type(), newType(), ((View<C, B>) that).function());
         }
-        if (Objects.equals(that.function(), Functions.id())) {
+        if (Functions.isId(that.function())) {
             return new View<>(that.type(), newType(), ((View<C, B>) this).function());
         }
         return create(that.type, newType, Functions.comp(that.newType, function(), that.function()));

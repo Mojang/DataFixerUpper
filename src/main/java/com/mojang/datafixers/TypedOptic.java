@@ -131,7 +131,7 @@ public final class TypedOptic<S, T, A, B> {
             DSL.and(newType, gType),
             fType,
             newType,
-            new Proj1<>()
+            Optics.proj1()
         );
     }
 
@@ -142,7 +142,7 @@ public final class TypedOptic<S, T, A, B> {
             DSL.and(fType, newType),
             gType,
             newType,
-            new Proj2<>()
+            Optics.proj2()
         );
     }
 
@@ -153,7 +153,7 @@ public final class TypedOptic<S, T, A, B> {
             DSL.or(newType, gType),
             fType,
             newType,
-            new Inj1<>()
+            Optics.inj1()
         );
     }
 
@@ -164,7 +164,7 @@ public final class TypedOptic<S, T, A, B> {
             DSL.or(fType, newType),
             gType,
             newType,
-            new Inj2<>()
+            Optics.inj2()
         );
     }
 
@@ -175,7 +175,7 @@ public final class TypedOptic<S, T, A, B> {
             DSL.compoundList(bType, valueType),
             aType,
             bType,
-            new ListTraversal<Pair<K, V>, Pair<K2, V>>().compose(Optics.proj1())
+            Optics.<Pair<K, V>, Pair<K2, V>>listTraversal().compose(Optics.proj1())
         );
     }
 
@@ -186,7 +186,7 @@ public final class TypedOptic<S, T, A, B> {
             DSL.compoundList(keyType, bType),
             aType,
             bType,
-            new ListTraversal<Pair<K, V>, Pair<K, V2>>().compose(Optics.proj2())
+            Optics.<Pair<K, V>, Pair<K, V2>>listTraversal().compose(Optics.proj2())
         );
     }
 
@@ -197,7 +197,7 @@ public final class TypedOptic<S, T, A, B> {
             DSL.list(bType),
             aType,
             bType,
-            new ListTraversal<>()
+            Optics.listTraversal()
         );
     }
 

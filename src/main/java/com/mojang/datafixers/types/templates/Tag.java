@@ -146,7 +146,7 @@ public final class Tag implements TypeTemplate {
         }
 
         private <B> View<A, ?> cap(final View<A, B> instance) {
-            if (Objects.equals(instance.function(), Functions.id())) {
+            if (Functions.isId(instance.function())) {
                 return View.nopView(this);
             }
             return View.create(this, DSL.field(name, instance.newType()), instance.function());

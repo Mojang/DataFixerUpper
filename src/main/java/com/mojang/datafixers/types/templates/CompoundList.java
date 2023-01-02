@@ -64,7 +64,7 @@ public final class CompoundList implements TypeTemplate {
     }
 
     private <S, T, A, B> Optic<?, ?, ?, A, B> cap(final Optic<?, S, T, A, B> concreteOptic) {
-        return new ListTraversal<Pair<String, S>, Pair<String, T>>().compose(Optics.proj2()).composeUnchecked(concreteOptic);
+        return Optics.<Pair<String, S>, Pair<String, T>>listTraversal().compose(Optics.proj2()).composeUnchecked(concreteOptic);
     }
 
     @Override

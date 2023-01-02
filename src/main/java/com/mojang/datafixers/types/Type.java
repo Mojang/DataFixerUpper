@@ -57,7 +57,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     @SuppressWarnings("unchecked")
     public static <S, T, A, B> RewriteResult<S, T> opticView(final Type<S> type, final RewriteResult<A, B> view, final TypedOptic<S, T, A, B> optic) {
-        if (Objects.equals(view.view().function(), Functions.id())) {
+        if (Functions.isId(view.view().function())) {
             return (RewriteResult<S, T>) RewriteResult.nop(type);
         }
         // copy the recData, since optic doesn't touch more than the nested view

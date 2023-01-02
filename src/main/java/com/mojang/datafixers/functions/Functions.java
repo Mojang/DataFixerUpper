@@ -5,6 +5,7 @@ package com.mojang.datafixers.functions;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.optics.Optic;
+import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.templates.RecursivePoint;
@@ -14,14 +15,12 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public abstract class Functions {
-    private static final Id<?> ID = new Id<>();
-
     @SuppressWarnings("unchecked")
     public static <A, B, C> PointFree<Function<A, C>> comp(final Type<B> middleType, final PointFree<Function<B, C>> f1, final PointFree<Function<A, B>> f2) {
-        if (Objects.equals(f1, id())) {
+        if (Functions.isId(f1)) {
             return (PointFree<Function<A, C>>) (PointFree<?>) f2;
         }
-        if (Objects.equals(f2, id())) {
+        if (Functions.isId(f2)) {
             return (PointFree<Function<A, C>>) (PointFree<?>) f1;
         }
         return new Comp<>(middleType, f1, f2);
@@ -57,6 +56,10 @@ public abstract class Functions {
 
     @SuppressWarnings("unchecked")
     public static <A> PointFree<Function<A, A>> id() {
-        return (Id<A>) ID;
+        return (Id<A>) Id.INSTANCE;
+    }
+
+    public static boolean isId(final PointFree<?> function) {
+        return function == Id.INSTANCE;
     }
 }
