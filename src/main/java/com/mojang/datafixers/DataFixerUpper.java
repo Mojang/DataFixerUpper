@@ -63,7 +63,7 @@ public class DataFixerUpper implements DataFixer {
         final PointFreeRule opLeft = PointFreeRule.many(PointFreeRule.once(PointFreeRule.orElse(opSimple, PointFreeRule.CompAssocLeft.INSTANCE)));
         final PointFreeRule opComp = PointFreeRule.many(PointFreeRule.once(PointFreeRule.orElse(PointFreeRule.SortInj.INSTANCE, PointFreeRule.SortProj.INSTANCE)));
         final PointFreeRule opRight = PointFreeRule.many(PointFreeRule.once(PointFreeRule.orElse(opSimple, PointFreeRule.CompAssocRight.INSTANCE)));
-        return PointFreeRule.seq(ImmutableList.of(() -> opLeft, () -> opComp, () -> opRight, () -> opLeft, () -> opRight));
+        return PointFreeRule.seq(opLeft, opComp, opRight, opLeft, opRight);
     });
 
     private final Int2ObjectSortedMap<Schema> schemas;
