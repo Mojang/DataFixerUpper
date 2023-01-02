@@ -215,7 +215,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
         }
 
         private DataResult<? extends Codec<?>> getCodec(final K k) {
-            return Optional.ofNullable(types.get(k)).map(t -> DataResult.success(t.codec())).orElseGet(() -> DataResult.error("Unsupported key: " + k));
+            return Optional.ofNullable(types.get(k)).map(t -> DataResult.success(t.codec())).orElseGet(() -> DataResult.error(() -> "Unsupported key: " + k));
         }
 
         @Override

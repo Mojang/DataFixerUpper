@@ -34,14 +34,6 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return success(result, Lifecycle.experimental());
     }
 
-    public static <R> DataResult<R> error(final String message, final R partialResult) {
-        return error(() -> message, partialResult);
-    }
-
-    public static <R> DataResult<R> error(final String message) {
-        return error(() -> message);
-    }
-
     public static <R> DataResult<R> error(final Supplier<String> message, final R partialResult) {
         return error(message, partialResult, Lifecycle.experimental());
     }
@@ -52,14 +44,6 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
     public static <R> DataResult<R> success(final R result, final Lifecycle experimental) {
         return new DataResult<>(Either.left(result), experimental);
-    }
-
-    public static <R> DataResult<R> error(final String message, final R partialResult, final Lifecycle lifecycle) {
-        return error(() -> message, partialResult, lifecycle);
-    }
-
-    public static <R> DataResult<R> error(final String message, final Lifecycle lifecycle) {
-        return error(() -> message, lifecycle);
     }
 
     public static <R> DataResult<R> error(final Supplier<String> message, final R partialResult, final Lifecycle lifecycle) {

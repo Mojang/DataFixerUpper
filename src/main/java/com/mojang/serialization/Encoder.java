@@ -83,7 +83,7 @@ public interface Encoder<A> {
         return new Encoder<A>() {
             @Override
             public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
-                return DataResult.error(error + " " + input);
+                return DataResult.error(() -> error + " " + input);
             }
 
             @Override

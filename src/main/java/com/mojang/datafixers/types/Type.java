@@ -31,7 +31,6 @@ import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -151,7 +150,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
     public <T> DataResult<T> readAndWrite(final DynamicOps<T> ops, final Type<?> expectedType, final TypeRewriteRule rule, final PointFreeRule fRule, final T input) {
         final Optional<RewriteResult<A, ?>> rewriteResult = rewrite(rule, fRule);
         if (!rewriteResult.isPresent()) {
-            return DataResult.error("Could not build a rewrite rule: " + rule + " " + fRule, input);
+            return DataResult.error(() -> "Could not build a rewrite rule: " + rule + " " + fRule, input);
         }
         final View<A, ?> view = rewriteResult.get().view();
         if (view.isNop()) {
@@ -165,7 +164,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     private <T, B> DataResult<T> capWrite(final DynamicOps<T> ops, final Type<?> expectedType, final T rest, final A value, final View<A, B> f) {
         if (!expectedType.equals(f.newType(), true, true)) {
-            return DataResult.error("Rewritten type doesn't match");
+            return DataResult.error(() -> "Rewritten type doesn't match");
         }
         return f.newType().codec().encode(f.function().evalCached().apply(ops).apply(value), ops, rest);
     }

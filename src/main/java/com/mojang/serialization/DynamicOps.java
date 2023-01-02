@@ -114,7 +114,7 @@ public interface DynamicOps<T> {
      */
     default DataResult<T> mergeToPrimitive(final T prefix, final T value) {
         if (!Objects.equals(prefix, empty())) {
-            return DataResult.error("Do not know how to append a primitive value " + value + " to " + prefix, value);
+            return DataResult.error(() -> "Do not know how to append a primitive value " + value + " to " + prefix, value);
         }
         return DataResult.success(value);
     }
@@ -132,7 +132,7 @@ public interface DynamicOps<T> {
             try {
                 return DataResult.success(MapLike.forMap(s.collect(Pair.toMap()), this));
             } catch (final IllegalStateException e) {
-                return DataResult.error("Error while building map: " + e.getMessage());
+                return DataResult.error(() -> "Error while building map: " + e.getMessage());
             }
         });
     }
@@ -159,7 +159,7 @@ public interface DynamicOps<T> {
                 }
                 return DataResult.success(buffer);
             }
-            return DataResult.error("Some elements are not bytes: " + input);
+            return DataResult.error(() -> "Some elements are not bytes: " + input);
         });
     }
 
@@ -173,7 +173,7 @@ public interface DynamicOps<T> {
             if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
                 return DataResult.success(list.stream().mapToInt(element -> getNumberValue(element).result().get().intValue()));
             }
-            return DataResult.error("Some elements are not ints: " + input);
+            return DataResult.error(() -> "Some elements are not ints: " + input);
         });
     }
 
@@ -187,7 +187,7 @@ public interface DynamicOps<T> {
             if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
                 return DataResult.success(list.stream().mapToLong(element -> getNumberValue(element).result().get().longValue()));
             }
-            return DataResult.error("Some elements are not longs: " + input);
+            return DataResult.error(() -> "Some elements are not longs: " + input);
         });
     }
 
@@ -208,7 +208,7 @@ public interface DynamicOps<T> {
     default DataResult<T> getGeneric(final T input, final T key) {
         return getMap(input).flatMap(map -> Optional.ofNullable(map.get(key))
             .map(DataResult::success)
-            .orElseGet(() -> DataResult.error("No element " + key + " in the map " + input))
+            .orElseGet(() -> DataResult.error(() -> "No element " + key + " in the map " + input))
         );
     }
 

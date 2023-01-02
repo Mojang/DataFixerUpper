@@ -113,7 +113,7 @@ public class Dynamic<T> extends DynamicLike<T> {
         return new OptionalDynamic<>(ops, ops.getMap(value).flatMap(m -> {
             final T value = m.get(key);
             if (value == null) {
-                return DataResult.error("key missing: " + key + " in " + this.value);
+                return DataResult.error(() -> "key missing: " + key + " in " + this.value);
             }
             return DataResult.success(new Dynamic<>(ops, value));
         }));

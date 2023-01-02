@@ -137,7 +137,7 @@ public interface Decoder<A> {
         return new Decoder<A>() {
             @Override
             public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
-                return DataResult.error(error);
+                return DataResult.error(() -> error);
             }
 
             @Override
