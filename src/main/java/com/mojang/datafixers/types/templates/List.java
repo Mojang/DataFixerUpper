@@ -101,7 +101,7 @@ public final class List implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(element);
+        return element.hashCode();
     }
 
     @Override

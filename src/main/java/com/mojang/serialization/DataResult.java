@@ -220,7 +220,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(result);
+        return result.hashCode();
     }
 
     @Override
@@ -267,7 +267,9 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
         @Override
         public int hashCode() {
-            return Objects.hash(message, partialResult);
+            int result = message.hashCode();
+            result = 31 * result + partialResult.hashCode();
+            return result;
         }
 
         @Override

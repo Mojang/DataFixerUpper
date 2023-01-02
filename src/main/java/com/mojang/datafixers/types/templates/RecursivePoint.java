@@ -98,7 +98,7 @@ public final class RecursivePoint implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(index);
+        return index;
     }
 
     @Override
@@ -276,7 +276,9 @@ public final class RecursivePoint implements TypeTemplate {
 
         @Override
         public int hashCode() {
-            return Objects.hash(family, index);
+            int result = family.hashCode();
+            result = 31 * result + index;
+            return result;
         }
 
         public View<A, A> in() {

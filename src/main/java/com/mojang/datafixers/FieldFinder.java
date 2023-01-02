@@ -50,7 +50,9 @@ public final class FieldFinder<FT> implements OpticFinder<FT> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type);
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + type.hashCode();
+        return result;
     }
 
     private static final class Matcher<FT, FR> implements Type.TypeMatcher<FT, FR> {
@@ -136,7 +138,10 @@ public final class FieldFinder<FT> implements OpticFinder<FT> {
 
         @Override
         public int hashCode() {
-            return Objects.hash(resultType, name, type);
+            int result = resultType.hashCode();
+            result = 31 * result + (name != null ? name.hashCode() : 0);
+            result = 31 * result + type.hashCode();
+            return result;
         }
     }
 }

@@ -164,7 +164,9 @@ public class Dynamic<T> extends DynamicLike<T> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(ops, value);
+        int result = value.hashCode();
+        result = 31 * result + ops.hashCode();
+        return result;
     }
 
     @Override

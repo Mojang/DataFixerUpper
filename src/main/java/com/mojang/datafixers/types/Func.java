@@ -48,7 +48,9 @@ public final class Func<A, B> extends Type<Function<A, B>> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(first, second);
+        int result = first.hashCode();
+        result = 31 * result + second.hashCode();
+        return result;
     }
 
     public Type<A> first() {

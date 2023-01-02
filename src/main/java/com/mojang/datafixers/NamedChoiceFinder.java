@@ -44,7 +44,9 @@ final class NamedChoiceFinder<FT> implements OpticFinder<FT> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type);
+        int result = name.hashCode();
+        result = 31 * result + type.hashCode();
+        return result;
     }
 
     private static class Matcher<FT, FR> implements Type.TypeMatcher<FT, FR> {
@@ -102,7 +104,10 @@ final class NamedChoiceFinder<FT> implements OpticFinder<FT> {
 
         @Override
         public int hashCode() {
-            return Objects.hash(resultType, name, type);
+            int result = resultType.hashCode();
+            result = 31 * result + name.hashCode();
+            result = 31 * result + type.hashCode();
+            return result;
         }
     }
 }

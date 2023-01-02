@@ -151,7 +151,7 @@ public abstract class DataFix {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name);
+            return name.hashCode();
         }
     }
 }

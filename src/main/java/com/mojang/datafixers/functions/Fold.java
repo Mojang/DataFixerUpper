@@ -68,6 +68,8 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(aType, algebra);
+        int result = aType.hashCode();
+        result = 31 * result + algebra.hashCode();
+        return result;
     }
 }

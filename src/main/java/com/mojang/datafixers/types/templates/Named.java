@@ -83,7 +83,9 @@ public final class Named implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, element);
+        int result = name.hashCode();
+        result = 31 * result + element.hashCode();
+        return result;
     }
 
     @Override
@@ -184,7 +186,9 @@ public final class Named implements TypeTemplate {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, element);
+            int result = name.hashCode();
+            result = 31 * result + element.hashCode();
+            return result;
         }
 
         @Override

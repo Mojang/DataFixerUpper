@@ -116,7 +116,10 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, keyType, templates);
+        int result = name.hashCode();
+        result = 31 * result + keyType.hashCode();
+        result = 31 * result + templates.hashCode();
+        return result;
     }
 
     @Override
@@ -463,7 +466,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
             @Override
             public int hashCode() {
-                return Objects.hash(results);
+                return results.hashCode();
             }
         }
     }

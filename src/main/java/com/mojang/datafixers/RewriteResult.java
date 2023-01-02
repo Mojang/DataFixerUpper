@@ -49,6 +49,6 @@ public record RewriteResult<A, B>(View<A, B> view, BitSet recData) {
 
     @Override
     public int hashCode() {
-        return Objects.hash(view);
+        return view.hashCode();
     }
 }

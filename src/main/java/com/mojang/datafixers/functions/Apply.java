@@ -60,6 +60,8 @@ final class Apply<A, B> extends PointFree<B> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(func, arg);
+        int result = func.hashCode();
+        result = 31 * result + arg.hashCode();
+        return result;
     }
 }
