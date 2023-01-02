@@ -64,8 +64,9 @@ public abstract class Optics {
         );
     }
 
+    @SuppressWarnings("unchecked")
     public static <S, T> Adapter<S, T, S, T> id() {
-        return new IdAdapter<>();
+        return (Adapter<S, T, S, T>) IdAdapter.INSTANCE;
     }
 
     public static <S, T, A, B> Adapter<S, T, A, B> adapter(final Function<S, A> from, final Function<B, T> to) {
@@ -222,20 +223,40 @@ public abstract class Optics {
         return FunctionType.unbox(box);
     }
 
+    @SuppressWarnings("unchecked")
     public static <F, G, F2> Proj1<F, G, F2> proj1() {
-        return new Proj1<>();
+        return (Proj1<F, G, F2>) Proj1.INSTANCE;
     }
 
+    public static boolean isProj1(final Optic<?, ?, ?, ?, ?> optic) {
+        return optic == Proj1.INSTANCE;
+    }
+
+    @SuppressWarnings("unchecked")
     public static <F, G, G2> Proj2<F, G, G2> proj2() {
-        return new Proj2<>();
+        return (Proj2<F, G, G2>) Proj2.INSTANCE;
     }
 
+    public static boolean isProj2(final Optic<?, ?, ?, ?, ?> optic) {
+        return optic == Proj2.INSTANCE;
+    }
+
+    @SuppressWarnings("unchecked")
     public static <F, G, F2> Inj1<F, G, F2> inj1() {
-        return new Inj1<>();
+        return (Inj1<F, G, F2>) Inj1.INSTANCE;
     }
 
+    public static boolean isInj1(final Optic<?, ?, ?, ?, ?> optic) {
+        return optic == Inj1.INSTANCE;
+    }
+
+    @SuppressWarnings("unchecked")
     public static <F, G, G2> Inj2<F, G, G2> inj2() {
-        return new Inj2<>();
+        return (Inj2<F, G, G2>) Inj2.INSTANCE;
+    }
+
+    public static boolean isInj2(final Optic<?, ?, ?, ?, ?> optic) {
+        return optic == Inj2.INSTANCE;
     }
 
     /*public static <Proof extends Cartesian.Mu, S1, S2, T1, T2, A, B> Optic<Proof, Either<S1, S2>, Either<T1, T2>, A, B> choosing(final Optic<? super Profunctor.Mu, S1, T1, A, B> first, final Optic<? super Profunctor.Mu, S2, T2, A, B> second) {
@@ -294,5 +315,10 @@ public abstract class Optics {
                 );
             }
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <A, B> ListTraversal<A, B> listTraversal() {
+        return (ListTraversal<A, B>) ListTraversal.INSTANCE;
     }
 }

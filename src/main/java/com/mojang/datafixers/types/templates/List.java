@@ -14,6 +14,7 @@ import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
+import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -73,7 +74,7 @@ public final class List implements TypeTemplate {
     }
 
     private <S, T, A, B> Optic<?, ?, ?, A, B> cap(final Optic<?, S, T, A, B> concreteOptic) {
-        return new ListTraversal<S, T>().composeUnchecked(concreteOptic);
+        return Optics.<S, T>listTraversal().composeUnchecked(concreteOptic);
     }
 
     @Override

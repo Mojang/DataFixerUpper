@@ -139,7 +139,7 @@ public interface PointFreeRule {
             if (expr instanceof Apply<?, ?>) {
                 final Apply<?, A> apply = (Apply<?, A>) expr;
                 final PointFree<? extends Function<?, A>> func = apply.func;
-                if (func instanceof ProfunctorTransformer<?, ?, ?, ?> && Objects.equals(apply.arg, Functions.id())) {
+                if (func instanceof ProfunctorTransformer<?, ?, ?, ?> && Functions.isId(apply.arg)) {
                     return Optional.of((PointFree<A>) Functions.id());
                 }
             }
@@ -255,7 +255,7 @@ public interface PointFreeRule {
                         so = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) so).outer();
                     }
 
-                    if (Objects.equals(fo, Optics.proj2()) && Objects.equals(so, Optics.proj1())) {
+                    if (Optics.isProj2(fo) && Optics.isProj1(so)) {
                         final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
                         final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
                         return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
@@ -300,7 +300,7 @@ public interface PointFreeRule {
                         so = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) so).outer();
                     }
 
-                    if (Objects.equals(fo, Optics.inj2()) && Objects.equals(so, Optics.inj1())) {
+                    if (Optics.isInj2(fo) && Optics.isInj1(so)) {
                         final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
                         final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
                         return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
@@ -405,8 +405,8 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final boolean firstId = Objects.equals(CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function(), Functions.id());
-                        final boolean secondId = Objects.equals(secondAlgFunc.view().function(), Functions.id());
+                        final boolean firstId = Functions.isId(CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function());
+                        final boolean secondId = Functions.isId(secondAlgFunc.view().function());
 
                         if (firstId && secondId) {
                             newAlgebra.add(firstFold.algebra.apply(i));
@@ -452,8 +452,8 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final boolean firstId = Objects.equals(CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function(), Functions.id());
-                        final boolean secondId = Objects.equals(secondAlgFunc.view().function(), Functions.id());
+                        final boolean firstId = Functions.isId(CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function());
+                        final boolean secondId = Functions.isId(secondAlgFunc.view().function());
                         firstModifies.set(i, !firstId);
                         secondModifies.set(i, !secondId);
                     }
@@ -468,8 +468,8 @@ public interface PointFreeRule {
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
                         final PointFree<?> firstF = CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function();
                         final PointFree<?> secondF = CompAssocRight.INSTANCE.rewriteOrNop(secondAlgFunc.view()).function();
-                        final boolean firstId = Objects.equals(firstF, Functions.id());
-                        final boolean secondId = Objects.equals(secondF, Functions.id());
+                        final boolean firstId = Functions.isId(firstF);
+                        final boolean secondId = Functions.isId(secondF);
                         if (firstAlgFunc.recData().intersects(secondModifies) || secondAlgFunc.recData().intersects(firstModifies)) {
                             // outer function depends on the result of the inner one
                             return Optional.empty();

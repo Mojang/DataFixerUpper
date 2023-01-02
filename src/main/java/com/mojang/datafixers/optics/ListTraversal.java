@@ -11,6 +11,11 @@ import com.mojang.datafixers.kinds.K1;
 import java.util.List;
 
 public final class ListTraversal<A, B> implements Traversal<List<A>, List<B>, A, B> {
+    static final ListTraversal<?, ?> INSTANCE = new ListTraversal<>();
+
+    private ListTraversal() {
+    }
+
     @Override
     public <F extends K1> FunctionType<List<A>, App<F, List<B>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
         return as -> {
@@ -20,11 +25,6 @@ public final class ListTraversal<A, B> implements Traversal<List<A>, List<B>, A,
             }
             return applicative.map(ImmutableList.Builder::build, result);
         };
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return obj instanceof ListTraversal<?, ?>;
     }
 
     @Override

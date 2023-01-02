@@ -9,6 +9,7 @@ import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.functions.PointFreeRule;
+import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
@@ -136,7 +137,7 @@ public final class Check implements TypeTemplate {
         }
 
         public static <A, B> RewriteResult<A, ?> fix(final CheckType<A> type, final RewriteResult<A, B> instance) {
-            if (Objects.equals(instance.view().function(), Functions.id())) {
+            if (Functions.isId(instance.view().function())) {
                 return RewriteResult.nop(type);
             }
             return opticView(type, instance, wrapOptic(type, TypedOptic.adapter(instance.view().type(), instance.view().newType())));

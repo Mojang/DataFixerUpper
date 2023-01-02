@@ -255,7 +255,7 @@ public interface TypeRewriteRule {
         @Override
         public <A> Optional<RewriteResult<A, ?>> rewrite(final Type<A> type) {
             final Optional<RewriteResult<A, ?>> result = rule.rewrite(type);
-            if (!result.isPresent() || Objects.equals(result.get().view.function(), Functions.id())) {
+            if (!result.isPresent() || Functions.isId(result.get().view.function())) {
                 onFail.accept(type);
             }
             return result;

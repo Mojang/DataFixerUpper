@@ -7,12 +7,9 @@ import com.mojang.serialization.DynamicOps;
 import java.util.function.Function;
 
 final class Id<A> extends PointFree<Function<A, A>> {
-    public Id() {
-    }
+    public static final Id<?> INSTANCE = new Id<>();
 
-    @Override
-    public boolean equals(final Object obj) {
-        return obj instanceof Id<?>;
+    private Id() {
     }
 
     @Override

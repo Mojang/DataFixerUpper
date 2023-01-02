@@ -5,6 +5,11 @@ package com.mojang.datafixers.optics;
 import com.mojang.datafixers.util.Pair;
 
 public final class Proj2<F, G, G2> implements Lens<Pair<F, G>, Pair<F, G2>, G, G2> {
+    public static final Proj2<?, ?, ?> INSTANCE = new Proj2<>();
+
+    private Proj2() {
+    }
+
     @Override
     public G view(final Pair<F, G> pair) {
         return pair.getSecond();
@@ -18,10 +23,5 @@ public final class Proj2<F, G, G2> implements Lens<Pair<F, G>, Pair<F, G2>, G, G
     @Override
     public String toString() {
         return "\u03C02";
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return obj instanceof Proj2<?, ?, ?>;
     }
 }

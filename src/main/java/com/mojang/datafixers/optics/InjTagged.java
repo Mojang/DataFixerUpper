@@ -37,4 +37,9 @@ public final class InjTagged<K, A, B> implements Prism<Pair<K, ?>, Pair<K, ?>, A
     public boolean equals(final Object obj) {
         return obj instanceof InjTagged<?, ?, ?> && Objects.equals(((InjTagged<?, ?, ?>) obj).key, key);
     }
+
+    @Override
+    public int hashCode() {
+        return key.hashCode();
+    }
 }

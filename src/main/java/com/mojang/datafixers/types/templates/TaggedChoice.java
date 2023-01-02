@@ -134,7 +134,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
         public RewriteResult<Pair<K, ?>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             final Map<K, ? extends RewriteResult<?, ?>> results = types.entrySet().stream()
                 .map(e -> rule.rewrite(e.getValue()).map(v -> Pair.of(e.getKey(), v)))
-                .filter(e -> e.isPresent() && !Objects.equals(e.get().getSecond().view().function(), Functions.id()))
+                .filter(e -> e.isPresent() && !Functions.isId(e.get().getSecond().view().function()))
                 .map(Optional::get)
                 .collect(Pair.toMap())
                 ;
