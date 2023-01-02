@@ -36,6 +36,9 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Encoder;
 import com.mojang.serialization.codecs.KeyDispatchCodec;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -50,11 +53,11 @@ import java.util.function.IntFunction;
 public final class TaggedChoice<K> implements TypeTemplate {
     private final String name;
     private final Type<K> keyType;
-    private final Map<K, TypeTemplate> templates;
+    private final Object2ObjectMap<K, TypeTemplate> templates;
     private final Map<Pair<TypeFamily, Integer>, Type<?>> types = Maps.newConcurrentMap();
     private final int size;
 
-    public TaggedChoice(final String name, final Type<K> keyType, final Map<K, TypeTemplate> templates) {
+    public TaggedChoice(final String name, final Type<K> keyType, final Object2ObjectMap<K, TypeTemplate> templates) {
         this.name = name;
         this.keyType = keyType;
         this.templates = templates;
@@ -68,9 +71,13 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
     @Override
     public TypeFamily apply(final TypeFamily family) {
-        return index -> types.computeIfAbsent(Pair.of(family, index), key ->
-            DSL.taggedChoiceType(name, keyType, templates.entrySet().stream().map(e -> Pair.<K, Type<?>>of(e.getKey(), e.getValue().apply(key.getFirst()).apply(key.getSecond()))).collect(Pair.toMap()))
-        );
+        return index -> types.computeIfAbsent(Pair.of(family, index), key -> {
+            final Object2ObjectMap<K, Type<?>> types = new Object2ObjectOpenHashMap<>(templates.size());
+            for (final Map.Entry<K, TypeTemplate> entry : Object2ObjectMaps.fastIterable(templates)) {
+                types.put(entry.getKey(), entry.getValue().apply(key.getFirst()).apply(key.getSecond()));
+            }
+            return DSL.taggedChoiceType(name, keyType, types);
+        });
     }
 
     @Override
@@ -120,10 +127,10 @@ public final class TaggedChoice<K> implements TypeTemplate {
     public static final class TaggedChoiceType<K> extends Type<Pair<K, ?>> {
         private final String name;
         private final Type<K> keyType;
-        protected final Map<K, Type<?>> types;
+        protected final Object2ObjectMap<K, Type<?>> types;
         private final int hashCode;
 
-        public TaggedChoiceType(final String name, final Type<K> keyType, final Map<K, Type<?>> types) {
+        public TaggedChoiceType(final String name, final Type<K> keyType, final Object2ObjectMap<K, Type<?>> types) {
             this.name = name;
             this.keyType = keyType;
             this.types = types;
@@ -132,12 +139,13 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public RewriteResult<Pair<K, ?>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
-            final Map<K, ? extends RewriteResult<?, ?>> results = types.entrySet().stream()
-                .map(e -> rule.rewrite(e.getValue()).map(v -> Pair.of(e.getKey(), v)))
-                .filter(e -> e.isPresent() && !Functions.isId(e.get().getSecond().view().function()))
-                .map(Optional::get)
-                .collect(Pair.toMap())
-                ;
+            final Object2ObjectMap<K, RewriteResult<?, ?>> results = new Object2ObjectOpenHashMap<>(types.size());
+            for (final Map.Entry<K, Type<?>> entry : Object2ObjectMaps.fastIterable(types)) {
+                final Optional<? extends RewriteResult<?, ?>> result = rule.rewrite(entry.getValue());
+                if (result.isPresent() && !Functions.isId(result.get().view().function())) {
+                    results.put(entry.getKey(), result.get());
+                }
+            }
 
             if (results.isEmpty()) {
                 return RewriteResult.nop(this);
@@ -145,9 +153,9 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 final Map.Entry<K, ? extends RewriteResult<?, ?>> entry = results.entrySet().iterator().next();
                 return elementResult(entry.getKey(), this, entry.getValue());
             }
-            final Map<K, Type<?>> newTypes = Maps.newHashMap(types);
+            final Object2ObjectMap<K, Type<?>> newTypes = new Object2ObjectOpenHashMap<>(types);
             final BitSet recData = new BitSet();
-            for (final Map.Entry<K, ? extends RewriteResult<?, ?>> entry : results.entrySet()) {
+            for (final Map.Entry<K, ? extends RewriteResult<?, ?>> entry : Object2ObjectMaps.fastIterable(results)) {
                 newTypes.put(entry.getKey(), entry.getValue().view().newType());
                 recData.or(entry.getValue().recData());
             }
@@ -171,12 +179,20 @@ public final class TaggedChoice<K> implements TypeTemplate {
 
         @Override
         public Type<?> updateMu(final RecursiveTypeFamily newFamily) {
-            return DSL.taggedChoiceType(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().updateMu(newFamily))).collect(Pair.toMap()));
+            final Object2ObjectMap<K, Type<?>> newTypes = new Object2ObjectOpenHashMap<>(types.size());
+            for (final Object2ObjectMap.Entry<K, Type<?>> entry : Object2ObjectMaps.fastIterable(types)) {
+                newTypes.put(entry.getKey(), entry.getValue().updateMu(newFamily));
+            }
+            return DSL.taggedChoiceType(name, keyType, newTypes);
         }
 
         @Override
         public TypeTemplate buildTemplate() {
-            return DSL.taggedChoice(name, keyType, types.entrySet().stream().map(e -> Pair.of(e.getKey(), e.getValue().template())).collect(Pair.toMap()));
+            final Object2ObjectMap<K, TypeTemplate> templates = new Object2ObjectOpenHashMap<>(types.size());
+            for (final Object2ObjectMap.Entry<K, Type<?>> entry : Object2ObjectMaps.fastIterable(types)) {
+                templates.put(entry.getKey(), entry.getValue().template());
+            }
+            return DSL.taggedChoice(name, keyType, templates);
         }
 
         @SuppressWarnings("unchecked")
@@ -322,7 +338,13 @@ public final class TaggedChoice<K> implements TypeTemplate {
                     throw new IllegalStateException("Could not merge TaggedChoiceType optics, unknown bound: " + Arrays.toString(bounds.toArray()));
                 }
 
-                final Map<K, Type<?>> newTypes = types.entrySet().stream().map(e -> Pair.of(e.getKey(), optics.containsKey(e.getKey()) ? optics.get(e.getKey()).tType() : e.getValue())).collect(Pair.toMap());
+                final Object2ObjectMap<K, Type<?>> newTypes = new Object2ObjectOpenHashMap<>(types);
+                for (final Object2ObjectMap.Entry<K, Type<?>> entry : Object2ObjectMaps.fastIterable(newTypes)) {
+                    final TypedOptic<?, ?, FT, FR> typeOptic = optics.get(entry.getKey());
+                    if (typeOptic != null) {
+                        entry.setValue(typeOptic.tType());
+                    }
+                }
 
                 return Either.left(new TypedOptic<>(
                     bound,

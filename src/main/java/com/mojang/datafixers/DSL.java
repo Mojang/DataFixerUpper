@@ -25,6 +25,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -191,7 +192,7 @@ public interface DSL {
     }
 
     static <K> TaggedChoice<K> taggedChoice(final String name, final Type<K> keyType, final Map<K, TypeTemplate> templates) {
-        return new TaggedChoice<>(name, keyType, templates);
+        return new TaggedChoice<>(name, keyType, new Object2ObjectOpenHashMap<>(templates));
     }
 
     static <K> TaggedChoice<K> taggedChoiceLazy(final String name, final Type<K> keyType, final Map<K, Supplier<TypeTemplate>> templates) {
@@ -200,7 +201,7 @@ public interface DSL {
 
     @SuppressWarnings("unchecked")
     static <K> Type<Pair<K, ?>> taggedChoiceType(final String name, final Type<K> keyType, final Map<K, ? extends Type<?>> types) {
-        return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getLeft(), (Type<K>) k.getMiddle(), (Map<K, Type<?>>) k.getRight()));
+        return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getLeft(), (Type<K>) k.getMiddle(), new Object2ObjectOpenHashMap<>((Map<K, Type<?>>) k.getRight())));
     }
 
     static <A, B> Type<Function<A, B>> func(final Type<A> input, final Type<B> output) {
