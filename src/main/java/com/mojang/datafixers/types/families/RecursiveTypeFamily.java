@@ -16,7 +16,6 @@ import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.functions.PointFree;
 import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.optics.Optic;
-import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.types.templates.TypeTemplate;
@@ -166,7 +165,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
             boolean nop1 = true;
             // FB -> GB
             final RewriteResult<?, ?> view = DataFixUtils.orElse(unfold.everywhere(rule, optimizationRule, false, true), RewriteResult.nop(unfold));
-            if (!Functions.isId(view.view().function())) {
+            if (!view.view().isNop()) {
                 nop1 = false;
             }
 
@@ -187,7 +186,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
         final RewriteResult<A, B> newView = RewriteResult.create(newType.in(), new BitSet()).compose((RewriteResult<A, B>) view);
         // B -> B
         final Optional<RewriteResult<B, ?>> rewrite = rule.rewrite(newView.view().newType());
-        if (rewrite.isPresent() && !Functions.isId(rewrite.get().view().function())) {
+        if (rewrite.isPresent() && !rewrite.get().view().isNop()) {
             nop = false;
             view = rewrite.get().compose((RewriteResult<A, B>) newView);
         }

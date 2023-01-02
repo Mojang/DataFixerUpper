@@ -57,12 +57,16 @@ public record View<A, B>(Type<A> type, Type<B> newType, PointFree<Function<A, B>
 
     @SuppressWarnings("unchecked")
     public <C> View<C, B> compose(final View<C, A> that) {
-        if (Functions.isId(function())) {
+        if (isNop()) {
             return new View<>(that.type(), newType(), ((View<C, B>) that).function());
         }
-        if (Functions.isId(that.function())) {
+        if (that.isNop()) {
             return new View<>(that.type(), newType(), ((View<C, B>) this).function());
         }
         return create(that.type, newType, Functions.comp(that.newType, function(), that.function()));
+    }
+
+    public boolean isNop() {
+        return Functions.isId(function());
     }
 }

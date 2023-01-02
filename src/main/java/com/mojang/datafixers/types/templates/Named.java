@@ -9,7 +9,6 @@ import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
-import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
@@ -103,7 +102,7 @@ public final class Named implements TypeTemplate {
         }
 
         public static <A, B> RewriteResult<Pair<String, A>, ?> fix(final NamedType<A> type, final RewriteResult<A, B> instance) {
-            if (Functions.isId(instance.view().function())) {
+            if (instance.view().isNop()) {
                 return RewriteResult.nop(type);
             }
             return opticView(type, instance, wrapOptic(type.name, TypedOptic.adapter(instance.view().type(), instance.view().newType())));

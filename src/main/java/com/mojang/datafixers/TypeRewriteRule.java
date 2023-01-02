@@ -3,7 +3,6 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.types.Type;
 
@@ -224,7 +223,7 @@ public interface TypeRewriteRule {
         @Override
         public <A> Optional<RewriteResult<A, ?>> rewrite(final Type<A> type) {
             final Optional<RewriteResult<A, ?>> result = rule.rewrite(type);
-            if (!result.isPresent() || Functions.isId(result.get().view().function())) {
+            if (!result.isPresent() || result.get().view().isNop()) {
                 onFail.accept(type);
             }
             return result;
