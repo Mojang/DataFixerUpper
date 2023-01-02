@@ -58,7 +58,9 @@ final class Comp<A, B, C> extends PointFree<Function<A, C>> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(first, second);
+        int result = first.hashCode();
+        result = 31 * result + second.hashCode();
+        return result;
     }
 
     @Override

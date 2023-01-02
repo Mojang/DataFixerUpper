@@ -30,7 +30,7 @@ final class In<A> extends PointFree<Function<A, A>> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(type);
+        return type.hashCode();
     }
 
     @Override

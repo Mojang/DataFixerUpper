@@ -78,7 +78,7 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
 
         @Override
         public int hashCode() {
-            return Objects.hash(value);
+            return value.hashCode();
         }
     }
 
@@ -139,7 +139,7 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
 
         @Override
         public int hashCode() {
-            return Objects.hash(value);
+            return value.hashCode();
         }
     }
 

@@ -45,6 +45,6 @@ final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Functio
 
     @Override
     public int hashCode() {
-        return Objects.hash(optic);
+        return optic.hashCode();
     }
 }

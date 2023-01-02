@@ -84,7 +84,7 @@ public final class Const implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(type);
+        return type.hashCode();
     }
 
     @Override

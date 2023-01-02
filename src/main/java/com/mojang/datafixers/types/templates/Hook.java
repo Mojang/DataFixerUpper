@@ -91,7 +91,10 @@ public final class Hook implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(element, preRead, postWrite);
+        int result = element.hashCode();
+        result = 31 * result + preRead.hashCode();
+        result = 31 * result + postWrite.hashCode();
+        return result;
     }
 
     @Override
@@ -204,7 +207,10 @@ public final class Hook implements TypeTemplate {
 
         @Override
         public int hashCode() {
-            return Objects.hash(delegate, preRead, postWrite);
+            int result = delegate.hashCode();
+            result = 31 * result + preRead.hashCode();
+            result = 31 * result + postWrite.hashCode();
+            return result;
         }
     }
 }

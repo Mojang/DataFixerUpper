@@ -35,7 +35,7 @@ final class FunctionWrapper<A, B> extends PointFree<Function<A, B>> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(fun);
+        return fun.hashCode();
     }
 
     @Override

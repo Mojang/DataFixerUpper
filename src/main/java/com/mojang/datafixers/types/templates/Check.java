@@ -100,7 +100,10 @@ public final class Check implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, index, element);
+        int result = name.hashCode();
+        result = 31 * result + index;
+        result = 31 * result + element.hashCode();
+        return result;
     }
 
     @Override
@@ -249,7 +252,10 @@ public final class Check implements TypeTemplate {
 
         @Override
         public int hashCode() {
-            return Objects.hash(index, expectedIndex, delegate);
+            int result = index;
+            result = 31 * result + expectedIndex;
+            result = 31 * result + delegate.hashCode();
+            return result;
         }
     }
 }

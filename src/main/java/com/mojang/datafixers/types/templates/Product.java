@@ -146,7 +146,9 @@ public final class Product implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(f, g);
+        int result = f.hashCode();
+        result = 31 * result + g.hashCode();
+        return result;
     }
 
     @Override
@@ -233,7 +235,9 @@ public final class Product implements TypeTemplate {
         @Override
         public int hashCode() {
             if (hashCode == 0) {
-                hashCode = Objects.hash(first, second);
+                int result = first.hashCode();
+                result = 31 * result + second.hashCode();
+                hashCode = result;
             }
             return hashCode;
         }

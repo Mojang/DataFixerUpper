@@ -92,7 +92,7 @@ public final class CompoundList implements TypeTemplate {
 
     @Override
     public int hashCode() {
-        return Objects.hash(element);
+        return element.hashCode();
     }
 
     @Override
@@ -192,7 +192,9 @@ public final class CompoundList implements TypeTemplate {
 
         @Override
         public int hashCode() {
-            return Objects.hash(key, element);
+            int result = key.hashCode();
+            result = 31 * result + element.hashCode();
+            return result;
         }
 
         public Type<K> getKey() {
