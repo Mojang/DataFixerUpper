@@ -154,6 +154,9 @@ public abstract class Type<A> implements App<Type.Mu, A> {
             return DataResult.error("Could not build a rewrite rule: " + rule + " " + fRule, input);
         }
         final View<A, ?> view = rewriteResult.get().view();
+        if (view.isNop()) {
+            return DataResult.success(input);
+        }
 
         return codec().decode(ops, input).flatMap(pair ->
             capWrite(ops, expectedType, pair.getSecond(), pair.getFirst(), view)
