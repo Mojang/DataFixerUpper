@@ -8,7 +8,6 @@ import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.View;
-import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
@@ -148,7 +147,7 @@ public final class Tag implements TypeTemplate {
         }
 
         private <B> View<A, ?> cap(final View<A, B> instance) {
-            if (Functions.isId(instance.function())) {
+            if (instance.isNop()) {
                 return View.nopView(this);
             }
             return View.create(this, DSL.field(name, instance.newType()), instance.function());

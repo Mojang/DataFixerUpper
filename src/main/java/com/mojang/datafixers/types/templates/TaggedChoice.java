@@ -145,7 +145,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
             final Object2ObjectMap<K, RewriteResult<?, ?>> results = new Object2ObjectOpenHashMap<>(types.size());
             for (final Map.Entry<K, Type<?>> entry : Object2ObjectMaps.fastIterable(types)) {
                 final Optional<? extends RewriteResult<?, ?>> result = rule.rewrite(entry.getValue());
-                if (result.isPresent() && !Functions.isId(result.get().view().function())) {
+                if (result.isPresent() && !result.get().view().isNop()) {
                     results.put(entry.getKey(), result.get());
                 }
             }

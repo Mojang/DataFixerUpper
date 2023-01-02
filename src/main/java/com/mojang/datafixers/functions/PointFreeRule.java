@@ -412,8 +412,8 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final boolean firstId = Functions.isId(firstAlgFunc.view().function());
-                        final boolean secondId = Functions.isId(secondAlgFunc.view().function());
+                        final boolean firstId = firstAlgFunc.view().isNop();
+                        final boolean secondId = secondAlgFunc.view().isNop();
 
                         if (firstId && secondId) {
                             newAlgebra.add(firstAlgFunc);
@@ -459,8 +459,8 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final boolean firstId = Functions.isId(firstAlgFunc.view().function());
-                        final boolean secondId = Functions.isId(secondAlgFunc.view().function());
+                        final boolean firstId = firstAlgFunc.view().isNop();
+                        final boolean secondId = secondAlgFunc.view().isNop();
                         if (!firstId && !secondId) {
                             return Optional.empty();
                         }
@@ -477,7 +477,7 @@ public interface PointFreeRule {
                             // outer function depends on the result of the inner one
                             return Optional.empty();
                         }
-                        if (Functions.isId(firstAlgFunc.view().function())) {
+                        if (firstAlgFunc.view().isNop()) {
                             newAlgebra.add(secondAlgFunc);
                         } else {
                             newAlgebra.add(firstAlgFunc);
