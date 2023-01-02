@@ -35,10 +35,18 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
     }
 
     public static <R> DataResult<R> error(final String message, final R partialResult) {
-        return error(message, partialResult, Lifecycle.experimental());
+        return error(() -> message, partialResult);
     }
 
     public static <R> DataResult<R> error(final String message) {
+        return error(() -> message);
+    }
+
+    public static <R> DataResult<R> error(final Supplier<String> message, final R partialResult) {
+        return error(message, partialResult, Lifecycle.experimental());
+    }
+
+    public static <R> DataResult<R> error(final Supplier<String> message) {
         return error(message, Lifecycle.experimental());
     }
 
@@ -47,15 +55,23 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
     }
 
     public static <R> DataResult<R> error(final String message, final R partialResult, final Lifecycle lifecycle) {
-        return new DataResult<>(Either.right(new PartialResult<>(message, Optional.of(partialResult))), lifecycle);
+        return error(() -> message, partialResult, lifecycle);
     }
 
     public static <R> DataResult<R> error(final String message, final Lifecycle lifecycle) {
+        return error(() -> message, lifecycle);
+    }
+
+    public static <R> DataResult<R> error(final Supplier<String> message, final R partialResult, final Lifecycle lifecycle) {
+        return new DataResult<>(Either.right(new PartialResult<>(message, Optional.of(partialResult))), lifecycle);
+    }
+
+    public static <R> DataResult<R> error(final Supplier<String> message, final Lifecycle lifecycle) {
         return new DataResult<>(Either.right(new PartialResult<>(message, Optional.empty())), lifecycle);
     }
 
     public static <K, V> Function<K, DataResult<V>> partialGet(final Function<K, V> partialGet, final Supplier<String> errorPrefix) {
-        return name -> Optional.ofNullable(partialGet.apply(name)).map(DataResult::success).orElseGet(() -> error(errorPrefix.get() + name));
+        return name -> Optional.ofNullable(partialGet.apply(name)).map(DataResult::success).orElseGet(() -> error(() -> errorPrefix.get() + name));
     }
 
     private static <R> DataResult<R> create(final Either<R, PartialResult<R>> result, final Lifecycle lifecycle) {
@@ -83,7 +99,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return result.map(
             Optional::of,
             r -> {
-                onError.accept(r.message);
+                onError.accept(r.message.get());
                 return r.partialResult;
             }
         );
@@ -93,11 +109,12 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return result.map(
             l -> l,
             r -> {
-                onError.accept(r.message);
+                final String message = r.message.get();
+                onError.accept(message);
                 if (allowPartial && r.partialResult.isPresent()) {
                     return r.partialResult.get();
                 }
-                throw new RuntimeException(r.message);
+                throw new RuntimeException(message);
             }
         );
     }
@@ -117,7 +134,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         return result.map(
             r -> new DataResult<>(Either.left(r), lifecycle),
             r -> {
-                onError.accept(r.message);
+                onError.accept(r.message.get());
                 return r.partialResult
                     .map(pr -> new DataResult<>(Either.left(pr), lifecycle))
                     .orElseGet(() -> create(Either.right(r), lifecycle));
@@ -143,7 +160,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
                     final DataResult<R2> second = function.apply(value);
                     return create(Either.right(second.get().map(
                         l2 -> new PartialResult<>(r.message, Optional.of(l2)),
-                        r2 -> new PartialResult<>(appendMessages(r.message, r2.message), r2.partialResult)
+                        r2 -> new PartialResult<>(() -> appendMessages(r.message.get(), r2.message.get()), r2.partialResult)
                     )), lifecycle.add(second.lifecycle));
                 })
                 .orElseGet(
@@ -161,7 +178,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             argError -> Either.right(functionResult.result.map(
                 func -> new PartialResult<>(argError.message, argError.partialResult.map(func)),
                 funcError -> new PartialResult<>(
-                    appendMessages(argError.message, funcError.message),
+                    () -> appendMessages(argError.message.get(), funcError.message.get()),
                     argError.partialResult.flatMap(a -> funcError.partialResult.map(f -> f.apply(a)))
                 )
             ))
@@ -191,7 +208,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
     }
 
     public DataResult<R> mapError(final UnaryOperator<String> function) {
-        return create(result.mapRight(r -> new PartialResult<>(function.apply(r.message), r.partialResult)), lifecycle);
+        return create(result.mapRight(r -> new PartialResult<>(() -> function.apply(r.message.get()), r.partialResult)), lifecycle);
     }
 
     public DataResult<R> setLifecycle(final Lifecycle lifecycle) {
@@ -229,10 +246,10 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
     }
 
     public static class PartialResult<R> {
-        private final String message;
+        private final Supplier<String> message;
         private final Optional<R> partialResult;
 
-        public PartialResult(final String message, final Optional<R> partialResult) {
+        public PartialResult(final Supplier<String> message, final Optional<R> partialResult) {
             this.message = message;
             this.partialResult = partialResult;
         }
@@ -244,13 +261,13 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         public <R2> PartialResult<R2> flatMap(final Function<R, PartialResult<R2>> function) {
             if (partialResult.isPresent()) {
                 final PartialResult<R2> result = function.apply(partialResult.get());
-                return new PartialResult<>(appendMessages(message, result.message), result.partialResult);
+                return new PartialResult<>(() -> appendMessages(message.get(), result.message.get()), result.partialResult);
             }
             return new PartialResult<>(message, Optional.empty());
         }
 
         public String message() {
-            return message;
+            return message.get();
         }
 
         @Override
