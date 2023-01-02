@@ -605,7 +605,18 @@ public interface PointFreeRule {
     }
 
     static PointFreeRule once(final PointFreeRule rule) {
-        return orElseStrict(rule, () -> one(once(rule)));
+        return new Once(rule);
+    }
+
+    record Once(PointFreeRule rule) implements PointFreeRule {
+        @Override
+        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+            final Optional<? extends PointFree<A>> view = rule.rewrite(type, expr);
+            if (view.isPresent()) {
+                return view;
+            }
+            return expr.one(this, type);
+        }
     }
 
     static PointFreeRule many(final PointFreeRule rule) {
@@ -613,7 +624,15 @@ public interface PointFreeRule {
     }
 
     static PointFreeRule everywhere(final PointFreeRule rule) {
-        return seq(orElse(rule, Nop.INSTANCE), () -> all(everywhere(rule)));
+        return new Everywhere(rule);
+    }
+
+    record Everywhere(PointFreeRule rule) implements PointFreeRule {
+        @Override
+        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+            final PointFree<A> view = rule.rewriteOrNop(type, expr);
+            return view.all(this, type);
+        }
     }
 
     final class All implements PointFreeRule {
