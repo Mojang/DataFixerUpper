@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-public final class View<A, B> implements App2<View.Mu, A, B> {
+public record View<A, B>(Type<A> type, Type<B> newType, PointFree<Function<A, B>> function) implements App2<View.Mu, A, B> {
     static final class Mu implements K2 {}
 
     static <A, B> View<A, B> unbox(final App2<Mu, A, B> box) {
@@ -25,52 +25,13 @@ public final class View<A, B> implements App2<View.Mu, A, B> {
         return create(type, type, Functions.id());
     }
 
-    private final Type<A> type;
-    protected final Type<B> newType;
-    private final PointFree<Function<A, B>> function;
-
-    public View(final Type<A> type, final Type<B> newType, final PointFree<Function<A, B>> function) {
-        this.type = type;
-        this.newType = newType;
-        this.function = function;
-    }
-
-    public Type<A> type() {
-        return type;
-    }
-
-    public Type<B> newType() {
-        return newType;
-    }
-
-    public PointFree<Function<A, B>> function() {
-        return function;
-    }
-
-    public Type<Function<A, B>> getFuncType() {
+    public Type<Function<A, B>> funcType() {
         return DSL.func(type, newType);
     }
 
     @Override
     public String toString() {
         return "View[" + function + "," + newType + "]";
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final View<?, ?> view = (View<?, ?>) o;
-        return Objects.equals(type, view.type) && Objects.equals(newType, view.newType) && Objects.equals(function, view.function);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, newType, function);
     }
 
     public Optional<? extends View<A, B>> rewrite(final PointFreeRule rule) {
