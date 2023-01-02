@@ -351,7 +351,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
             if (value.compareTo(minInclusive) >= 0 && value.compareTo(maxInclusive) <= 0) {
                 return DataResult.success(value);
             }
-            return DataResult.error("Value " + value + " outside of range [" + minInclusive + ":" + maxInclusive + "]", value);
+            return DataResult.error(() -> "Value " + value + " outside of range [" + minInclusive + ":" + maxInclusive + "]", value);
         };
     }
 
@@ -597,7 +597,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
             return toMap.result().map(DataResult::success).orElseGet(() -> {
                 final DataResult<T> toList = ops.getStream(casted).flatMap(stream -> ops.mergeToList(prefix, stream.collect(Collectors.toList())));
                 return toList.result().map(DataResult::success).orElseGet(() ->
-                    DataResult.error("Don't know how to merge " + prefix + " and " + casted, prefix, Lifecycle.experimental())
+                    DataResult.error(() -> "Don't know how to merge " + prefix + " and " + casted, prefix, Lifecycle.experimental())
                 );
             });
         }

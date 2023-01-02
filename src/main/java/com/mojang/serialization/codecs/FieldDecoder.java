@@ -24,7 +24,7 @@ public final class FieldDecoder<A> extends MapDecoder.Implementation<A> {
     public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
         final T value = input.get(name);
         if (value == null) {
-            return DataResult.error("No key " + name + " in " + input);
+            return DataResult.error(() -> "No key " + name + " in " + input);
         }
         return elementCodec.parse(ops, value);
     }

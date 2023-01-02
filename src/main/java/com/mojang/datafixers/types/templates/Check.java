@@ -133,7 +133,7 @@ public final class Check implements TypeTemplate {
 
         private <T> DataResult<Pair<A, T>> read(final DynamicOps<T> ops, final T input) {
             if (index != expectedIndex) {
-                return DataResult.error("Index mismatch: " + index + " != " + expectedIndex);
+                return DataResult.error(() -> "Index mismatch: " + index + " != " + expectedIndex);
             }
             return delegate.codec().decode(ops, input);
         }

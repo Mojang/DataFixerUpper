@@ -21,7 +21,7 @@ public interface MapDecoder<A> extends Keyable {
             final Optional<Consumer<Consumer<T>>> inputList = ops.getList(input).result();
 
             if (!inputList.isPresent()) {
-                return DataResult.error("Input is not a list");
+                return DataResult.error(() -> "Input is not a list");
             }
 
             final KeyCompressor<T> compressor = compressor(ops);
