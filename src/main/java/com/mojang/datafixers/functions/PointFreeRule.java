@@ -550,8 +550,13 @@ public interface PointFreeRule {
         }
     }
 
-    static PointFreeRule choice(final PointFreeRule first, final PointFreeRule second) {
-        return new Choice2(first, second);
+    static PointFreeRule choice(final PointFreeRule... rules) {
+        if (rules.length == 1) {
+            return rules[0];
+        } else if (rules.length == 2) {
+            return new Choice2(rules[0], rules[1]);
+        }
+        return new Choice(rules);
     }
 
     final class Choice2 implements PointFreeRule {
@@ -587,6 +592,32 @@ public interface PointFreeRule {
         @Override
         public int hashCode() {
             return Objects.hash(first, second);
+        }
+    }
+
+    record Choice(PointFreeRule[] rules) implements PointFreeRule {
+        @Override
+        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+            for (final PointFreeRule rule : rules) {
+                final Optional<? extends PointFree<A>> view = rule.rewrite(type, expr);
+                if (view.isPresent()) {
+                    return view;
+                }
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            return obj instanceof final Choice that && Arrays.equals(rules, that.rules);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(rules);
         }
     }
 
