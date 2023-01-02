@@ -44,20 +44,12 @@ public class DataFixerUpper implements DataFixer {
 
     protected static final PointFreeRule OPTIMIZATION_RULE = DataFixUtils.make(() -> {
         final PointFreeRule opSimple = PointFreeRule.choice(
-            PointFreeRule.choice(
-                PointFreeRule.CataFuseSame.INSTANCE,
-                PointFreeRule.choice(
-                    PointFreeRule.CataFuseDifferent.INSTANCE,
-                    PointFreeRule.LensAppId.INSTANCE
-                )
-            ),
-            PointFreeRule.choice(
-                PointFreeRule.LensComp.INSTANCE,
-                PointFreeRule.choice(
-                    PointFreeRule.AppNest.INSTANCE,
-                    PointFreeRule.LensCompFunc.INSTANCE
-                )
-            )
+            PointFreeRule.CataFuseSame.INSTANCE,
+            PointFreeRule.CataFuseDifferent.INSTANCE,
+            PointFreeRule.LensAppId.INSTANCE,
+            PointFreeRule.LensComp.INSTANCE,
+            PointFreeRule.AppNest.INSTANCE,
+            PointFreeRule.LensCompFunc.INSTANCE
         );
         final PointFreeRule opLeft = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(opSimple, PointFreeRule.CompAssocLeft.INSTANCE)));
         final PointFreeRule opComp = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(PointFreeRule.SortInj.INSTANCE, PointFreeRule.SortProj.INSTANCE)));
