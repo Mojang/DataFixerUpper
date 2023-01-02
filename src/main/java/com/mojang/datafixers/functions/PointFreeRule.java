@@ -550,15 +550,15 @@ public interface PointFreeRule {
         }
     }
 
-    static PointFreeRule orElse(final PointFreeRule first, final PointFreeRule second) {
-        return new OrElse(first, second);
+    static PointFreeRule choice(final PointFreeRule first, final PointFreeRule second) {
+        return new Choice2(first, second);
     }
 
-    final class OrElse implements PointFreeRule {
+    final class Choice2 implements PointFreeRule {
         protected final PointFreeRule first;
         protected final PointFreeRule second;
 
-        public OrElse(final PointFreeRule first, final PointFreeRule second) {
+        public Choice2(final PointFreeRule first, final PointFreeRule second) {
             this.first = first;
             this.second = second;
         }
@@ -577,10 +577,10 @@ public interface PointFreeRule {
             if (obj == this) {
                 return true;
             }
-            if (!(obj instanceof OrElse)) {
+            if (!(obj instanceof Choice2)) {
                 return false;
             }
-            final OrElse that = (OrElse) obj;
+            final Choice2 that = (Choice2) obj;
             return Objects.equals(first, that.first) && Objects.equals(second, that.second);
         }
 

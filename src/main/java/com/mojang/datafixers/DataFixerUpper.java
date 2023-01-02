@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.schemas.Schema;
@@ -44,25 +43,25 @@ public class DataFixerUpper implements DataFixer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFixerUpper.class);
 
     protected static final PointFreeRule OPTIMIZATION_RULE = DataFixUtils.make(() -> {
-        final PointFreeRule opSimple = PointFreeRule.orElse(
-            PointFreeRule.orElse(
+        final PointFreeRule opSimple = PointFreeRule.choice(
+            PointFreeRule.choice(
                 PointFreeRule.CataFuseSame.INSTANCE,
-                PointFreeRule.orElse(
+                PointFreeRule.choice(
                     PointFreeRule.CataFuseDifferent.INSTANCE,
                     PointFreeRule.LensAppId.INSTANCE
                 )
             ),
-            PointFreeRule.orElse(
+            PointFreeRule.choice(
                 PointFreeRule.LensComp.INSTANCE,
-                PointFreeRule.orElse(
+                PointFreeRule.choice(
                     PointFreeRule.AppNest.INSTANCE,
                     PointFreeRule.LensCompFunc.INSTANCE
                 )
             )
         );
-        final PointFreeRule opLeft = PointFreeRule.many(PointFreeRule.once(PointFreeRule.orElse(opSimple, PointFreeRule.CompAssocLeft.INSTANCE)));
-        final PointFreeRule opComp = PointFreeRule.many(PointFreeRule.once(PointFreeRule.orElse(PointFreeRule.SortInj.INSTANCE, PointFreeRule.SortProj.INSTANCE)));
-        final PointFreeRule opRight = PointFreeRule.many(PointFreeRule.once(PointFreeRule.orElse(opSimple, PointFreeRule.CompAssocRight.INSTANCE)));
+        final PointFreeRule opLeft = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(opSimple, PointFreeRule.CompAssocLeft.INSTANCE)));
+        final PointFreeRule opComp = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(PointFreeRule.SortInj.INSTANCE, PointFreeRule.SortProj.INSTANCE)));
+        final PointFreeRule opRight = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(opSimple, PointFreeRule.CompAssocRight.INSTANCE)));
         return PointFreeRule.seq(opLeft, opComp, opRight, opLeft, opRight);
     });
 
