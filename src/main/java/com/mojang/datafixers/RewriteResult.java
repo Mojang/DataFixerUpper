@@ -9,15 +9,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.BitSet;
 import java.util.Objects;
 
-public final class RewriteResult<A, B> {
-    protected final View<A, B> view;
-    protected final BitSet recData;
-
-    public RewriteResult(final View<A, B> view, final BitSet recData) {
-        this.view = view;
-        this.recData = recData;
-    }
-
+public record RewriteResult<A, B>(View<A, B> view, BitSet recData) {
     public static <A, B> RewriteResult<A, B> create(final View<A, B> view, final BitSet recData) {
         return new RewriteResult<>(view, recData);
     }
@@ -36,14 +28,6 @@ public final class RewriteResult<A, B> {
             newData = recData;
         }
         return create(view.compose(that.view), newData);
-    }
-
-    public BitSet recData() {
-        return recData;
-    }
-
-    public View<A, B> view() {
-        return view;
     }
 
     @Override

@@ -84,7 +84,7 @@ public interface TypeRewriteRule {
         }
 
         protected <A, B> Optional<RewriteResult<A, ?>> cap1(final TypeRewriteRule rule, final RewriteResult<A, B> f) {
-            return rule.rewrite(f.view.newType).map(s -> s.compose(f));
+            return rule.rewrite(f.view().newType()).map(s -> s.compose(f));
         }
 
         @Override
@@ -213,65 +213,21 @@ public interface TypeRewriteRule {
         }
     }
 
-    class One implements TypeRewriteRule {
-        private final TypeRewriteRule rule;
-
-        public One(final TypeRewriteRule rule) {
-            this.rule = rule;
-        }
-
+    record One(TypeRewriteRule rule) implements TypeRewriteRule {
         @Override
         public <A> Optional<RewriteResult<A, ?>> rewrite(final Type<A> type) {
             return type.one(rule);
         }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (!(obj instanceof One)) {
-                return false;
-            }
-            final One that = (One) obj;
-            return Objects.equals(rule, that.rule);
-        }
-
-        @Override
-        public int hashCode() {
-            return rule.hashCode();
-        }
     }
 
-    class CheckOnce implements TypeRewriteRule {
-        private final TypeRewriteRule rule;
-        private final Consumer<Type<?>> onFail;
-
-        public CheckOnce(final TypeRewriteRule rule, final Consumer<Type<?>> onFail) {
-            this.rule = rule;
-            this.onFail = onFail;
-        }
-
+    record CheckOnce(TypeRewriteRule rule, Consumer<Type<?>> onFail) implements TypeRewriteRule {
         @Override
         public <A> Optional<RewriteResult<A, ?>> rewrite(final Type<A> type) {
             final Optional<RewriteResult<A, ?>> result = rule.rewrite(type);
-            if (!result.isPresent() || Functions.isId(result.get().view.function())) {
+            if (!result.isPresent() || Functions.isId(result.get().view().function())) {
                 onFail.accept(type);
             }
             return result;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            return o instanceof CheckOnce && Objects.equals(rule, ((CheckOnce) o).rule);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(rule);
         }
     }
 

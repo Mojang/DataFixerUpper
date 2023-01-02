@@ -32,7 +32,7 @@ public interface PointFreeRule {
     <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr);
 
     default <A, B> Optional<View<A, B>> rewrite(final View<A, B> view) {
-        return rewrite(view.getFuncType(), view.function()).map(pf -> View.create(view.type(), view.newType(), pf));
+        return rewrite(view.funcType(), view.function()).map(pf -> View.create(view.type(), view.newType(), pf));
     }
 
     default <A> PointFree<A> rewriteOrNop(final Type<A> type, final PointFree<A> expr) {
@@ -513,13 +513,7 @@ public interface PointFreeRule {
         return new Seq(rules);
     }
 
-    final class Seq implements PointFreeRule {
-        private final PointFreeRule[] rules;
-
-        public Seq(final PointFreeRule... rules) {
-            this.rules = rules;
-        }
-
+    record Seq(PointFreeRule[] rules) implements PointFreeRule {
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             Optional<? extends PointFree<A>> result = Optional.of(expr);
@@ -537,11 +531,7 @@ public interface PointFreeRule {
             if (obj == this) {
                 return true;
             }
-            if (!(obj instanceof Seq)) {
-                return false;
-            }
-            final Seq that = (Seq) obj;
-            return Arrays.equals(rules, that.rules);
+            return obj instanceof final Seq that && Arrays.equals(rules, that.rules);
         }
 
         @Override
@@ -559,15 +549,7 @@ public interface PointFreeRule {
         return new Choice(rules);
     }
 
-    final class Choice2 implements PointFreeRule {
-        protected final PointFreeRule first;
-        protected final PointFreeRule second;
-
-        public Choice2(final PointFreeRule first, final PointFreeRule second) {
-            this.first = first;
-            this.second = second;
-        }
-
+    record Choice2(PointFreeRule first, PointFreeRule second) implements PointFreeRule {
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             final Optional<? extends PointFree<A>> view = first.rewrite(type, expr);
@@ -575,23 +557,6 @@ public interface PointFreeRule {
                 return view;
             }
             return second.rewrite(type, expr);
-        }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (!(obj instanceof Choice2)) {
-                return false;
-            }
-            final Choice2 that = (Choice2) obj;
-            return Objects.equals(first, that.first) && Objects.equals(second, that.second);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(first, second);
         }
     }
 
@@ -660,73 +625,21 @@ public interface PointFreeRule {
         }
     }
 
-    final class All implements PointFreeRule {
-        private final PointFreeRule rule;
-
-        public All(final PointFreeRule rule) {
-            this.rule = rule;
-        }
-
+    record All(PointFreeRule rule) implements PointFreeRule {
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             return expr.all(rule, type);
         }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (!(obj instanceof All)) {
-                return false;
-            }
-            final All that = (All) obj;
-            return Objects.equals(rule, that.rule);
-        }
-
-        @Override
-        public int hashCode() {
-            return rule.hashCode();
-        }
     }
 
-    final class One implements PointFreeRule {
-        private final PointFreeRule rule;
-
-        public One(final PointFreeRule rule) {
-            this.rule = rule;
-        }
-
+    record One(PointFreeRule rule) implements PointFreeRule {
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             return expr.one(rule, type);
         }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (!(obj instanceof One)) {
-                return false;
-            }
-            final One that = (One) obj;
-            return Objects.equals(rule, that.rule);
-        }
-
-        @Override
-        public int hashCode() {
-            return rule.hashCode();
-        }
     }
 
-    final class Many implements PointFreeRule {
-        private final PointFreeRule rule;
-
-        public Many(final PointFreeRule rule) {
-            this.rule = rule;
-        }
-
+    record Many(PointFreeRule rule) implements PointFreeRule {
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             Optional<? extends PointFree<A>> result = Optional.of(expr);
@@ -737,23 +650,6 @@ public interface PointFreeRule {
                 }
                 result = newResult;
             }
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final Many many = (Many) o;
-            return Objects.equals(rule, many.rule);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(rule);
         }
     }
 }

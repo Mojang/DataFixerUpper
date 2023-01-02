@@ -25,15 +25,7 @@ public interface Optic<Proof extends K1, S, T, A, B> {
         return new CompositionOptic<Proof2, S, T, A, B, A1, B1>((Optic<? super Proof2, S, T, A, B>) this, (Optic<? super Proof2, A, B, A1, B1>) optic);
     }
 
-    final class CompositionOptic<Proof extends K1, S, T, A, B, A1, B1> implements Optic<Proof, S, T, A1, B1> {
-        protected final Optic<? super Proof, S, T, A, B> outer;
-        protected final Optic<? super Proof, A, B, A1, B1> inner;
-
-        public CompositionOptic(final Optic<? super Proof, S, T, A, B> outer, final Optic<? super Proof, A, B, A1, B1> inner) {
-            this.outer = outer;
-            this.inner = inner;
-        }
-
+    record CompositionOptic<Proof extends K1, S, T, A, B, A1, B1>(Optic<? super Proof, S, T, A, B> outer, Optic<? super Proof, A, B, A1, B1> inner) implements Optic<Proof, S, T, A1, B1> {
         @Override
         public <P extends K2> Function<App2<P, A1, B1>, App2<P, S, T>> eval(final App<? extends Proof, P> proof) {
             return outer.eval(proof).compose(inner.eval(proof));
@@ -42,31 +34,6 @@ public interface Optic<Proof extends K1, S, T, A, B> {
         @Override
         public String toString() {
             return "(" + outer + " \u25E6 " + inner + ")";
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final CompositionOptic<?, ?, ?, ?, ?, ?, ?> that = (CompositionOptic<?, ?, ?, ?, ?, ?, ?>) o;
-            return Objects.equals(outer, that.outer) && Objects.equals(inner, that.inner);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(outer, inner);
-        }
-
-        public Optic<? super Proof, S, T, A, B> outer() {
-            return outer;
-        }
-
-        public Optic<? super Proof, A, B, A1, B1> inner() {
-            return inner;
         }
     }
 
