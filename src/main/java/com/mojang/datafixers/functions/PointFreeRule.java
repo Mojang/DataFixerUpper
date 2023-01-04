@@ -405,7 +405,7 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final boolean firstId = Functions.isId(CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function());
+                        final boolean firstId = Functions.isId(firstAlgFunc.view().function());
                         final boolean secondId = Functions.isId(secondAlgFunc.view().function());
 
                         if (firstId && secondId) {
@@ -452,7 +452,7 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final boolean firstId = Functions.isId(CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function());
+                        final boolean firstId = Functions.isId(firstAlgFunc.view().function());
                         final boolean secondId = Functions.isId(secondAlgFunc.view().function());
                         firstModifies.set(i, !firstId);
                         secondModifies.set(i, !secondId);
@@ -466,10 +466,8 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final PointFree<?> firstF = CompAssocRight.INSTANCE.rewriteOrNop(firstAlgFunc.view()).function();
-                        final PointFree<?> secondF = CompAssocRight.INSTANCE.rewriteOrNop(secondAlgFunc.view()).function();
-                        final boolean firstId = Functions.isId(firstF);
-                        final boolean secondId = Functions.isId(secondF);
+                        final boolean firstId = Functions.isId(firstAlgFunc.view().function());
+                        final boolean secondId = Functions.isId(secondAlgFunc.view().function());
                         if (firstAlgFunc.recData().intersects(secondModifies) || secondAlgFunc.recData().intersects(firstModifies)) {
                             // outer function depends on the result of the inner one
                             return Optional.empty();
