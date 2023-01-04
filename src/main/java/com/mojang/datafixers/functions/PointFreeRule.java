@@ -249,17 +249,21 @@ public interface PointFreeRule {
                     while (fo instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
                         fo = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) fo).outer();
                     }
+                    if (!Optics.isProj2(fo)) {
+                        return Optional.empty();
+                    }
 
                     Optic<?, ?, ?, ?, ?> so = secondOptic.optic;
                     while (so instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
                         so = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) so).outer();
                     }
-
-                    if (Optics.isProj2(fo) && Optics.isProj1(so)) {
-                        final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
-                        final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
-                        return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
+                    if (!Optics.isProj1(so)) {
+                        return Optional.empty();
                     }
+
+                    final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
+                    final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
+                    return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
                 }
             }
             return Optional.empty();
@@ -294,17 +298,21 @@ public interface PointFreeRule {
                     while (fo instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
                         fo = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) fo).outer();
                     }
+                    if (!Optics.isInj2(fo)) {
+                        return Optional.empty();
+                    }
 
                     Optic<?, ?, ?, ?, ?> so = secondOptic.optic;
                     while (so instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
                         so = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) so).outer();
                     }
-
-                    if (Optics.isInj2(fo) && Optics.isInj1(so)) {
-                        final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
-                        final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
-                        return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
+                    if (!Optics.isInj1(so)) {
+                        return Optional.empty();
                     }
+
+                    final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
+                    final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
+                    return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
                 }
             }
             return Optional.empty();
@@ -395,7 +403,7 @@ public interface PointFreeRule {
                 final Fold<?, ?> firstFold = (Fold<?, ?>) first;
                 final Fold<?, ?> secondFold = (Fold<?, ?>) second;
                 final RecursiveTypeFamily family = firstFold.aType.family();
-                if (Objects.equals(family, secondFold.aType.family()) && firstFold.index == secondFold.index) {
+                if (firstFold.index == secondFold.index && Objects.equals(family, secondFold.aType.family())) {
                     // same fold
                     final List<RewriteResult<?, ?>> newAlgebra = Lists.newArrayList();
 
@@ -409,7 +417,7 @@ public interface PointFreeRule {
                         final boolean secondId = Functions.isId(secondAlgFunc.view().function());
 
                         if (firstId && secondId) {
-                            newAlgebra.add(firstFold.algebra.apply(i));
+                            newAlgebra.add(firstAlgFunc);
                         } else if (!foundOne && !firstId && !secondId) {
                             newAlgebra.add(getCompose(firstAlgFunc, secondAlgFunc));
                             foundOne = true;
@@ -442,7 +450,7 @@ public interface PointFreeRule {
                 final Fold<?, ?> firstFold = (Fold<?, ?>) first;
                 final Fold<?, ?> secondFold = (Fold<?, ?>) second;
                 final RecursiveTypeFamily family = firstFold.aType.family();
-                if (Objects.equals(family, secondFold.aType.family()) && firstFold.index == secondFold.index) {
+                if (firstFold.index == secondFold.index && Objects.equals(family, secondFold.aType.family())) {
                     // same fold
                     final List<RewriteResult<?, ?>> newAlgebra = Lists.newArrayList();
 
@@ -454,6 +462,9 @@ public interface PointFreeRule {
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
                         final boolean firstId = Functions.isId(firstAlgFunc.view().function());
                         final boolean secondId = Functions.isId(secondAlgFunc.view().function());
+                        if (!firstId && !secondId) {
+                            return Optional.empty();
+                        }
                         firstModifies.set(i, !firstId);
                         secondModifies.set(i, !secondId);
                     }
@@ -463,18 +474,14 @@ public interface PointFreeRule {
                     for (int i = 0; i < family.size(); i++) {
                         final RewriteResult<?, ?> firstAlgFunc = firstFold.algebra.apply(i);
                         final RewriteResult<?, ?> secondAlgFunc = secondFold.algebra.apply(i);
-                        final boolean firstId = Functions.isId(firstAlgFunc.view().function());
-                        final boolean secondId = Functions.isId(secondAlgFunc.view().function());
                         if (firstAlgFunc.recData().intersects(secondModifies) || secondAlgFunc.recData().intersects(firstModifies)) {
                             // outer function depends on the result of the inner one
                             return Optional.empty();
                         }
-                        if (firstId) {
+                        if (Functions.isId(firstAlgFunc.view().function())) {
                             newAlgebra.add(secondAlgFunc);
-                        } else if (secondId) {
-                            newAlgebra.add(firstAlgFunc);
                         } else {
-                            return Optional.empty();
+                            newAlgebra.add(firstAlgFunc);
                         }
                     }
                     // have new algebra - make a new fold
