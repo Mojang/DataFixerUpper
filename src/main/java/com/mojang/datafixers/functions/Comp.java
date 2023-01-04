@@ -24,7 +24,7 @@ final class Comp<A, B, C> extends PointFree<Function<A, C>> {
 
     @Override
     public String toString(final int level) {
-        return "(\n" + indent(level + 1) + first.toString(level + 1) + "\n" + indent(level + 1) + "◦\n" + indent(level + 1) + second.toString(level + 1) + "\n" + indent(level) + ")";
+        return "(\n" + indent(level + 1) + first.toString(level + 1) + "\n" + indent(level + 1) + "\u25E6\n" + indent(level + 1) + second.toString(level + 1) + "\n" + indent(level) + ")";
     }
 
     @Override

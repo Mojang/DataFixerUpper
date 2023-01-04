@@ -17,7 +17,7 @@ public final class Proj2<F, G, G2> implements Lens<Pair<F, G>, Pair<F, G2>, G, G
 
     @Override
     public String toString() {
-        return "π2";
+        return "\u03C02";
     }
 
     @Override
