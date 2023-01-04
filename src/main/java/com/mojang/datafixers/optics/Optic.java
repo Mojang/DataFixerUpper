@@ -41,7 +41,7 @@ public interface Optic<Proof extends K1, S, T, A, B> {
 
         @Override
         public String toString() {
-            return "(" + outer + " ◦ " + inner + ")";
+            return "(" + outer + " \u25E6 " + inner + ")";
         }
 
         @Override
