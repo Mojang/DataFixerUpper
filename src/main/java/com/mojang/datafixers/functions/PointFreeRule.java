@@ -162,6 +162,18 @@ public interface PointFreeRule {
     }
 
     interface CompRewrite extends PointFreeRule {
+        static CompRewrite choice(final CompRewrite... rules) {
+            return (first, second) -> {
+                for (final CompRewrite rule : rules) {
+                    final Optional<? extends PointFree<? extends Function<?, ?>>> view = rule.doRewrite(first, second);
+                    if (view.isPresent()) {
+                        return view;
+                    }
+                }
+                return Optional.empty();
+            };
+        }
+
         @Override
         default <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
