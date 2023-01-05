@@ -84,6 +84,7 @@ public interface PointFreeRule {
     enum CompAssocLeft implements PointFreeRule {
         INSTANCE;
 
+        // f ◦ (g ◦ h) -> (f ◦ g) ◦ h
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
@@ -107,6 +108,7 @@ public interface PointFreeRule {
     enum CompAssocRight implements PointFreeRule {
         INSTANCE;
 
+        // (f ◦ g) ◦ h -> f ◦ (g ◦ h)
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
@@ -175,6 +177,7 @@ public interface PointFreeRule {
                 final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) expr;
                 final PointFree<? extends Function<?, ?>> first = comp.first;
                 final PointFree<? extends Function<?, ?>> second = comp.second;
+                // Rewrite f ◦ g in (_ ◦ f) ◦ g
                 if (first instanceof Comp<?, ?, ?>) {
                     final Comp<?, ?, ?> firstComp = (Comp<?, ?, ?>) first;
                     return doRewrite(type, comp.middleType, firstComp.second, comp.second).map(result -> {
@@ -185,6 +188,7 @@ public interface PointFreeRule {
                         return buildRight(firstComp, result);
                     });
                 }
+                // Rewrite f ◦ g in f ◦ (g ◦ _)
                 if (second instanceof Comp<?, ?, ?>) {
                     final Comp<?, ?, ?> secondComp = (Comp<?, ?, ?>) second;
                     return doRewrite(type, comp.middleType, comp.first, secondComp.first).map(result -> {
@@ -195,6 +199,7 @@ public interface PointFreeRule {
                         return buildLeft(result, secondComp);
                     });
                 }
+                // Rewrite f ◦ g
                 return (Optional<? extends PointFree<A>>) doRewrite(type, comp.middleType, comp.first, comp.second);
             }
             return Optional.empty();
