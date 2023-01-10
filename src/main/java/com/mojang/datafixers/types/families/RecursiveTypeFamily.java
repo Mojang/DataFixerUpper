@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.families;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
@@ -32,6 +34,8 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 
 public final class RecursiveTypeFamily implements TypeFamily {
+    private static final Interner<TypeTemplate> TEMPLATE_INTERNER = Interners.newWeakInterner();
+
     private final String name;
     private final TypeTemplate template;
     private final int size;
@@ -41,7 +45,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
 
     public RecursiveTypeFamily(final String name, final TypeTemplate template) {
         this.name = name;
-        this.template = template;
+        this.template = TEMPLATE_INTERNER.intern(template);
         size = template.size();
         hashCode = Objects.hashCode(template);
     }
@@ -57,7 +61,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
             // G
             final TypeTemplate newTypeTemplate = newType.template();
             // Mu G
-            if (Objects.equals(template, newTypeTemplate)) {
+            if (template == newTypeTemplate) {
                 newFamily = this;
             } else {
                 newFamily = new RecursiveTypeFamily("ruled " + name, newTypeTemplate);
@@ -206,7 +210,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
             return false;
         }
         final RecursiveTypeFamily family = (RecursiveTypeFamily) o;
-        return Objects.equals(template, family.template);
+        return template == family.template;
     }
 
     @Override
