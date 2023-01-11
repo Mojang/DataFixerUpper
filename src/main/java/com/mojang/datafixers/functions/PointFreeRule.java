@@ -218,7 +218,7 @@ public interface PointFreeRule {
             return (PointFree<E>) new Comp<>(comp2.middleType, comp2.first, new Comp<>(comp1.middleType, comp2.second, comp1.second));
         }
 
-        Optional<? extends PointFree<?>> doRewrite(PointFree<? extends Function<?, ?>> first, PointFree<? extends Function<?, ?>> second);
+        Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(PointFree<? extends Function<?, ?>> first, PointFree<? extends Function<?, ?>> second);
     }
 
     enum SortProj implements CompRewrite {
@@ -226,7 +226,7 @@ public interface PointFreeRule {
 
         // (ap π1 f)◦(ap π2 g) -> (ap π2 g)◦(ap π1 f)
         @Override
-        public Optional<? extends PointFree<?>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
+        public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
                 final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
                 final Apply<?, ?> applySecond = (Apply<?, ?>) second;
@@ -275,7 +275,7 @@ public interface PointFreeRule {
 
         // (ap i1 f)◦(ap i2 g) -> (ap i2 g)◦(ap i1 f)
         @Override
-        public Optional<? extends PointFree<?>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
+        public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
                 final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
                 final Apply<?, ?> applySecond = (Apply<?, ?>) second;
@@ -351,7 +351,7 @@ public interface PointFreeRule {
         // (ap lens f)◦(ap lens g) -> (ap lens (f ◦ g))
         @SuppressWarnings("unchecked")
         @Override
-        public Optional<? extends PointFree<?>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
+        public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
           if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
                 final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
                 final Apply<?, ?> applySecond = (Apply<?, ?>) second;
@@ -388,7 +388,7 @@ public interface PointFreeRule {
         // (fold g ◦ in) ◦ fold (f ◦ in) -> fold ( g ◦ f ◦ in), <== g ◦ in ◦ fold (f ◦ in) ◦ out == in ◦ fold (f ◦ in) ◦ out ◦ g <== g doesn't touch fold's index
         @SuppressWarnings("unchecked")
         @Override
-        public Optional<? extends PointFree<?>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
+        public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Fold<?, ?> && second instanceof Fold<?, ?>) {
                 // fold (_) ◦ fold (_)
                 final Fold<?, ?> firstFold = (Fold<?, ?>) first;
@@ -435,7 +435,7 @@ public interface PointFreeRule {
         // (fold g ◦ in) ◦ fold (f ◦ in) -> fold ( g ◦ f ◦ in), <== g ◦ in ◦ fold (f ◦ in) ◦ out == in ◦ fold (f ◦ in) ◦ out ◦ g <== g doesn't touch fold's index
         @SuppressWarnings("unchecked")
         @Override
-        public Optional<? extends PointFree<?>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
+        public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof Fold<?, ?> && second instanceof Fold<?, ?>) {
                 // fold (_) ◦ fold (_)
                 final Fold<?, ?> firstFold = (Fold<?, ?>) first;
