@@ -17,9 +17,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class DataFixerBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFixerBuilder.class);
@@ -65,17 +67,22 @@ public class DataFixerBuilder {
         return build();
     }
 
-    public DataFixer buildOptimized(final Executor executor) {
+    public DataFixer buildOptimized(final Set<DSL.TypeReference> requiredTypes, final Executor executor) {
         final DataFixerUpper fixerUpper = build();
 
         final Instant started = Instant.now();
         final List<CompletableFuture<Void>> futures = Lists.newArrayList();
+
+        final Set<String> requiredTypeNames = requiredTypes.stream().map(DSL.TypeReference::typeName).collect(Collectors.toSet());
 
         final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
         while (iterator.hasNext()) {
             final int versionKey = iterator.nextInt();
             final Schema schema = schemas.get(versionKey);
             for (final String typeName : schema.types()) {
+                if (!requiredTypeNames.contains(typeName)) {
+                    continue;
+                }
                 final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                     final Type<?> dataType = schema.getType(() -> typeName);
                     final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
