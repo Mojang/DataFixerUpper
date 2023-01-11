@@ -42,11 +42,12 @@ final class Apply<A, B> extends PointFree<B> {
 
     @Override
     public Optional<? extends PointFree<B>> all(final PointFreeRule rule) {
-        return Optional.of(new Apply<>(
-            rule.rewrite(func).map(f1 -> (PointFree<Function<A, B>>) f1).orElse(func),
-            rule.rewrite(arg).map(f -> (PointFree<A>) f).orElse(arg),
-            type
-        ));
+        final PointFree<Function<A, B>> f = rule.rewriteOrNop(func);
+        final PointFree<A> a = rule.rewriteOrNop(arg);
+        if (f == func && a == arg) {
+            return Optional.of(this);
+        }
+        return Optional.of(new Apply<>(f, a, type));
     }
 
     @Override
