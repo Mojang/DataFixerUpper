@@ -41,11 +41,12 @@ final class Comp<A, B, C> extends PointFree<Function<A, C>> {
 
     @Override
     public Optional<? extends PointFree<Function<A, C>>> all(final PointFreeRule rule) {
-        return Optional.of(new Comp<>(
-            rule.rewrite(first).map(f -> (PointFree<Function<B, C>>) f).orElse(first),
-            rule.rewrite(second).map(f1 -> (PointFree<Function<A, B>>) f1).orElse(second),
-            type
-        ));
+        final PointFree<Function<B, C>> f = rule.rewriteOrNop(first);
+        final PointFree<Function<A, B>> s = rule.rewriteOrNop(second);
+        if (f == first && s == second) {
+            return Optional.of(this);
+        }
+        return Optional.of(new Comp<>(f, s, type));
     }
 
     @Override
