@@ -643,15 +643,17 @@ public interface PointFreeRule {
         return new Many(rule);
     }
 
-    static PointFreeRule everywhere(final PointFreeRule rule) {
-        return new Everywhere(rule);
+    static PointFreeRule everywhere(final PointFreeRule topDown, final PointFreeRule bottomUp) {
+        return new Everywhere(topDown, bottomUp);
     }
 
-    record Everywhere(PointFreeRule rule) implements PointFreeRule {
+    record Everywhere(PointFreeRule topDown, PointFreeRule bottomUp) implements PointFreeRule {
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
-            final PointFree<A> view = rule.rewriteOrNop(expr);
-            return view.all(this);
+            final PointFree<A> topDown = this.topDown.rewriteOrNop(expr);
+            final PointFree<A> all = DataFixUtils.orElse(topDown.all(this), topDown);
+            final PointFree<A> bottomUp = this.bottomUp.rewriteOrNop(all);
+            return Optional.of(bottomUp);
         }
     }
 
