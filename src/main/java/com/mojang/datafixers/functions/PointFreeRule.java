@@ -275,6 +275,7 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private <R, A, A2, B, B2> R cap(final Func<B, B2> firstArg, final Func<A, A2> secondArg, final Apply<?, ?> first, final Apply<?, ?> second) {
             return (R) Functions.comp(
+                // Bug: this middle type is technically incorrect for nested optics, but it is never used
                 DSL.and(secondArg.first(), firstArg.second()),
                 (PointFree<Function<Pair<A, B2>, Pair<A2, B2>>>) second,
                 (PointFree<Function<Pair<A, B>, Pair<A, B2>>>) first
@@ -324,6 +325,7 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private <R, A, A2, B, B2> R cap(final Func<B, B2> firstArg, final Func<A, A2> secondArg, final Apply<?, ?> first, final Apply<?, ?> second) {
             return (R) Functions.comp(
+                // Bug: this middle type is technically incorrect for nested optics, but it is never used
                 DSL.or(secondArg.first(), firstArg.second()),
                 (PointFree<Function<Either<A, B2>, Either<A2, B2>>>) second,
                 (PointFree<Function<Either<A, B>, Either<A, B2>>>) first
