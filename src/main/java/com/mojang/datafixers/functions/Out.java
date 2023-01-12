@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.mojang.datafixers.DSL;
+import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.serialization.DynamicOps;
 
@@ -13,6 +15,11 @@ final class Out<A> extends PointFree<Function<A, A>> {
 
     public Out(final RecursivePoint.RecursivePointType<A> type) {
         this.type = type;
+    }
+
+    @Override
+    public Type<Function<A, A>> type() {
+        return DSL.func(type, type.unfold());
     }
 
     @Override

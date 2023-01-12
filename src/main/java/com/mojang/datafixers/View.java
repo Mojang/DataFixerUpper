@@ -7,14 +7,14 @@ import com.mojang.datafixers.functions.PointFree;
 import com.mojang.datafixers.functions.PointFreeRule;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.K2;
+import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-public record View<A, B>(Type<A> type, Type<B> newType, PointFree<Function<A, B>> function) implements App2<View.Mu, A, B> {
+public record View<A, B>(PointFree<Function<A, B>> function) implements App2<View.Mu, A, B> {
     static final class Mu implements K2 {}
 
     static <A, B> View<A, B> unbox(final App2<Mu, A, B> box) {
@@ -22,20 +22,28 @@ public record View<A, B>(Type<A> type, Type<B> newType, PointFree<Function<A, B>
     }
 
     public static <A> View<A, A> nopView(final Type<A> type) {
-        return create(type, type, Functions.id());
+        return new View<>(Functions.id(type));
+    }
+
+    public Type<A> type() {
+        return ((Func<A, B>) funcType()).first();
+    }
+
+    public Type<B> newType() {
+        return ((Func<A, B>) funcType()).second();
     }
 
     public Type<Function<A, B>> funcType() {
-        return DSL.func(type, newType);
+        return function.type();
     }
 
     @Override
     public String toString() {
-        return "View[" + function + "," + newType + "]";
+        return "View[" + function + "," + newType() + "]";
     }
 
     public Optional<? extends View<A, B>> rewrite(final PointFreeRule rule) {
-        return rule.rewrite(DSL.func(type, newType), function()).map(f -> create(type, newType, f));
+        return rule.rewrite(function()).map(View::new);
     }
 
     public View<A, B> rewriteOrNop(final PointFreeRule rule) {
@@ -43,27 +51,27 @@ public record View<A, B>(Type<A> type, Type<B> newType, PointFree<Function<A, B>
     }
 
     public <C> View<A, C> flatMap(final Function<Type<B>, View<B, C>> function) {
-        final View<B, C> instance = function.apply(newType);
-        return new View<>(type, instance.newType, Functions.comp(newType, instance.function(), function()));
+        final View<B, C> instance = function.apply(newType());
+        return new View<>(Functions.comp(instance.function(), function()));
     }
 
-    public static <A, B> View<A, B> create(final Type<A> type, final Type<B> newType, final PointFree<Function<A, B>> function) {
-        return new View<>(type, newType, function);
+    public static <A, B> View<A, B> create(final PointFree<Function<A, B>> function) {
+        return new View<>(function);
     }
 
     public static <A, B> View<A, B> create(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function) {
-        return new View<>(type, newType, Functions.fun(name, function));
+        return new View<>(Functions.fun(name, function, type, newType));
     }
 
     @SuppressWarnings("unchecked")
     public <C> View<C, B> compose(final View<C, A> that) {
         if (isNop()) {
-            return new View<>(that.type(), newType(), ((View<C, B>) that).function());
+            return new View<>(((View<C, B>) that).function());
         }
         if (that.isNop()) {
-            return new View<>(that.type(), newType(), ((View<C, B>) this).function());
+            return new View<>(((View<C, B>) this).function());
         }
-        return create(that.type, newType, Functions.comp(that.newType, function(), that.function()));
+        return new View<>(Functions.comp(function(), that.function()));
     }
 
     public boolean isNop() {

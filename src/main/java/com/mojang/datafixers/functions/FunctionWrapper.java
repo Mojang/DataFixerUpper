@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.mojang.datafixers.DSL;
+import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
 import java.util.Objects;
@@ -10,10 +12,17 @@ import java.util.function.Function;
 final class FunctionWrapper<A, B> extends PointFree<Function<A, B>> {
     private final String name;
     protected final Function<DynamicOps<?>, Function<A, B>> fun;
+    private final Type<Function<A, B>> type;
 
-    FunctionWrapper(final String name, final Function<DynamicOps<?>, Function<A, B>> fun) {
+    FunctionWrapper(final String name, final Function<DynamicOps<?>, Function<A, B>> fun, final Type<A> input, final Type<B> output) {
         this.name = name;
         this.fun = fun;
+        type = DSL.func(input, output);
+    }
+
+    @Override
+    public Type<Function<A, B>> type() {
+        return type;
     }
 
     @Override

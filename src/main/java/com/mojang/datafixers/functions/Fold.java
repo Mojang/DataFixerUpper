@@ -3,8 +3,10 @@
 package com.mojang.datafixers.functions;
 
 import com.google.common.collect.Maps;
+import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.View;
+import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
@@ -35,8 +37,13 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
         this.index = index;
     }
 
+    @Override
+    public Type<Function<A, B>> type() {
+        return DSL.func(aType, bType);
+    }
+
     private <FB> PointFree<Function<A, B>> cap(final RewriteResult<?, B> op, final RewriteResult<?, FB> resResult) {
-        return Functions.comp(resResult.view().newType(), ((View<FB, B>) op.view()).function(), ((View<A, FB>) resResult.view()).function());
+        return Functions.comp(((View<FB, B>) op.view()).function(), ((View<A, FB>) resResult.view()).function());
     }
 
     @Override

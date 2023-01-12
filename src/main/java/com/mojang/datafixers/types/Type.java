@@ -61,12 +61,15 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         }
         // copy the recData, since optic doesn't touch more than the nested view
         return RewriteResult.create(View.create(
-            optic.sType(),
-            optic.tType(),
             Functions.app(
-                Functions.profunctorTransformer(optic.upCast(FunctionType.Instance.Mu.TYPE_TOKEN).orElseThrow(IllegalArgumentException::new)),
-                view.view().function(),
-                DSL.func(optic.aType(), view.view().newType())
+                Functions.profunctorTransformer(
+                    optic.upCast(FunctionType.Instance.Mu.TYPE_TOKEN).orElseThrow(IllegalArgumentException::new),
+                    DSL.func(
+                        DSL.func(optic.aType(), view.view().newType()),
+                        DSL.func(optic.sType(), optic.tType())
+                    )
+                ),
+                view.view().function()
             )), view.recData());
     }
 
