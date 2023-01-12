@@ -42,21 +42,23 @@ public class DataFixerUpper implements DataFixer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFixerUpper.class);
 
-    protected static final PointFreeRule OPTIMIZATION_RULE = DataFixUtils.make(() -> {
-        final PointFreeRule opSimple = PointFreeRule.choice(
-            PointFreeRule.CompRewrite.choice(
-                PointFreeRule.CataFuseSame.INSTANCE,
-                PointFreeRule.CataFuseDifferent.INSTANCE
-            ),
-            PointFreeRule.LensAppId.INSTANCE,
-            PointFreeRule.LensComp.INSTANCE,
-            PointFreeRule.AppNest.INSTANCE
-        );
-        final PointFreeRule opLeft = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(opSimple, PointFreeRule.CompAssocLeft.INSTANCE)));
-        final PointFreeRule opComp = PointFreeRule.many(PointFreeRule.once(PointFreeRule.CompRewrite.choice(PointFreeRule.SortInj.INSTANCE, PointFreeRule.SortProj.INSTANCE)));
-        final PointFreeRule opRight = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(opSimple, PointFreeRule.CompAssocRight.INSTANCE)));
-        return PointFreeRule.seq(opLeft, opComp, opRight, opLeft, opRight);
-    });
+    protected static final PointFreeRule OPTIMIZATION_RULE = DataFixUtils.make(() -> PointFreeRule.everywhere(
+        // Top-down: these rules produce new compositions that also need to be rewritten
+        PointFreeRule.seq(
+            // Applying CataFuseDifferent before CataFuseSame would prevent some merges from happening, but not the other way around
+            PointFreeRule.CataFuseSame.INSTANCE,
+            PointFreeRule.CataFuseDifferent.INSTANCE,
+            // Apply all of these together exhaustively because each change can allow another rule to apply
+            PointFreeRule.CompRewrite.together(
+                // Merge functions applying to identical optics, must run before merging nested applied functions
+                PointFreeRule.LensComp.INSTANCE,
+                PointFreeRule.SortProj.INSTANCE,
+                PointFreeRule.SortInj.INSTANCE
+            )
+        ),
+        // Bottom-up: ensure we nest the full tree in a single pass
+        PointFreeRule.AppNest.INSTANCE
+    ));
 
     private final Int2ObjectSortedMap<Schema> schemas;
     private final List<DataFix> globalList;
