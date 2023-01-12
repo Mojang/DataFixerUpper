@@ -50,11 +50,6 @@ public final class RecursiveTypeFamily implements TypeFamily {
     }
 
     @SuppressWarnings("unchecked")
-    public static <A, B> View<A, B> viewUnchecked(final Type<?> type, final Type<?> resType, final PointFree<Function<A, B>> function) {
-        return View.create((Type<A>) type, (Type<B>) resType, function);
-    }
-
-    @SuppressWarnings("unchecked")
     public <A> RecursivePoint.RecursivePointType<A> buildMuType(final Type<A> newType, @Nullable RecursiveTypeFamily newFamily) {
         if (newFamily == null) {
             // G
@@ -101,7 +96,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
         return index -> {
             final RewriteResult<?, ?> result = algebra.apply(index);
             // FIXME: is this corrext?
-            return RewriteResult.create(viewUnchecked(result.view().type(), result.view().newType(), foldUnchecked(this, newFamily, algebra, index, result)), result.recData());
+            return RewriteResult.create(View.create(foldUnchecked(this, newFamily, algebra, index, result)), result.recData());
         };
     }
 
@@ -185,7 +180,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
         }
         final Algebra algebra = new ListAlgebra("everywhere", views);
         final RewriteResult<?, ?> fold = fold(algebra, newFamily).apply(index);
-        return Optional.of(RewriteResult.create(viewUnchecked(apply(index), newType, fold.view().function()), fold.recData()));
+        return Optional.of(RewriteResult.create(View.create(fold.view().function()), fold.recData()));
     }
 
     private <A, B> boolean cap2(final List<RewriteResult<?, ?>> views, final RecursivePoint.RecursivePointType<A> type, final TypeRewriteRule rule, final PointFreeRule optimizationRule, boolean nop, RewriteResult<?, ?> view, final RecursivePoint.RecursivePointType<B> newType) {

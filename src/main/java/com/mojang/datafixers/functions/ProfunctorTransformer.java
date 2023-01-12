@@ -5,6 +5,7 @@ package com.mojang.datafixers.functions;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.optics.Optic;
+import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
 import java.util.Objects;
@@ -12,9 +13,21 @@ import java.util.function.Function;
 
 final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Function<A, B>, Function<S, T>>> {
     protected final Optic<? super FunctionType.Instance.Mu, S, T, A, B> optic;
+    protected final Type<Function<Function<A, B>, Function<S, T>>> type;
 
-    public ProfunctorTransformer(final Optic<? super FunctionType.Instance.Mu, S, T, A, B> optic) {
+    public ProfunctorTransformer(final Optic<? super FunctionType.Instance.Mu, S, T, A, B> optic, final Type<Function<Function<A, B>, Function<S, T>>> type) {
         this.optic = optic;
+        this.type = type;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <S2, T2> ProfunctorTransformer<S2, T2, A, B> castOuterUnchecked(final Type<Function<Function<A, B>, Function<S2, T2>>> newType) {
+        return new ProfunctorTransformer<>((Optic<? super FunctionType.Instance.Mu, S2, T2, A, B>) optic, newType);
+    }
+
+    @Override
+    public Type<Function<Function<A, B>, Function<S, T>>> type() {
+        return type;
     }
 
     @Override

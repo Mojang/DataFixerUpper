@@ -2,12 +2,21 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
 import java.util.function.Function;
 
 final class Id<A> extends PointFree<Function<A, A>> {
-    Id() {
+    private final Type<Function<A, A>> type;
+
+    Id(final Type<Function<A, A>> type) {
+        this.type = type;
+    }
+
+    @Override
+    public Type<Function<A, A>> type() {
+        return type;
     }
 
     @Override

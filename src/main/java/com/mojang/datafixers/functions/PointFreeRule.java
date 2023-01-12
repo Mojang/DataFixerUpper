@@ -6,17 +6,17 @@ import com.google.common.collect.Lists;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.RewriteResult;
-import com.mojang.datafixers.View;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.Func;
-import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.constant.EmptyPart;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.families.ListAlgebra;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
+import com.mojang.datafixers.types.templates.Product;
+import com.mojang.datafixers.types.templates.Sum;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 
@@ -29,10 +29,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface PointFreeRule {
-    <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr);
+    <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr);
 
-    default <A> PointFree<A> rewriteOrNop(final Type<A> type, final PointFree<A> expr) {
-        return DataFixUtils.orElse(rewrite(type, expr), expr);
+    default <A> PointFree<A> rewriteOrNop(final PointFree<A> expr) {
+        return DataFixUtils.orElse(rewrite(expr), expr);
     }
 
     static PointFreeRule nop() {
@@ -43,7 +43,7 @@ public interface PointFreeRule {
         INSTANCE;
 
         @Override
-        public <A> Optional<PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<PointFree<A>> rewrite(final PointFree<A> expr) {
             return Optional.of(expr);
         }
 
@@ -58,14 +58,13 @@ public interface PointFreeRule {
 
         @SuppressWarnings("unchecked")
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             if (expr instanceof Bang) {
                 return Optional.empty();
             }
-            if (type instanceof Func<?, ?>) {
-                final Func<?, ?> func = (Func<?, ?>) type;
+            if (expr.type() instanceof Func<?, ?> func) {
                 if (func.second() instanceof EmptyPart) {
-                    return Optional.of((PointFree<A>) Functions.bang());
+                    return Optional.of((PointFree<A>) Functions.bang(func.first()));
                 }
             }
             return Optional.empty();
@@ -77,7 +76,7 @@ public interface PointFreeRule {
 
         // f ◦ (g ◦ h) -> (f ◦ g) ◦ h
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp2 = (Comp<?, ?, ?>) expr;
                 final PointFree<? extends Function<?, ?>> second = comp2.second;
@@ -92,7 +91,7 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private static <A, B, C, D, E> Optional<PointFree<E>> swap(final Comp<A, B, C> comp1, final Comp<?, ?, D> comp2raw) {
             final Comp<A, C, D> comp2 = (Comp<A, C, D>) comp2raw;
-            return Optional.of((PointFree<E>) new Comp<>(comp1.middleType, new Comp<>(comp2.middleType, comp2.first, comp1.first), comp1.second));
+            return Optional.of((PointFree<E>) new Comp<>(new Comp<>(comp2.first, comp1.first), comp1.second));
         }
     }
 
@@ -101,7 +100,7 @@ public interface PointFreeRule {
 
         // (f ◦ g) ◦ h -> f ◦ (g ◦ h)
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp1 = (Comp<?, ?, ?>) expr;
                 final PointFree<? extends Function<?, ?>> first = comp1.first;
@@ -116,7 +115,7 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private static <A, B, C, D, E> Optional<PointFree<E>> swap(final Comp<A, B, D> comp1, final Comp<?, C, ?> comp2raw) {
             final Comp<B, C, D> comp2 = (Comp<B, C, D>) comp2raw;
-            return Optional.of((PointFree<E>) new Comp<>(comp2.middleType, comp2.first, new Comp<>(comp1.middleType, comp2.second, comp1.second)));
+            return Optional.of((PointFree<E>) new Comp<>(comp2.first, new Comp<>(comp2.second, comp1.second)));
         }
     }
 
@@ -126,12 +125,11 @@ public interface PointFreeRule {
         // (ap lens id) -> id
         @SuppressWarnings("unchecked")
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
-            if (expr instanceof Apply<?, ?>) {
-                final Apply<?, A> apply = (Apply<?, A>) expr;
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
+            if (expr instanceof Apply<?, A> apply) {
                 final PointFree<? extends Function<?, A>> func = apply.func;
                 if (func instanceof ProfunctorTransformer<?, ?, ?, ?> && Functions.isId(apply.arg)) {
-                    return Optional.of((PointFree<A>) Functions.id());
+                    return Optional.of((PointFree<A>) Functions.id(((Func<?, ?>) apply.type()).first()));
                 }
             }
             return Optional.empty();
@@ -143,7 +141,7 @@ public interface PointFreeRule {
 
         // (ap f1 (ap f2 arg)) -> (ap (f1 ◦ f2) arg)
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             if (expr instanceof Apply<?, ?>) {
                 final Apply<?, ?> applyFirst = (Apply<?, ?>) expr;
                 if (applyFirst.arg instanceof Apply<?, ?>) {
@@ -157,7 +155,7 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private <A, B, C, D, E> Optional<? extends PointFree<A>> cap(final Apply<D, E> applyFirst, final Apply<B, C> applySecond) {
             final PointFree<?> func = applySecond.func;
-            return Optional.of((PointFree<A>) Functions.app(Functions.comp(applyFirst.argType, applyFirst.func, (PointFree<Function<B, D>>) func), applySecond.arg, applySecond.argType));
+            return Optional.of((PointFree<A>) Functions.app(Functions.comp(applyFirst.func, (PointFree<Function<B, D>>) func), applySecond.arg));
         }
     }
 
@@ -175,7 +173,7 @@ public interface PointFreeRule {
         }
 
         @Override
-        default <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        default <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) expr;
                 final PointFree<? extends Function<?, ?>> first = comp.first;
@@ -210,24 +208,24 @@ public interface PointFreeRule {
 
         @SuppressWarnings("unchecked")
         static <A, B, C, D> PointFree<D> buildLeft(final PointFree<?> result, final Comp<A, B, C> comp) {
-            return (PointFree<D>) new Comp<>(comp.middleType, (PointFree<Function<B, C>>) result, comp.second);
+            return (PointFree<D>) new Comp<>((PointFree<Function<B, C>>) result, comp.second);
         }
 
         @SuppressWarnings("unchecked")
         static <A, B, C, D> PointFree<D> buildRight(final Comp<A, B, C> comp, final PointFree<?> result) {
-            return (PointFree<D>) new Comp<>(comp.middleType, comp.first, (PointFree<Function<A, B>>) result);
+            return (PointFree<D>) new Comp<>(comp.first, (PointFree<Function<A, B>>) result);
         }
 
         @SuppressWarnings("unchecked")
         static <A, B, C, D, E> PointFree<E> buildLeftNested(final Comp<A, B, C> comp1, final Comp<?, ?, D> comp2raw) {
             final Comp<A, C, D> comp2 = (Comp<A, C, D>) comp2raw;
-            return (PointFree<E>) new Comp<>(comp1.middleType, new Comp<>(comp2.middleType, comp2.first, comp1.first), comp1.second);
+            return (PointFree<E>) new Comp<>(new Comp<>(comp2.first, comp1.first), comp1.second);
         }
 
         @SuppressWarnings("unchecked")
         static <A, B, C, D, E> PointFree<E> buildRightNested(final Comp<A, B, D> comp1, final Comp<?, C, ?> comp2raw) {
             final Comp<B, C, D> comp2 = (Comp<B, C, D>) comp2raw;
-            return (PointFree<E>) new Comp<>(comp2.middleType, comp2.first, new Comp<>(comp1.middleType, comp2.second, comp1.second));
+            return (PointFree<E>) new Comp<>(comp2.first, new Comp<>(comp2.second, comp1.second));
         }
 
         Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(PointFree<? extends Function<?, ?>> first, PointFree<? extends Function<?, ?>> second);
@@ -264,21 +262,33 @@ public interface PointFreeRule {
                         return Optional.empty();
                     }
 
-                    final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
-                    final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
-                    return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
+                    return Optional.of(cap(applyFirst, applySecond));
                 }
             }
             return Optional.empty();
         }
 
         @SuppressWarnings("unchecked")
-        private <R, A, A2, B, B2> R cap(final Func<B, B2> firstArg, final Func<A, A2> secondArg, final Apply<?, ?> first, final Apply<?, ?> second) {
-            return (R) Functions.comp(
-                // Bug: this middle type is technically incorrect for nested optics, but it is never used
-                DSL.and(secondArg.first(), firstArg.second()),
-                (PointFree<Function<Pair<A, B2>, Pair<A2, B2>>>) second,
-                (PointFree<Function<Pair<A, B>, Pair<A, B2>>>) first
+        private <R, A, A2, B, B2> R cap(final Apply<?, ?> first, final Apply<?, ?> second) {
+            final ProfunctorTransformer<Pair<A, B2>, Pair<A2, B2>, A, A2> firstFunc = (ProfunctorTransformer<Pair<A, B2>, Pair<A2, B2>, A, A2>) (Object) first.func;
+            final ProfunctorTransformer<Pair<A, B>, Pair<A, B2>, B, B2> secondFunc = (ProfunctorTransformer<Pair<A, B>, Pair<A, B2>, B, B2>) (Object) second.func;
+            final PointFree<Function<A, A2>> firstArg = (PointFree<Function<A, A2>>) first.arg;
+            final PointFree<Function<B, B2>> secondArg = (PointFree<Function<B, B2>>) second.arg;
+
+            final Func<Pair<A, B2>, Pair<A2, B2>> firstType = (Func<Pair<A, B2>, Pair<A2, B2>>) first.type;
+            final Func<Pair<A, B>, Pair<A, B2>> secondType = (Func<Pair<A, B>, Pair<A, B2>>) second.type;
+            final Product.ProductType<A, B> input = (Product.ProductType<A, B>) secondType.first();
+            final Product.ProductType<A2, B2> output = (Product.ProductType<A2, B2>) firstType.second();
+
+            return (R) new Comp<>(
+                new Apply<>(secondFunc.castOuterUnchecked(DSL.func(
+                    DSL.func(input.second(), output.second()),
+                    DSL.func(DSL.and(output.first(), input.second()), output)
+                )), secondArg),
+                new Apply<>(firstFunc.castOuterUnchecked(DSL.func(
+                    DSL.func(input.first(), output.first()),
+                    DSL.func(input, DSL.and(output.first(), input.second()))
+                )), firstArg)
             );
         }
     }
@@ -314,21 +324,33 @@ public interface PointFreeRule {
                         return Optional.empty();
                     }
 
-                    final Func<?, ?> firstArg = (Func<?, ?>) applyFirst.argType;
-                    final Func<?, ?> secondArg = (Func<?, ?>) applySecond.argType;
-                    return Optional.of(cap(firstArg, secondArg, applyFirst, applySecond));
+                    return Optional.of(cap(applyFirst, applySecond));
                 }
             }
             return Optional.empty();
         }
 
         @SuppressWarnings("unchecked")
-        private <R, A, A2, B, B2> R cap(final Func<B, B2> firstArg, final Func<A, A2> secondArg, final Apply<?, ?> first, final Apply<?, ?> second) {
-            return (R) Functions.comp(
-                // Bug: this middle type is technically incorrect for nested optics, but it is never used
-                DSL.or(secondArg.first(), firstArg.second()),
-                (PointFree<Function<Either<A, B2>, Either<A2, B2>>>) second,
-                (PointFree<Function<Either<A, B>, Either<A, B2>>>) first
+        private <R, A, A2, B, B2> R cap(final Apply<?, ?> first, final Apply<?, ?> second) {
+            final ProfunctorTransformer<Either<A, B2>, Either<A2, B2>, A, A2> firstFunc = (ProfunctorTransformer<Either<A, B2>, Either<A2, B2>, A, A2>) (Object) first.func;
+            final ProfunctorTransformer<Either<A, B>, Either<A, B2>, B, B2> secondFunc = (ProfunctorTransformer<Either<A, B>, Either<A, B2>, B, B2>) (Object) second.func;
+            final PointFree<Function<A, A2>> firstArg = (PointFree<Function<A, A2>>) first.arg;
+            final PointFree<Function<B, B2>> secondArg = (PointFree<Function<B, B2>>) second.arg;
+
+            final Func<Either<A, B2>, Either<A2, B2>> firstType = (Func<Either<A, B2>, Either<A2, B2>>) first.type;
+            final Func<Either<A, B>, Either<A, B2>> secondType = (Func<Either<A, B>, Either<A, B2>>) second.type;
+            final Sum.SumType<A, B> input = (Sum.SumType<A, B>) secondType.first();
+            final Sum.SumType<A2, B2> output = (Sum.SumType<A2, B2>) firstType.second();
+
+            return (R) new Comp<>(
+                new Apply<>(secondFunc.castOuterUnchecked(DSL.func(
+                    DSL.func(input.second(), output.second()),
+                    DSL.func(DSL.or(output.first(), input.second()), output)
+                )), secondArg),
+                new Apply<>(firstFunc.castOuterUnchecked(DSL.func(
+                    DSL.func(input.first(), output.first()),
+                    DSL.func(input, DSL.or(output.first(), input.second()))
+                )), firstArg)
             );
         }
     }
@@ -338,7 +360,7 @@ public interface PointFreeRule {
 
         // Optic[o1] ◦ Optic[o2] -> Optic[o1 ◦ o2]
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             if (expr instanceof Comp<?, ?, ?>) {
                 final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) expr;
                 final PointFree<? extends Function<?, ?>> first = comp.first;
@@ -355,7 +377,9 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private <R, X, Y, S, T, A, B> R cap(final ProfunctorTransformer<X, Y, ?, ?> first, final ProfunctorTransformer<S, T, A, B> second) {
             final ProfunctorTransformer<X, Y, S, T> firstCasted = (ProfunctorTransformer<X, Y, S, T>) first;
-            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic));
+            final Func<Function<S, T>, Function<X, Y>> firstType = (Func<Function<S, T>, Function<X, Y>>) firstCasted.type;
+            final Func<Function<A, B>, Function<S, T>> secondType = (Func<Function<A, B>, Function<S, T>>) second.type;
+            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic), DSL.func(secondType.first(), firstType.second()));
         }
     }
 
@@ -376,23 +400,21 @@ public interface PointFreeRule {
                     final ProfunctorTransformer<?, ?, ?, ?> lensPFSecond = (ProfunctorTransformer<?, ?, ?, ?>) secondFunc;
                     // TODO: better equality - has to be the same lens; find out more about lens profunctor composition
                     if (Objects.equals(lensPFFirst.optic, lensPFSecond.optic)) {
-                        final Func<?, ?> firstFuncType = (Func<?, ?>) applyFirst.argType;
-                        final Func<?, ?> secondFuncType = (Func<?, ?>) applySecond.argType;
-                        return cap(lensPFFirst, lensPFSecond, applyFirst.arg, applySecond.arg, firstFuncType, secondFuncType);
+                        return cap(lensPFFirst, lensPFSecond, applyFirst.arg, applySecond.arg);
                     }
                 }
             }
             return Optional.empty();
         }
 
-        private <R, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<?, U, ?, C> l2, final PointFree<?> f1, final PointFree<?> f2, final Func<?, ?> firstType, final Func<?, ?> secondType) {
-            return cap2(l1, (ProfunctorTransformer<T, U, B, C>) l2, (PointFree<Function<B, C>>) f1, (PointFree<Function<A, B>>) f2, (Func<B, C>) firstType, (Func<A, B>) secondType);
+        private <R, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<?, U, ?, C> l2, final PointFree<?> f1, final PointFree<?> f2) {
+            return cap2(l1, (ProfunctorTransformer<T, U, B, C>) l2, (PointFree<Function<B, C>>) f1, (PointFree<Function<A, B>>) f2);
         }
 
-        private <R, P extends K2, Proof extends K1, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap2(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<T, U, B, C> l2, final PointFree<Function<B, C>> f1, final PointFree<Function<A, B>> f2, final Func<B, C> firstType, final Func<A, B> secondType) {
+        private <R, P extends K2, Proof extends K1, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap2(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<T, U, B, C> l2, final PointFree<Function<B, C>> f1, final PointFree<Function<A, B>> f2) {
             final PointFree<Function<Function<A, C>, Function<S, U>>> lens = (PointFree<Function<Function<A, C>, Function<S, U>>>) (PointFree<?>) l1;
-            final PointFree<Function<A, C>> arg = Functions.comp(firstType.first(), f1, f2);
-            return Optional.of((PointFree<R>) Functions.app(lens, arg, DSL.func(secondType.first(), firstType.second())));
+            final PointFree<Function<A, C>> arg = Functions.comp(f1, f2);
+            return Optional.of((PointFree<R>) Functions.app(lens, arg));
         }
     }
 
@@ -523,10 +545,10 @@ public interface PointFreeRule {
 
     record Seq(PointFreeRule[] rules) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             Optional<? extends PointFree<A>> result = Optional.of(expr);
             for (final PointFreeRule rule : rules) {
-                result = rule.rewrite(type, result.get());
+                result = rule.rewrite(result.get());
                 if (result.isEmpty()) {
                     return Optional.empty();
                 }
@@ -559,20 +581,20 @@ public interface PointFreeRule {
 
     record Choice2(PointFreeRule first, PointFreeRule second) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
-            final Optional<? extends PointFree<A>> view = first.rewrite(type, expr);
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
+            final Optional<? extends PointFree<A>> view = first.rewrite(expr);
             if (view.isPresent()) {
                 return view;
             }
-            return second.rewrite(type, expr);
+            return second.rewrite(expr);
         }
     }
 
     record Choice(PointFreeRule[] rules) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             for (final PointFreeRule rule : rules) {
-                final Optional<? extends PointFree<A>> view = rule.rewrite(type, expr);
+                final Optional<? extends PointFree<A>> view = rule.rewrite(expr);
                 if (view.isPresent()) {
                     return view;
                 }
@@ -608,12 +630,12 @@ public interface PointFreeRule {
 
     record Once(PointFreeRule rule) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
-            final Optional<? extends PointFree<A>> view = rule.rewrite(type, expr);
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
+            final Optional<? extends PointFree<A>> view = rule.rewrite(expr);
             if (view.isPresent()) {
                 return view;
             }
-            return expr.one(this, type);
+            return expr.one(this);
         }
     }
 
@@ -627,33 +649,33 @@ public interface PointFreeRule {
 
     record Everywhere(PointFreeRule rule) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
-            final PointFree<A> view = rule.rewriteOrNop(type, expr);
-            return view.all(this, type);
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
+            final PointFree<A> view = rule.rewriteOrNop(expr);
+            return view.all(this);
         }
     }
 
     record All(PointFreeRule rule) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
-            return expr.all(rule, type);
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
+            return expr.all(rule);
         }
     }
 
     record One(PointFreeRule rule) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
-            return expr.one(rule, type);
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
+            return expr.one(rule);
         }
     }
 
     record Many(PointFreeRule rule) implements PointFreeRule {
         @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr) {
+        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
             Optional<? extends PointFree<A>> result = Optional.of(expr);
             while (true) {
-                final Optional<? extends PointFree<A>> newResult = result.flatMap(e -> rule.rewrite(type, e).map(r -> r));
-                if (!newResult.isPresent()) {
+                final Optional<? extends PointFree<A>> newResult = result.flatMap(rule::rewrite);
+                if (newResult.isEmpty()) {
                     return result;
                 }
                 result = newResult;

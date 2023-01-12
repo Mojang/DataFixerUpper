@@ -75,20 +75,17 @@ public final class RecursivePoint implements TypeTemplate {
         };
     }
 
-    @SuppressWarnings("unchecked")
     public <S, T> RewriteResult<S, T> cap(final TypeFamily family, final RewriteResult<S, T> result) {
         final Type<?> sourceType = family.apply(index);
         if (!(sourceType instanceof RecursivePointType<?>)) {
             throw new IllegalArgumentException("Type error: Recursive point template template got a non-recursice type as an input.");
         }
-        if (!Objects.equals(result.view().type(), ((RecursivePointType<?>) sourceType).unfold())) {
+        if (!Objects.equals(result.view().type(), sourceType)) {
             throw new IllegalArgumentException("Type error: hmap function input type");
         }
-        final RecursivePointType<S> sType = (RecursivePointType<S>) sourceType;
-        final RecursivePointType<T> tType = sType.family().buildMuType(result.view().newType(), null);
         final BitSet bitSet = ObjectUtils.clone(result.recData());
         bitSet.set(index);
-        return RewriteResult.create(View.create(sType, tType, result.view().function()), bitSet);
+        return RewriteResult.create(result.view(), bitSet);
     }
 
     @Override
@@ -282,11 +279,11 @@ public final class RecursivePoint implements TypeTemplate {
         }
 
         public View<A, A> in() {
-            return View.create(unfold(), this, Functions.in(this));
+            return View.create(Functions.in(this));
         }
 
         public View<A, A> out() {
-            return View.create(this, unfold(), Functions.out(this));
+            return View.create(Functions.out(this));
         }
     }
 }

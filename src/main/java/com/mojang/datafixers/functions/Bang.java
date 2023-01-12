@@ -2,13 +2,23 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.mojang.datafixers.DSL;
+import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.DynamicOps;
 
 import java.util.function.Function;
 
 final class Bang<A> extends PointFree<Function<A, Unit>> {
-    Bang() {
+    private final Type<A> type;
+
+    Bang(final Type<A> type) {
+        this.type = type;
+    }
+
+    @Override
+    public Type<Function<A, Unit>> type() {
+        return DSL.func(type, DSL.emptyPartType());
     }
 
     @Override

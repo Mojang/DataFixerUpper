@@ -28,13 +28,15 @@ public abstract class PointFree<T> {
         return value;
     }
 
+    public abstract Type<T> type();
+
     public abstract Function<DynamicOps<?>, T> eval();
 
-    Optional<? extends PointFree<T>> all(final PointFreeRule rule, final Type<T> type) {
+    Optional<? extends PointFree<T>> all(final PointFreeRule rule) {
         return Optional.of(this);
     }
 
-    Optional<? extends PointFree<T>> one(final PointFreeRule rule, final Type<T> type) {
+    Optional<? extends PointFree<T>> one(final PointFreeRule rule) {
         return Optional.empty();
     }
 

@@ -162,7 +162,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
                 newTypes.put(entry.getKey(), entry.getValue().view().newType());
                 recData.or(entry.getValue().recData());
             }
-            return RewriteResult.create(View.create(this, DSL.taggedChoiceType(name, keyType, newTypes), Functions.fun("TaggedChoiceTypeRewriteResult " + results.size(), new RewriteFunc<>(results))), recData);
+            return RewriteResult.create(View.create(Functions.fun("TaggedChoiceTypeRewriteResult " + results.size(), new RewriteFunc<>(results), this, DSL.taggedChoiceType(name, keyType, newTypes))), recData);
         }
 
         public static <K, FT, FR> RewriteResult<Pair<K, ?>, Pair<K, ?>> elementResult(final K key, final TaggedChoiceType<K> type, final RewriteResult<FT, FR> result) {

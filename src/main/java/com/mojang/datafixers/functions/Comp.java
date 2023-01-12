@@ -12,14 +12,26 @@ import java.util.Optional;
 import java.util.function.Function;
 
 final class Comp<A, B, C> extends PointFree<Function<A, C>> {
-    protected final Type<B> middleType;
     protected final PointFree<Function<B, C>> first;
     protected final PointFree<Function<A, B>> second;
+    private final Type<Function<A, C>> type;
 
-    public Comp(final Type<B> middleType, final PointFree<Function<B, C>> first, final PointFree<Function<A, B>> second) {
-        this.middleType = middleType;
+    public Comp(final PointFree<Function<B, C>> first, final PointFree<Function<A, B>> second) {
+        this(first, second, DSL.func(
+            ((Func<A, B>) second.type()).first(),
+            ((Func<B, C>) first.type()).second()
+        ));
+    }
+
+    private Comp(final PointFree<Function<B, C>> first, final PointFree<Function<A, B>> second, final Type<Function<A, C>> type) {
         this.first = first;
         this.second = second;
+        this.type = type;
+    }
+
+    @Override
+    public Type<Function<A, C>> type() {
+        return type;
     }
 
     @Override
@@ -28,20 +40,18 @@ final class Comp<A, B, C> extends PointFree<Function<A, C>> {
     }
 
     @Override
-    public Optional<? extends PointFree<Function<A, C>>> all(final PointFreeRule rule, final Type<Function<A, C>> type) {
-        final Func<A, C> funcType = (Func<A, C>) type;
-        return Optional.of(Functions.comp(
-            middleType,
-            rule.rewrite(DSL.func(middleType, funcType.second()), first).map(f -> (PointFree<Function<B, C>>) f).orElse(first),
-            rule.rewrite(DSL.func(funcType.first(), middleType), second).map(f1 -> (PointFree<Function<A, B>>) f1).orElse(second)
+    public Optional<? extends PointFree<Function<A, C>>> all(final PointFreeRule rule) {
+        return Optional.of(new Comp<>(
+            rule.rewrite(first).map(f -> (PointFree<Function<B, C>>) f).orElse(first),
+            rule.rewrite(second).map(f1 -> (PointFree<Function<A, B>>) f1).orElse(second),
+            type
         ));
     }
 
     @Override
-    public Optional<? extends PointFree<Function<A, C>>> one(final PointFreeRule rule, final Type<Function<A, C>> type) {
-        final Func<A, C> funcType = (Func<A, C>) type;
-        return rule.rewrite(DSL.func(middleType, funcType.second()), first).map(f -> Optional.of(Functions.comp(middleType, f, second)))
-            .orElseGet(() -> rule.rewrite(DSL.func(funcType.first(), middleType), second).map(s -> Functions.comp(middleType, first, s)));
+    public Optional<? extends PointFree<Function<A, C>>> one(final PointFreeRule rule) {
+        return rule.rewrite(first).map(f -> new Comp<>(f, second, type))
+            .or(() -> rule.rewrite(second).map(s -> new Comp<>(first, s, type)));
     }
 
     @Override
