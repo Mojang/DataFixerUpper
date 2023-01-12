@@ -165,6 +165,14 @@ public final class Sum implements TypeTemplate {
             this.second = second;
         }
 
+        public Type<F> first() {
+            return first;
+        }
+
+        public Type<G> second() {
+            return second;
+        }
+
         @Override
         public RewriteResult<Either<F, G>, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
             return mergeViews(first.rewriteOrNop(rule), second.rewriteOrNop(rule));
