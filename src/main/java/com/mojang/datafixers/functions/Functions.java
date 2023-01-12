@@ -54,12 +54,11 @@ public abstract class Functions {
         return new Fold<>(aType, function, algebra, index);
     }
 
-    @SuppressWarnings("unchecked")
     public static <A> PointFree<Function<A, A>> id() {
-        return (Id<A>) Id.INSTANCE;
+        return new Id<>();
     }
 
     public static boolean isId(final PointFree<?> function) {
-        return function == Id.INSTANCE;
+        return function instanceof Id<?>;
     }
 }
