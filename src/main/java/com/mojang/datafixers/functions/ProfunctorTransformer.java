@@ -12,13 +12,9 @@ import java.util.function.Function;
 
 final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Function<A, B>, Function<S, T>>> {
     protected final Optic<? super FunctionType.Instance.Mu, S, T, A, B> optic;
-    protected final Function<App2<FunctionType.Mu, A, B>, App2<FunctionType.Mu, S, T>> func;
-    private final Function<Function<A, B>, Function<S, T>> unwrappedFunction;
 
     public ProfunctorTransformer(final Optic<? super FunctionType.Instance.Mu, S, T, A, B> optic) {
         this.optic = optic;
-        func = optic.eval(FunctionType.Instance.INSTANCE);
-        unwrappedFunction = input -> FunctionType.unbox(func.apply(FunctionType.create(input)));
     }
 
     @Override
@@ -28,6 +24,8 @@ final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Functio
 
     @Override
     public Function<DynamicOps<?>, Function<Function<A, B>, Function<S, T>>> eval() {
+        final Function<App2<FunctionType.Mu, A, B>, App2<FunctionType.Mu, S, T>> func = optic.eval(FunctionType.Instance.INSTANCE);
+        final Function<Function<A, B>, Function<S, T>> unwrappedFunction = input -> FunctionType.unbox(func.apply(FunctionType.create(input)));
         return ops -> unwrappedFunction;
     }
 
