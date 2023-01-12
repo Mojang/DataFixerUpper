@@ -22,6 +22,22 @@ public abstract class Functions {
         if (Functions.isId(f2)) {
             return (PointFree<Function<A, C>>) (PointFree<?>) f1;
         }
+        if (f1 instanceof Comp<B, C> comp1 && f2 instanceof Comp<A, B> comp2) {
+            final PointFree<? extends Function<?, ?>>[] functions = new PointFree[comp1.functions.length + comp2.functions.length];
+            System.arraycopy(comp1.functions, 0, functions, 0, comp1.functions.length);
+            System.arraycopy(comp2.functions, 0, functions, comp1.functions.length, comp2.functions.length);
+            return new Comp<>(functions);
+        } else if (f1 instanceof Comp<B, C> comp1) {
+            final PointFree<? extends Function<?, ?>>[] functions = new PointFree[comp1.functions.length + 1];
+            System.arraycopy(comp1.functions, 0, functions, 0, comp1.functions.length);
+            functions[functions.length - 1] = f2;
+            return new Comp<>(functions);
+        } else if (f2 instanceof Comp<A, B> comp2) {
+            final PointFree<? extends Function<?, ?>>[] functions = new PointFree[1 + comp2.functions.length];
+            functions[0] = f1;
+            System.arraycopy(comp2.functions, 0, functions, 1, comp2.functions.length);
+            return new Comp<>(functions);
+        }
         return new Comp<>(f1, f2);
     }
 

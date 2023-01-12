@@ -20,8 +20,11 @@ import com.mojang.datafixers.types.templates.Sum;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -68,54 +71,6 @@ public interface PointFreeRule {
                 }
             }
             return Optional.empty();
-        }
-    }
-
-    enum CompAssocLeft implements PointFreeRule {
-        INSTANCE;
-
-        // f ◦ (g ◦ h) -> (f ◦ g) ◦ h
-        @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
-            if (expr instanceof Comp<?, ?, ?>) {
-                final Comp<?, ?, ?> comp2 = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends Function<?, ?>> second = comp2.second;
-                if (second instanceof Comp<?, ?, ?>) {
-                    final Comp<?, ?, ?> comp1 = (Comp<?, ?, ?>) second;
-                    return swap(comp1, comp2);
-                }
-            }
-            return Optional.empty();
-        }
-
-        @SuppressWarnings("unchecked")
-        private static <A, B, C, D, E> Optional<PointFree<E>> swap(final Comp<A, B, C> comp1, final Comp<?, ?, D> comp2raw) {
-            final Comp<A, C, D> comp2 = (Comp<A, C, D>) comp2raw;
-            return Optional.of((PointFree<E>) new Comp<>(new Comp<>(comp2.first, comp1.first), comp1.second));
-        }
-    }
-
-    enum CompAssocRight implements PointFreeRule {
-        INSTANCE;
-
-        // (f ◦ g) ◦ h -> f ◦ (g ◦ h)
-        @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
-            if (expr instanceof Comp<?, ?, ?>) {
-                final Comp<?, ?, ?> comp1 = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends Function<?, ?>> first = comp1.first;
-                if (first instanceof Comp<?, ?, ?>) {
-                    final Comp<?, ?, ?> comp2 = (Comp<?, ?, ?>) first;
-                    return swap(comp1, comp2);
-                }
-            }
-            return Optional.empty();
-        }
-
-        @SuppressWarnings("unchecked")
-        private static <A, B, C, D, E> Optional<PointFree<E>> swap(final Comp<A, B, D> comp1, final Comp<?, C, ?> comp2raw) {
-            final Comp<B, C, D> comp2 = (Comp<B, C, D>) comp2raw;
-            return Optional.of((PointFree<E>) new Comp<>(comp2.first, new Comp<>(comp2.second, comp1.second)));
         }
     }
 
@@ -169,7 +124,7 @@ public interface PointFreeRule {
     }
 
     interface CompRewrite extends PointFreeRule {
-        static CompRewrite choice(final CompRewrite... rules) {
+        static CompRewrite together(final CompRewrite... rules) {
             return (first, second) -> {
                 for (final CompRewrite rule : rules) {
                     final Optional<? extends PointFree<? extends Function<?, ?>>> view = rule.doRewrite(first, second);
@@ -182,59 +137,52 @@ public interface PointFreeRule {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         default <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
-            if (expr instanceof Comp<?, ?, ?>) {
-                final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends Function<?, ?>> first = comp.first;
-                final PointFree<? extends Function<?, ?>> second = comp.second;
-                // Rewrite f ◦ g in (_ ◦ f) ◦ g
-                if (first instanceof Comp<?, ?, ?>) {
-                    final Comp<?, ?, ?> firstComp = (Comp<?, ?, ?>) first;
-                    return doRewrite(firstComp.second, comp.second).map(result -> {
-                        if (result instanceof Comp<?, ?, ?>) {
-                            final Comp<?, ?, ?> resultComp = (Comp<?, ?, ?>) result;
-                            return buildLeftNested(resultComp, firstComp);
-                        }
-                        return buildRight(firstComp, result);
-                    });
-                }
-                // Rewrite f ◦ g in f ◦ (g ◦ _)
-                if (second instanceof Comp<?, ?, ?>) {
-                    final Comp<?, ?, ?> secondComp = (Comp<?, ?, ?>) second;
-                    return doRewrite(comp.first, secondComp.first).map(result -> {
-                        if (result instanceof Comp<?, ?, ?>) {
-                            final Comp<?, ?, ?> resultComp = (Comp<?, ?, ?>) result;
-                            return buildRightNested(secondComp, resultComp);
-                        }
-                        return buildLeft(result, secondComp);
-                    });
-                }
-                // Rewrite f ◦ g
-                return (Optional<? extends PointFree<A>>) doRewrite(comp.first, comp.second);
+            if (expr instanceof final Comp<?, ?> comp) {
+                return rewrite(comp.functions).map(rewrite -> {
+                    if (rewrite.length == 1) {
+                        return (PointFree<A>) rewrite[0];
+                    }
+                    return (PointFree<A>) new Comp<>(rewrite);
+                });
             }
             return Optional.empty();
         }
 
         @SuppressWarnings("unchecked")
-        static <A, B, C, D> PointFree<D> buildLeft(final PointFree<?> result, final Comp<A, B, C> comp) {
-            return (PointFree<D>) new Comp<>((PointFree<Function<B, C>>) result, comp.second);
+        private Optional<PointFree<? extends Function<?, ?>>[]> rewrite(final PointFree<? extends Function<?, ?>>[] functions) {
+            final Deque<PointFree<? extends Function<?, ?>>> result = new ArrayDeque<>(functions.length);
+            boolean rewritten = false;
+
+            final Deque<PointFree<? extends Function<?, ?>>> queue = new ArrayDeque<>(functions.length);
+            Collections.addAll(queue, functions);
+
+            while (!queue.isEmpty()) {
+                final PointFree<? extends Function<?, ?>> next = queue.removeFirst();
+                final PointFree<? extends Function<?, ?>> last = result.peekLast();
+
+                final Optional<? extends PointFree<? extends Function<?, ?>>> rewrite = last != null ? doRewrite(last, next) : Optional.empty();
+                if (rewrite.isPresent()) {
+                    result.removeLast();
+                    addFirst(queue, rewrite.get());
+                    rewritten = true;
+                } else {
+                    result.add(next);
+                }
+            }
+
+            return rewritten ? Optional.of(result.toArray(PointFree[]::new)) : Optional.empty();
         }
 
-        @SuppressWarnings("unchecked")
-        static <A, B, C, D> PointFree<D> buildRight(final Comp<A, B, C> comp, final PointFree<?> result) {
-            return (PointFree<D>) new Comp<>(comp.first, (PointFree<Function<A, B>>) result);
-        }
-
-        @SuppressWarnings("unchecked")
-        static <A, B, C, D, E> PointFree<E> buildLeftNested(final Comp<A, B, C> comp1, final Comp<?, ?, D> comp2raw) {
-            final Comp<A, C, D> comp2 = (Comp<A, C, D>) comp2raw;
-            return (PointFree<E>) new Comp<>(new Comp<>(comp2.first, comp1.first), comp1.second);
-        }
-
-        @SuppressWarnings("unchecked")
-        static <A, B, C, D, E> PointFree<E> buildRightNested(final Comp<A, B, D> comp1, final Comp<?, C, ?> comp2raw) {
-            final Comp<B, C, D> comp2 = (Comp<B, C, D>) comp2raw;
-            return (PointFree<E>) new Comp<>(comp2.first, new Comp<>(comp2.second, comp1.second));
+        private static void addFirst(final Deque<PointFree<? extends Function<?, ?>>> queue, final PointFree<? extends Function<?, ?>> function) {
+            if (function instanceof Comp<?, ?> comp) {
+                for (int i = comp.functions.length - 1; i >= 0; i--) {
+                    queue.addFirst(comp.functions[i]);
+                }
+            } else {
+                queue.addFirst(function);
+            }
         }
 
         Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(PointFree<? extends Function<?, ?>> first, PointFree<? extends Function<?, ?>> second);

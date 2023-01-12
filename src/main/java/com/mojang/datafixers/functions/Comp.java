@@ -7,52 +7,89 @@ import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-final class Comp<A, B, C> extends PointFree<Function<A, C>> {
-    protected final PointFree<Function<B, C>> first;
-    protected final PointFree<Function<A, B>> second;
-    private final Type<Function<A, C>> type;
+final class Comp<A, B> extends PointFree<Function<A, B>> {
+    protected final PointFree<? extends Function<?, ?>>[] functions;
+    private final Type<Function<A, B>> type;
 
-    public Comp(final PointFree<Function<B, C>> first, final PointFree<Function<A, B>> second) {
-        this(first, second, DSL.func(
-            ((Func<A, B>) second.type()).first(),
-            ((Func<B, C>) first.type()).second()
-        ));
+    @SuppressWarnings("unchecked")
+    protected Comp(final PointFree<? extends Function<?, ?>>... functions) {
+        this.functions = functions;
+        final PointFree<? extends Function<?, ?>> first = functions[0];
+        final PointFree<? extends Function<?, ?>> last = functions[functions.length - 1];
+        type = DSL.func(
+            ((Func<A, ?>) last.type()).first(),
+            ((Func<?, B>) first.type()).second()
+        );
     }
 
-    private Comp(final PointFree<Function<B, C>> first, final PointFree<Function<A, B>> second, final Type<Function<A, C>> type) {
-        this.first = first;
-        this.second = second;
+    protected Comp(final PointFree<? extends Function<?, ?>>[] functions, final Type<Function<A, B>> type) {
+        this.functions = functions;
         this.type = type;
     }
 
     @Override
-    public Type<Function<A, C>> type() {
+    public Type<Function<A, B>> type() {
         return type;
     }
 
     @Override
     public String toString(final int level) {
-        return "(\n" + indent(level + 1) + first.toString(level + 1) + "\n" + indent(level + 1) + "\u25E6\n" + indent(level + 1) + second.toString(level + 1) + "\n" + indent(level) + ")";
+        final String content = Arrays.stream(functions)
+            .map(function -> function.toString(level + 1))
+            .collect(Collectors.joining("\n" + indent(level + 1) + "\u25E6\n" + indent(level + 1)));
+        return "(\n" + indent(level + 1) + content + "\n" + indent(level) + ")";
     }
 
     @Override
-    public Optional<? extends PointFree<Function<A, C>>> all(final PointFreeRule rule) {
-        final PointFree<Function<B, C>> f = rule.rewriteOrNop(first);
-        final PointFree<Function<A, B>> s = rule.rewriteOrNop(second);
-        if (f == first && s == second) {
-            return Optional.of(this);
+    @SuppressWarnings("unchecked")
+    public Optional<? extends PointFree<Function<A, B>>> all(final PointFreeRule rule) {
+        final List<PointFree<? extends Function<?, ?>>> newFunctions = new ArrayList<>(functions.length);
+        boolean rewritten = false;
+        for (final PointFree<? extends Function<?, ?>> function : functions) {
+            final PointFree<? extends Function<?, ?>> rewrite = rule.rewriteOrNop(function);
+            if (rewrite != function) {
+                rewritten = true;
+                if (rewrite instanceof Comp<?, ?> comp) {
+                    Collections.addAll(newFunctions, comp.functions);
+                } else {
+                    newFunctions.add(rewrite);
+                }
+            } else {
+                newFunctions.add(function);
+            }
         }
-        return Optional.of(new Comp<>(f, s, type));
+        return Optional.of(rewritten ? new Comp<>(newFunctions.toArray(PointFree[]::new), type) : this);
     }
 
     @Override
-    public Optional<? extends PointFree<Function<A, C>>> one(final PointFreeRule rule) {
-        return rule.rewrite(first).map(f -> new Comp<>(f, second, type))
-            .or(() -> rule.rewrite(second).map(s -> new Comp<>(first, s, type)));
+    @SuppressWarnings("unchecked")
+    public Optional<? extends PointFree<Function<A, B>>> one(final PointFreeRule rule) {
+        for (int i = 0; i < functions.length; i++) {
+            final PointFree<? extends Function<?, ?>> function = functions[i];
+            final Optional<? extends PointFree<? extends Function<?, ?>>> rewrite = rule.rewrite(function);
+            if (rewrite.isPresent()) {
+                if (rewrite.get() instanceof Comp<?, ?> comp) {
+                    final PointFree<? extends Function<?, ?>>[] newFunctions = new PointFree[functions.length - 1 + comp.functions.length];
+                    System.arraycopy(functions, 0, newFunctions, 0, i);
+                    System.arraycopy(comp.functions, 0, newFunctions, i, comp.functions.length);
+                    System.arraycopy(functions, i + 1, newFunctions, i + comp.functions.length, functions.length - i - 1);
+                    return Optional.of(new Comp<>(newFunctions, type));
+                } else {
+                    final PointFree<? extends Function<?, ?>>[] newFunctions = Arrays.copyOf(functions, functions.length);
+                    newFunctions[i] = rewrite.get();
+                    return Optional.of(new Comp<>(newFunctions, type));
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -63,23 +100,29 @@ final class Comp<A, B, C> extends PointFree<Function<A, C>> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) o;
-        return Objects.equals(first, comp.first) && Objects.equals(second, comp.second);
+        final Comp<?, ?> comp = (Comp<?, ?>) o;
+        return Arrays.equals(functions, comp.functions);
     }
 
     @Override
     public int hashCode() {
-        int result = first.hashCode();
-        result = 31 * result + second.hashCode();
-        return result;
+        return Arrays.hashCode(functions);
     }
 
     @Override
-    public Function<DynamicOps<?>, Function<A, C>> eval() {
+    public Function<DynamicOps<?>, Function<A, B>> eval() {
         return ops -> input -> {
-            final Function<A, B> s = second.evalCached().apply(ops);
-            final Function<B, C> f = first.evalCached().apply(ops);
-            return f.apply(s.apply(input));
+            Object value = input;
+            for (int i = functions.length - 1; i >= 0; i--) {
+                final PointFree<? extends Function<?, ?>> f = functions[i];
+                value = applyUnchecked(f.evalCached().apply(ops), value);
+            }
+            return (B) value;
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <A, B> B applyUnchecked(final Function<A, B> function, final Object input) {
+        return function.apply((A) input);
     }
 }
