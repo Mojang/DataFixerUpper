@@ -31,16 +31,8 @@ import java.util.function.Supplier;
 public interface PointFreeRule {
     <A> Optional<? extends PointFree<A>> rewrite(final Type<A> type, final PointFree<A> expr);
 
-    default <A, B> Optional<View<A, B>> rewrite(final View<A, B> view) {
-        return rewrite(view.funcType(), view.function()).map(pf -> View.create(view.type(), view.newType(), pf));
-    }
-
     default <A> PointFree<A> rewriteOrNop(final Type<A> type, final PointFree<A> expr) {
         return DataFixUtils.orElse(rewrite(type, expr), expr);
-    }
-
-    default <A, B> View<A, B> rewriteOrNop(final View<A, B> view) {
-        return DataFixUtils.orElse(rewrite(view), view);
     }
 
     static PointFreeRule nop() {
