@@ -9,14 +9,9 @@ import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
-import com.mojang.datafixers.optics.Inj1;
-import com.mojang.datafixers.optics.Inj2;
 import com.mojang.datafixers.optics.InjTagged;
-import com.mojang.datafixers.optics.ListTraversal;
 import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
-import com.mojang.datafixers.optics.Proj1;
-import com.mojang.datafixers.optics.Proj2;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
 import com.mojang.datafixers.optics.profunctors.Cocartesian;
 import com.mojang.datafixers.optics.profunctors.Profunctor;
@@ -202,19 +197,22 @@ public final class TypedOptic<S, T, A, B> {
     }
 
     public static <K, A, B> TypedOptic<Pair<K, ?>, Pair<K, ?>, A, B> tagged(final TaggedChoice.TaggedChoiceType<K> sType, final K key, final Type<A> aType, final Type<B> bType) {
+        return new TypedOptic<>(
+            Cocartesian.Mu.TYPE_TOKEN,
+            sType,
+            replaceTagged(sType, key, aType, bType),
+            aType,
+            bType,
+            new InjTagged<>(key)
+        );
+    }
+
+    private static <K, A, B> Type<Pair<K, ?>> replaceTagged(final TaggedChoice.TaggedChoiceType<K> sType, final K key, final Type<A> aType, final Type<B> bType) {
         if (!Objects.equals(sType.types().get(key), aType)) {
             throw new IllegalArgumentException("Focused type doesn't match.");
         }
         final Map<K, Type<?>> newTypes = Maps.newHashMap(sType.types());
         newTypes.put(key, bType);
-        final Type<Pair<K, ?>> pairType = DSL.taggedChoiceType(sType.getName(), sType.getKeyType(), newTypes);
-        return new TypedOptic<>(
-            Cocartesian.Mu.TYPE_TOKEN,
-            sType,
-            pairType,
-            aType,
-            bType,
-            new InjTagged<>(key)
-        );
+        return DSL.taggedChoiceType(sType.getName(), sType.getKeyType(), newTypes);
     }
 }
