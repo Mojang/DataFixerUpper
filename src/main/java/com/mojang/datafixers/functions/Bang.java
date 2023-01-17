@@ -2,11 +2,12 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.DynamicOps;
 
 import java.util.function.Function;
 
-final class Bang<A> extends PointFree<Function<A, Void>> {
+final class Bang<A> extends PointFree<Function<A, Unit>> {
     Bang() {
     }
 
@@ -26,7 +27,7 @@ final class Bang<A> extends PointFree<Function<A, Void>> {
     }
 
     @Override
-    public Function<DynamicOps<?>, Function<A, Void>> eval() {
-        return ops -> a -> null;
+    public Function<DynamicOps<?>, Function<A, Unit>> eval() {
+        return ops -> a -> Unit.INSTANCE;
     }
 }
