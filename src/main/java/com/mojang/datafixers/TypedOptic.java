@@ -208,6 +208,9 @@ public final class TypedOptic<S, T, A, B> {
     }
 
     private static <K, A, B> Type<Pair<K, ?>> replaceTagged(final TaggedChoice.TaggedChoiceType<K> sType, final K key, final Type<A> aType, final Type<B> bType) {
+        if (Objects.equals(aType, bType)) {
+            return sType;
+        }
         if (!Objects.equals(sType.types().get(key), aType)) {
             throw new IllegalArgumentException("Focused type doesn't match.");
         }
