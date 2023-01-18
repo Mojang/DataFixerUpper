@@ -142,20 +142,29 @@ public interface PointFreeRule {
         // (ap f1 (ap f2 arg)) -> (ap (f1 ◦ f2) arg)
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
-            if (expr instanceof Apply<?, ?>) {
-                final Apply<?, ?> applyFirst = (Apply<?, ?>) expr;
-                if (applyFirst.arg instanceof Apply<?, ?>) {
-                    final Apply<?, ?> applySecond = (Apply<?, ?>) applyFirst.arg;
-                    return cap(applyFirst, applySecond);
+            if (expr instanceof final Apply<?, ?> applyFirst) {
+                if (applyFirst.arg instanceof final Apply<?, ?> applySecond) {
+                    return Optional.of(Functions.app(compose(applyFirst.func, applySecond.func), applySecond.arg));
                 }
             }
             return Optional.empty();
         }
 
         @SuppressWarnings("unchecked")
-        private <A, B, C, D, E> Optional<? extends PointFree<A>> cap(final Apply<D, E> applyFirst, final Apply<B, C> applySecond) {
-            final PointFree<?> func = applySecond.func;
-            return Optional.of((PointFree<A>) Functions.app(Functions.comp(applyFirst.func, (PointFree<Function<B, D>>) func), applySecond.arg));
+        private <A, B, C> PointFree<Function<A, C>> compose(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
+            // Optic[o1] ◦ Optic[o2] -> Optic[o1 ◦ o2]
+            if (first instanceof ProfunctorTransformer<?, ?, ?, ?> firstOptic && second instanceof ProfunctorTransformer<?, ?, ?, ?> secondOptic) {
+                return cap(firstOptic, secondOptic);
+            }
+            return Functions.comp((PointFree<Function<B, C>>) first, (PointFree<Function<A, B>>) second);
+        }
+
+        @SuppressWarnings("unchecked")
+        private <R, X, Y, S, T, A, B> R cap(final ProfunctorTransformer<X, Y, ?, ?> first, final ProfunctorTransformer<S, T, A, B> second) {
+            final ProfunctorTransformer<X, Y, S, T> firstCasted = (ProfunctorTransformer<X, Y, S, T>) first;
+            final Func<Function<S, T>, Function<X, Y>> firstType = (Func<Function<S, T>, Function<X, Y>>) firstCasted.type;
+            final Func<Function<A, B>, Function<S, T>> secondType = (Func<Function<A, B>, Function<S, T>>) second.type;
+            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic), DSL.func(secondType.first(), firstType.second()));
         }
     }
 
@@ -352,34 +361,6 @@ public interface PointFreeRule {
                     DSL.func(input, DSL.or(output.first(), input.second()))
                 )), firstArg)
             );
-        }
-    }
-
-    enum LensCompFunc implements PointFreeRule {
-        INSTANCE;
-
-        // Optic[o1] ◦ Optic[o2] -> Optic[o1 ◦ o2]
-        @Override
-        public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
-            if (expr instanceof Comp<?, ?, ?>) {
-                final Comp<?, ?, ?> comp = (Comp<?, ?, ?>) expr;
-                final PointFree<? extends Function<?, ?>> first = comp.first;
-                final PointFree<? extends Function<?, ?>> second = comp.second;
-                if (first instanceof ProfunctorTransformer<?, ?, ?, ?> && second instanceof ProfunctorTransformer<?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?>) first;
-                    final ProfunctorTransformer<?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?>) second;
-                    return Optional.of(cap(firstOptic, secondOptic));
-                }
-            }
-            return Optional.empty();
-        }
-
-        @SuppressWarnings("unchecked")
-        private <R, X, Y, S, T, A, B> R cap(final ProfunctorTransformer<X, Y, ?, ?> first, final ProfunctorTransformer<S, T, A, B> second) {
-            final ProfunctorTransformer<X, Y, S, T> firstCasted = (ProfunctorTransformer<X, Y, S, T>) first;
-            final Func<Function<S, T>, Function<X, Y>> firstType = (Func<Function<S, T>, Function<X, Y>>) firstCasted.type;
-            final Func<Function<A, B>, Function<S, T>> secondType = (Func<Function<A, B>, Function<S, T>>) second.type;
-            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic), DSL.func(secondType.first(), firstType.second()));
         }
     }
 

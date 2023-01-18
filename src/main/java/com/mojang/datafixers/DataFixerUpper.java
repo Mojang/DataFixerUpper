@@ -50,8 +50,7 @@ public class DataFixerUpper implements DataFixer {
             ),
             PointFreeRule.LensAppId.INSTANCE,
             PointFreeRule.LensComp.INSTANCE,
-            PointFreeRule.AppNest.INSTANCE,
-            PointFreeRule.LensCompFunc.INSTANCE
+            PointFreeRule.AppNest.INSTANCE
         );
         final PointFreeRule opLeft = PointFreeRule.many(PointFreeRule.once(PointFreeRule.choice(opSimple, PointFreeRule.CompAssocLeft.INSTANCE)));
         final PointFreeRule opComp = PointFreeRule.many(PointFreeRule.once(PointFreeRule.CompRewrite.choice(PointFreeRule.SortInj.INSTANCE, PointFreeRule.SortProj.INSTANCE)));
