@@ -39,7 +39,7 @@ final class FunctionWrapper<A, B> extends PointFree<Function<A, B>> {
             return false;
         }
         final FunctionWrapper<?, ?> that = (FunctionWrapper<?, ?>) o;
-        return Objects.equals(fun, that.fun);
+        return Objects.equals(fun, that.fun) && Objects.equals(type, that.type);
     }
 
     @Override

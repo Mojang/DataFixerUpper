@@ -28,12 +28,12 @@ final class Bang<A> extends PointFree<Function<A, Unit>> {
 
     @Override
     public boolean equals(final Object o) {
-        return o instanceof Bang<?>;
+        return o instanceof Bang<?> bang && type.equals(bang.type);
     }
 
     @Override
     public int hashCode() {
-        return Bang.class.hashCode();
+        return type.hashCode();
     }
 
     @Override
