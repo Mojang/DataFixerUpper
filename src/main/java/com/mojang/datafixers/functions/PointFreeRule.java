@@ -527,14 +527,11 @@ public interface PointFreeRule {
     record Seq(PointFreeRule[] rules) implements PointFreeRule {
         @Override
         public <A> Optional<? extends PointFree<A>> rewrite(final PointFree<A> expr) {
-            Optional<? extends PointFree<A>> result = Optional.of(expr);
+            PointFree<A> result = expr;
             for (final PointFreeRule rule : rules) {
-                result = rule.rewrite(result.get());
-                if (result.isEmpty()) {
-                    return Optional.empty();
-                }
+                result = rule.rewriteOrNop(result);
             }
-            return result;
+            return Optional.of(result);
         }
 
         @Override
