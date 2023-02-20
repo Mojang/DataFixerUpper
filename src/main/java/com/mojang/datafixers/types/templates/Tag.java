@@ -7,7 +7,8 @@ import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
-import com.mojang.datafixers.View;
+import com.mojang.datafixers.optics.Optics;
+import com.mojang.datafixers.optics.profunctors.Profunctor;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
@@ -142,21 +143,28 @@ public final class Tag implements TypeTemplate {
 
         @Override
         public RewriteResult<A, ?> all(final TypeRewriteRule rule, final boolean recurse, final boolean checkIndex) {
-            final RewriteResult<A, ?> elementView = element.rewriteOrNop(rule);
-            return RewriteResult.create(cap(elementView.view()), elementView.recData());
+            return wrap(element.rewriteOrNop(rule));
         }
 
-        private <B> View<A, ?> cap(final View<A, B> instance) {
-            if (instance.isNop()) {
-                return View.nopView(this);
+        private <B> RewriteResult<A, B> wrap(final RewriteResult<A, B> instance) {
+            if (instance.view().isNop()) {
+                return instance;
             }
-            return View.create(this, DSL.field(name, instance.newType()), instance.function());
+            final Type<B> output = DSL.field(name, instance.view().newType());
+            return opticView(this, instance, new TypedOptic<>(
+                Profunctor.Mu.TYPE_TOKEN,
+                this,
+                output,
+                instance.view().type(),
+                instance.view().newType(),
+                Optics.id()
+            ));
         }
 
         @Override
         public Optional<RewriteResult<A, ?>> one(final TypeRewriteRule rule) {
             final Optional<RewriteResult<A, ?>> view = rule.rewrite(element);
-            return view.map(instance -> RewriteResult.create(cap(instance.view()), instance.recData()));
+            return view.map(this::wrap);
         }
 
         @Override
