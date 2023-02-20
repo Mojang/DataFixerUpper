@@ -17,12 +17,17 @@ public interface Optic<Proof extends K1, S, T, A, B> {
     <P extends K2> Function<App2<P, A, B>, App2<P, S, T>> eval(final App<? extends Proof, P> proof);
 
     default <Proof2 extends Proof, A1, B1> Optic<Proof2, S, T, A1, B1> compose(final Optic<? super Proof2, A, B, A1, B1> optic) {
-        return new CompositionOptic<>(this, optic);
+        return composeUnchecked(optic);
     }
 
     @SuppressWarnings("unchecked")
-    default <Proof2 extends K1, A1, B1> Optic<?, S, T, A1, B1> composeUnchecked(final Optic<?, A, B, A1, B1> optic) {
-        return new CompositionOptic<Proof2, S, T, A, B, A1, B1>((Optic<? super Proof2, S, T, A, B>) this, (Optic<? super Proof2, A, B, A1, B1>) optic);
+    default <Proof2 extends K1, A1, B1> Optic<Proof2, S, T, A1, B1> composeUnchecked(final Optic<?, A, B, A1, B1> optic) {
+        if (Optics.isId(optic)) {
+            return (Optic<Proof2, S, T, A1, B1>) this;
+        } else if (Optics.isId(this)) {
+            return (Optic<Proof2, S, T, A1, B1>) optic;
+        }
+        return new CompositionOptic<>((Optic<? super Proof2, S, T, A, B>) this, (Optic<? super Proof2, A, B, A1, B1>) optic);
     }
 
     record CompositionOptic<Proof extends K1, S, T, A, B, A1, B1>(Optic<? super Proof, S, T, A, B> outer, Optic<? super Proof, A, B, A1, B1> inner) implements Optic<Proof, S, T, A1, B1> {
