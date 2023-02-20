@@ -69,6 +69,10 @@ public abstract class Optics {
         return (Adapter<S, T, S, T>) IdAdapter.INSTANCE;
     }
 
+    public static boolean isId(final Optic<?, ?, ?, ?, ?> optic) {
+        return optic == IdAdapter.INSTANCE;
+    }
+
     public static <S, T, A, B> Adapter<S, T, A, B> adapter(final Function<S, A> from, final Function<B, T> to) {
         return new Adapter<S, T, A, B>() {
             @Override
