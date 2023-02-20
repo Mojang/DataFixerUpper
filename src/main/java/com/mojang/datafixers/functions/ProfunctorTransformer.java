@@ -51,7 +51,7 @@ final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Functio
             return false;
         }
         final ProfunctorTransformer<?, ?, ?, ?> that = (ProfunctorTransformer<?, ?, ?, ?>) o;
-        return Objects.equals(optic, that.optic);
+        return Objects.equals(optic, that.optic) && Objects.equals(type, that.type);
     }
 
     @Override

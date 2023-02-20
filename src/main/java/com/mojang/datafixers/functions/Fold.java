@@ -74,12 +74,13 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
             return false;
         }
         final Fold<?, ?> fold = (Fold<?, ?>) o;
-        return Objects.equals(aType, fold.aType) && Objects.equals(algebra, fold.algebra);
+        return Objects.equals(aType, fold.aType) && Objects.equals(bType, fold.bType) && Objects.equals(algebra, fold.algebra);
     }
 
     @Override
     public int hashCode() {
         int result = aType.hashCode();
+        result = 31 * result + bType.hashCode();
         result = 31 * result + algebra.hashCode();
         return result;
     }
