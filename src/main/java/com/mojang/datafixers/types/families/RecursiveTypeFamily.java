@@ -60,7 +60,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
             // G
             final TypeTemplate newTypeTemplate = newType.template();
             // Mu G
-            if (template == newTypeTemplate) {
+            if (Objects.equals(template, newTypeTemplate)) {
                 newFamily = this;
             } else {
                 newFamily = new RecursiveTypeFamily("ruled " + name, newTypeTemplate);
