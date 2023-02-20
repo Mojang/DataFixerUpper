@@ -409,6 +409,7 @@ public interface PointFreeRule {
                 final Fold<?, ?> secondFold = (Fold<?, ?>) second;
                 final RecursiveTypeFamily family = firstFold.aType.family();
                 if (firstFold.index == secondFold.index && Objects.equals(family, secondFold.aType.family())) {
+                    final RecursiveTypeFamily newFamily = firstFold.bType.family();
                     // same fold
                     final List<RewriteResult<?, ?>> newAlgebra = Lists.newArrayList();
 
@@ -431,7 +432,7 @@ public interface PointFreeRule {
                         }
                     }
                     final Algebra algebra = new ListAlgebra("FusedSame", newAlgebra);
-                    return Optional.of(family.fold(algebra).apply(firstFold.index).view().function());
+                    return Optional.of(family.fold(algebra, newFamily).apply(firstFold.index).view().function());
                 }
             }
             return Optional.empty();
@@ -456,6 +457,7 @@ public interface PointFreeRule {
                 final Fold<?, ?> secondFold = (Fold<?, ?>) second;
                 final RecursiveTypeFamily family = firstFold.aType.family();
                 if (firstFold.index == secondFold.index && Objects.equals(family, secondFold.aType.family())) {
+                    final RecursiveTypeFamily newFamily = firstFold.bType.family();
                     // same fold
                     final List<RewriteResult<?, ?>> newAlgebra = Lists.newArrayList();
 
@@ -492,7 +494,7 @@ public interface PointFreeRule {
                     // have new algebra - make a new fold
 
                     final Algebra algebra = new ListAlgebra("FusedDifferent", newAlgebra);
-                    return Optional.of(family.fold(algebra).apply(firstFold.index).view().function());
+                    return Optional.of(family.fold(algebra, newFamily).apply(firstFold.index).view().function());
                 }
             }
             return Optional.empty();

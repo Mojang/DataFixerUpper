@@ -10,6 +10,7 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DynamicOps;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.Map;
 import java.util.Objects;
@@ -17,16 +18,18 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 
 final class Fold<A, B> extends PointFree<Function<A, B>> {
-    private static final Map<Pair<RecursiveTypeFamily, Algebra>, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = Maps.newConcurrentMap();
+    private static final Map<Triple<RecursiveTypeFamily, RecursiveTypeFamily, Algebra>, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = Maps.newConcurrentMap();
     private static final Map<Pair<IntFunction<RewriteResult<?, ?>>, Integer>, RewriteResult<?, ?>> HMAP_APPLY_CACHE = Maps.newConcurrentMap();
 
     protected final RecursivePoint.RecursivePointType<A> aType;
-    protected final RewriteResult<?, B> function;
+    protected final RecursivePoint.RecursivePointType<B> bType;
+    protected final RewriteResult<A, B> function;
     protected final Algebra algebra;
     protected final int index;
 
-    public Fold(final RecursivePoint.RecursivePointType<A> aType, final RewriteResult<?, B> function, final Algebra algebra, final int index) {
+    public Fold(final RecursivePoint.RecursivePointType<A> aType, final RecursivePoint.RecursivePointType<B> bType, final RewriteResult<A, B> function, final Algebra algebra, final int index) {
         this.aType = aType;
+        this.bType = bType;
         this.function = function;
         this.algebra = algebra;
         this.index = index;
@@ -40,8 +43,9 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
     public Function<DynamicOps<?>, Function<A, B>> eval() {
         return ops -> a -> {
             final RecursiveTypeFamily family = aType.family();
+            final RecursiveTypeFamily newFamily = bType.family();
 
-            final IntFunction<RewriteResult<?, ?>> hmapped = HMAP_CACHE.computeIfAbsent(Pair.of(family, algebra), key -> key.getFirst().template().hmap(key.getFirst(), key.getFirst().fold(key.getSecond())));
+            final IntFunction<RewriteResult<?, ?>> hmapped = HMAP_CACHE.computeIfAbsent(Triple.of(family, newFamily, algebra), key -> key.getLeft().template().hmap(key.getLeft(), key.getLeft().fold(key.getRight(), key.getMiddle())));
             final RewriteResult<?, ?> result = HMAP_APPLY_CACHE.computeIfAbsent(Pair.of(hmapped, index), key -> key.getFirst().apply(key.getSecond()));
 
             final PointFree<Function<A, B>> eval = cap(function, result);
