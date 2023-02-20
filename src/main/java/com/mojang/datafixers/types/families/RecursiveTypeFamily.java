@@ -97,12 +97,19 @@ public final class RecursiveTypeFamily implements TypeFamily {
     /**
      * returns family.apply(index) -> algebra.family.apply(index)
      */
-    public IntFunction<RewriteResult<?, ?>> fold(final Algebra algebra) {
+    public IntFunction<RewriteResult<?, ?>> fold(final Algebra algebra, final RecursiveTypeFamily newFamily) {
         return index -> {
             final RewriteResult<?, ?> result = algebra.apply(index);
             // FIXME: is this corrext?
-            return RewriteResult.create(viewUnchecked(result.view().type(), result.view().newType(), Functions.fold(apply(index), result, algebra, index)), result.recData());
+            return RewriteResult.create(viewUnchecked(result.view().type(), result.view().newType(), foldUnchecked(this, newFamily, algebra, index, result)), result.recData());
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <A, B> PointFree<Function<A, B>> foldUnchecked(final RecursiveTypeFamily family, final RecursiveTypeFamily newFamily, final Algebra algebra, final int index, final RewriteResult<?, B> result) {
+        final RecursivePoint.RecursivePointType<A> type = (RecursivePoint.RecursivePointType<A>) family.apply(index);
+        final RecursivePoint.RecursivePointType<B> newType = (RecursivePoint.RecursivePointType<B>) newFamily.apply(index);
+        return Functions.fold(type, newType, (RewriteResult<A, B>) result, algebra, index);
     }
 
     @Override
@@ -177,7 +184,7 @@ public final class RecursiveTypeFamily implements TypeFamily {
             return Optional.empty();
         }
         final Algebra algebra = new ListAlgebra("everywhere", views);
-        final RewriteResult<?, ?> fold = fold(algebra).apply(index);
+        final RewriteResult<?, ?> fold = fold(algebra, newFamily).apply(index);
         return Optional.of(RewriteResult.create(viewUnchecked(apply(index), newType, fold.view().function()), fold.recData()));
     }
 
