@@ -65,7 +65,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
                 Functions.profunctorTransformer(
                     optic.upCast(FunctionType.Instance.Mu.TYPE_TOKEN).orElseThrow(IllegalArgumentException::new),
                     DSL.func(
-                        DSL.func(optic.aType(), view.view().newType()),
+                        DSL.func(optic.aType(), optic.bType()),
                         DSL.func(optic.sType(), optic.tType())
                     )
                 ),
