@@ -2,13 +2,11 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.FunctionType;
-import com.mojang.datafixers.OpticParts;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
@@ -75,29 +73,9 @@ public record Sum(TypeTemplate f, TypeTemplate g) implements TypeTemplate {
         );
     }
 
-    private <A, B, LS, RS, LT, RT> OpticParts<A, B> cap(final FamilyOptic<A, B> lo, final FamilyOptic<A, B> ro, final int index) {
-        final TypeToken<TraversalP.Mu> bound = TraversalP.Mu.TYPE_TOKEN;
-        final OpticParts<A, B> lp = lo.apply(index);
-        final OpticParts<A, B> rp = ro.apply(index);
-
-        return new OpticParts<>(
-            ImmutableSet.of(bound),
-            new Traversal<Either<LS, RS>, Either<LT, RT>, A, B>() {
-                @Override
-                public <F extends K1> FunctionType<Either<LS, RS>, App<F, Either<LT, RT>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
-                    return e -> e.map(
-                        l -> {
-                            final Traversal<LS, LT, A, B> traversal = (Traversal<LS, LT, A, B>) Optics.toTraversal(lp.optic().upCast(lp.bounds(), bound).orElseThrow(IllegalArgumentException::new));
-                            return applicative.ap(Either::left, traversal.wander(applicative, input).apply(l));
-                        },
-                        r -> {
-                            final Traversal<RS, RT, A, B> traversal = (Traversal<RS, RT, A, B>) Optics.toTraversal(rp.optic().upCast(rp.bounds(), bound).orElseThrow(IllegalArgumentException::new));
-                            return applicative.ap(Either::right, traversal.wander(applicative, input).apply(r));
-                        }
-                    );
-                }
-            }
-        );
+    @SuppressWarnings("unchecked")
+    private <A, B, LS, RS, LT, RT> TypedOptic<?, ?, A, B> cap(final FamilyOptic<A, B> lo, final FamilyOptic<A, B> ro, final int index) {
+        return SumType.mergeOptics((TypedOptic<LS, LT, A, B>) lo.apply(index), (TypedOptic<RS, RT, A, B>) ro.apply(index));
     }
 
     @Override
@@ -241,16 +219,16 @@ public record Sum(TypeTemplate f, TypeTemplate g) implements TypeTemplate {
                 DSL.or(lo.tType(), ro.tType()),
                 lo.aType(),
                 lo.bType(),
-                new Traversal<Either<LS, RS>, Either<LT, RT>, A, B>() {
+                new Traversal<>() {
                     @Override
                     public <F extends K1> FunctionType<Either<LS, RS>, App<F, Either<LT, RT>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
                         return e -> e.map(
                             l -> {
-                                final Traversal<LS, LT, A, B> traversal = Optics.toTraversal(lo.optic().upCast(lo.bounds(), bound).orElseThrow(IllegalArgumentException::new));
+                                final Traversal<LS, LT, A, B> traversal = Optics.toTraversal(lo.upCast(bound).orElseThrow(IllegalArgumentException::new));
                                 return applicative.ap(Either::left, traversal.wander(applicative, input).apply(l));
                             },
                             r -> {
-                                final Traversal<RS, RT, A, B> traversal = Optics.toTraversal(ro.optic().upCast(ro.bounds(), bound).orElseThrow(IllegalArgumentException::new));
+                                final Traversal<RS, RT, A, B> traversal = Optics.toTraversal(ro.upCast(bound).orElseThrow(IllegalArgumentException::new));
                                 return applicative.ap(Either::right, traversal.wander(applicative, input).apply(r));
                             }
                         );
