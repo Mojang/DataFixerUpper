@@ -8,7 +8,6 @@ import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
