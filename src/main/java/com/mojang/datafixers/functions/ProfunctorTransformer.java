@@ -4,9 +4,8 @@ package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FunctionType;
+import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.kinds.App2;
-import com.mojang.datafixers.optics.Optic;
-import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
@@ -14,23 +13,19 @@ import java.util.Objects;
 import java.util.function.Function;
 
 final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Function<A, B>, Function<S, T>>> {
-    protected final Optic<? super FunctionType.Instance.Mu, S, T, A, B> optic;
-    protected final Type<Function<Function<A, B>, Function<S, T>>> type;
+    protected final TypedOptic<S, T, A, B> optic;
 
-    public ProfunctorTransformer(final Optic<? super FunctionType.Instance.Mu, S, T, A, B> optic, final Type<Function<Function<A, B>, Function<S, T>>> type) {
+    public ProfunctorTransformer(final TypedOptic<S, T, A, B> optic) {
         this.optic = optic;
-        this.type = type;
     }
 
-    @SuppressWarnings("unchecked")
     public <S2, T2> ProfunctorTransformer<S2, T2, A, B> castOuterUnchecked(final Type<S2> sType, final Type<T2> tType) {
-        final Func<Function<A, B>, Function<S, T>> func = (Func<Function<A, B>, Function<S, T>>) type;
-        return new ProfunctorTransformer<>((Optic<? super FunctionType.Instance.Mu, S2, T2, A, B>) optic, DSL.func(func.first(), DSL.func(sType, tType)));
+        return new ProfunctorTransformer<>(optic.castOuterUnchecked(sType, tType));
     }
 
     @Override
     public Type<Function<Function<A, B>, Function<S, T>>> type() {
-        return type;
+        return DSL.func(DSL.func(optic.aType(), optic.bType()), DSL.func(optic.sType(), optic.tType()));
     }
 
     @Override
@@ -40,7 +35,7 @@ final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Functio
 
     @Override
     public Function<DynamicOps<?>, Function<Function<A, B>, Function<S, T>>> eval() {
-        final Function<App2<FunctionType.Mu, A, B>, App2<FunctionType.Mu, S, T>> func = optic.eval(FunctionType.Instance.INSTANCE);
+        final Function<App2<FunctionType.Mu, A, B>, App2<FunctionType.Mu, S, T>> func = optic.upCast(FunctionType.Instance.Mu.TYPE_TOKEN).orElseThrow().eval(FunctionType.Instance.INSTANCE);
         final Function<Function<A, B>, Function<S, T>> unwrappedFunction = input -> FunctionType.unbox(func.apply(FunctionType.create(input)));
         return ops -> unwrappedFunction;
     }
@@ -54,7 +49,7 @@ final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Functio
             return false;
         }
         final ProfunctorTransformer<?, ?, ?, ?> that = (ProfunctorTransformer<?, ?, ?, ?>) o;
-        return Objects.equals(optic, that.optic) && Objects.equals(type, that.type);
+        return Objects.equals(optic, that.optic);
     }
 
     @Override

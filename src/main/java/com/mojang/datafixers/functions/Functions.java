@@ -3,9 +3,8 @@
 package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.DSL;
-import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.RewriteResult;
-import com.mojang.datafixers.optics.Optic;
+import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.Algebra;
 import com.mojang.datafixers.types.templates.RecursivePoint;
@@ -49,8 +48,8 @@ public abstract class Functions {
         return new Apply<>(fun, arg);
     }
 
-    public static <S, T, A, B> PointFree<Function<Function<A, B>, Function<S, T>>> profunctorTransformer(final Optic<? super FunctionType.Instance.Mu, S, T, A, B> lens, final Type<Function<Function<A, B>, Function<S, T>>> type) {
-        return new ProfunctorTransformer<>(lens, type);
+    public static <S, T, A, B> PointFree<Function<Function<A, B>, Function<S, T>>> profunctorTransformer(final TypedOptic<S, T, A, B> lens) {
+        return new ProfunctorTransformer<>(lens);
     }
 
     public static <A> Bang<A> bang(final Type<A> type) {

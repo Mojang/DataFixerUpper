@@ -218,4 +218,9 @@ public final class TypedOptic<S, T, A, B> {
         newTypes.put(key, bType);
         return DSL.taggedChoiceType(sType.getName(), sType.getKeyType(), newTypes);
     }
+
+    @SuppressWarnings("unchecked")
+    public <S2, T2> TypedOptic<S2, T2, A, B> castOuterUnchecked(final Type<S2> sType, final Type<T2> tType) {
+        return new TypedOptic<>(proofBounds, sType, tType, aType, bType, (Optic<?, S2, T2, A, B>) optic);
+    }
 }

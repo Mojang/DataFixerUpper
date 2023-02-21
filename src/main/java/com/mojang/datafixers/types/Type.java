@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FieldFinder;
-import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.OpticFinder;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
@@ -62,13 +61,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         // copy the recData, since optic doesn't touch more than the nested view
         return RewriteResult.create(View.create(
             Functions.app(
-                Functions.profunctorTransformer(
-                    optic.upCast(FunctionType.Instance.Mu.TYPE_TOKEN).orElseThrow(IllegalArgumentException::new),
-                    DSL.func(
-                        DSL.func(optic.aType(), optic.bType()),
-                        DSL.func(optic.sType(), optic.tType())
-                    )
-                ),
+                Functions.profunctorTransformer(optic),
                 view.view().function()
             )), view.recData());
     }

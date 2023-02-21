@@ -117,9 +117,7 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         private <R, X, Y, S, T, A, B> R cap(final ProfunctorTransformer<X, Y, ?, ?> first, final ProfunctorTransformer<S, T, A, B> second) {
             final ProfunctorTransformer<X, Y, S, T> firstCasted = (ProfunctorTransformer<X, Y, S, T>) first;
-            final Func<Function<S, T>, Function<X, Y>> firstType = (Func<Function<S, T>, Function<X, Y>>) firstCasted.type;
-            final Func<Function<A, B>, Function<S, T>> secondType = (Func<Function<A, B>, Function<S, T>>) second.type;
-            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic), DSL.func(secondType.first(), firstType.second()));
+            return (R) Functions.profunctorTransformer(firstCasted.optic.compose(second.optic));
         }
     }
 
@@ -198,7 +196,7 @@ public interface PointFreeRule {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
                 if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> firstOptic && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> secondOptic) {
-                    Optic<?, ?, ?, ?, ?> fo = firstOptic.optic;
+                    Optic<?, ?, ?, ?, ?> fo = firstOptic.optic.optic();
                     while (fo instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
                         fo = composition.outer();
                     }
@@ -206,7 +204,7 @@ public interface PointFreeRule {
                         return Optional.empty();
                     }
 
-                    Optic<?, ?, ?, ?, ?> so = secondOptic.optic;
+                    Optic<?, ?, ?, ?, ?> so = secondOptic.optic.optic();
                     while (so instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
                         so = composition.outer();
                     }
@@ -249,7 +247,7 @@ public interface PointFreeRule {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
                 if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> firstOptic && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> secondOptic) {
-                    Optic<?, ?, ?, ?, ?> fo = firstOptic.optic;
+                    Optic<?, ?, ?, ?, ?> fo = firstOptic.optic.optic();
                     while (fo instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
                         fo = composition.outer();
                     }
@@ -257,7 +255,7 @@ public interface PointFreeRule {
                         return Optional.empty();
                     }
 
-                    Optic<?, ?, ?, ?, ?> so = secondOptic.optic;
+                    Optic<?, ?, ?, ?, ?> so = secondOptic.optic.optic();
                     while (so instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
                         so = composition.outer();
                     }
