@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -28,26 +29,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public final class TypedOptic<S, T, A, B> {
-    protected final Set<TypeToken<? extends K1>> proofBounds;
-    protected final Type<S> sType;
-    protected final Type<T> tType;
-    protected final Type<A> aType;
-    protected final Type<B> bType;
-    private final Optic<?, S, T, A, B> optic;
-
+public record TypedOptic<S, T, A, B>(Set<TypeToken<? extends K1>> bounds, List<? extends Element<?, ?, ?, ?>> elements) {
     public TypedOptic(final TypeToken<? extends K1> proofBound, final Type<S> sType, final Type<T> tType, final Type<A> aType, final Type<B> bType, final Optic<?, S, T, A, B> optic) {
         this(ImmutableSet.of(proofBound), sType, tType, aType, bType, optic);
     }
 
     public TypedOptic(final Set<TypeToken<? extends K1>> proofBounds, final Type<S> sType, final Type<T> tType, final Type<A> aType, final Type<B> bType, final Optic<?, S, T, A, B> optic) {
-        this.proofBounds = proofBounds;
-        this.sType = sType;
-        this.tType = tType;
-        this.aType = aType;
-        this.bType = bType;
-        this.optic = optic;
+        this(proofBounds, List.of(new Element<>(sType, tType, aType, bType, optic)));
     }
 
     public <P extends K2, Proof2 extends K1> App2<P, S, T> apply(final TypeToken<Proof2> token, final App<Proof2, P> proof, final App2<P, A, B> argument) {
@@ -59,48 +49,58 @@ public final class TypedOptic<S, T, A, B> {
             .apply(argument);
     }
 
-    public Optic<?, S, T, A, B> optic() {
-        return optic;
+    public Optic<?, S, T, ?, ?> outermost() {
+        return outermostElement().optic();
     }
 
-    public Set<TypeToken<? extends K1>> bounds() {
-        return proofBounds;
+    public Optic<?, ?, ?, A, B> innermost() {
+        return innermostElement().optic();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Element<S, T, ?, ?> outermostElement() {
+        return (Element<S, T, ?, ?>) elements.get(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Element<?, ?, A, B> innermostElement() {
+        return (Element<?, ?, A, B>) elements.get(elements.size() - 1);
     }
 
     public Type<S> sType() {
-        return sType;
+        return outermostElement().sType();
     }
 
     public Type<T> tType() {
-        return tType;
+        return outermostElement().tType();
     }
 
     public Type<A> aType() {
-        return aType;
+        return innermostElement().aType();
     }
 
     public Type<B> bType() {
-        return bType;
+        return innermostElement().bType();
     }
 
     public <A1, B1> TypedOptic<S, T, A1, B1> compose(final TypedOptic<A, B, A1, B1> other) {
-        final ImmutableSet.Builder<TypeToken<? extends K1>> builder = ImmutableSet.builder();
-        builder.addAll(proofBounds);
-        builder.addAll(other.proofBounds);
-        return new TypedOptic<>(
-            builder.build(),
-            sType,
-            tType,
-            other.aType,
-            other.bType,
-            optic().composeUnchecked(other.optic())
-        );
+        final ImmutableSet.Builder<TypeToken<? extends K1>> proof = ImmutableSet.builder();
+        proof.addAll(bounds);
+        proof.addAll(other.bounds);
+        final ImmutableList.Builder<Element<?, ?, ?, ?>> elements = ImmutableList.builderWithExpectedSize(elements().size() + other.elements().size());
+        elements.addAll(elements());
+        elements.addAll(other.elements());
+        return new TypedOptic<>(proof.build(), elements.build());
     }
 
     @SuppressWarnings("unchecked")
     public <Proof2 extends K1> Optional<Optic<? super Proof2, S, T, A, B>> upCast(final TypeToken<Proof2> proof) {
-        if (instanceOf(proofBounds, proof)) {
-            return Optional.of((Optic<? super Proof2, S, T, A, B>) optic);
+        if (instanceOf(bounds, proof)) {
+            if (elements.size() == 1) {
+                return Optional.of((Optic<? super Proof2, S, T, A, B>) elements.get(0).optic());
+            }
+            final List<Optic<? super Proof2, ?, ?, ?, ?>> optics = elements.stream().map(e -> (Optic<? super Proof2, ?, ?, ?, ?>) e.optic()).collect(Collectors.toList());
+            return Optional.of(new Optic.CompositionOptic<>(optics));
         }
         return Optional.empty();
     }
@@ -238,8 +238,32 @@ public final class TypedOptic<S, T, A, B> {
         return castOuterUnchecked(sType, tType);
     }
 
-    @SuppressWarnings("unchecked")
     public <S2, T2> TypedOptic<S2, T2, A, B> castOuterUnchecked(final Type<S2> sType, final Type<T2> tType) {
-        return new TypedOptic<>(proofBounds, sType, tType, aType, bType, (Optic<?, S2, T2, A, B>) optic);
+        final List<Element<?, ?, ?, ?>> newElements = new ArrayList<>(elements);
+        newElements.set(0, newElements.get(0).castOuterUnchecked(sType, tType));
+        return new TypedOptic<>(bounds, newElements);
+    }
+
+    @Override
+    public String toString() {
+        return "(" + elements.stream().map(Object::toString).collect(Collectors.joining(" \u25E6 ")) + ")";
+    }
+
+    public record Element<S, T, A, B>(
+        Type<S> sType,
+        Type<T> tType,
+        Type<A> aType,
+        Type<B> bType,
+        Optic<?, S, T, A, B> optic
+    ) {
+        @SuppressWarnings("unchecked")
+        public <S2, T2> Element<S2, T2, A, B> castOuterUnchecked(final Type<S2> sType, final Type<T2> tType) {
+            return new Element<>(sType, tType, aType, bType, (Optic<?, S2, T2, A, B>) optic);
+        }
+
+        @Override
+        public String toString() {
+            return optic.toString();
+        }
     }
 }
