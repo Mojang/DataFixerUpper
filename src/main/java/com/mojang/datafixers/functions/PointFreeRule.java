@@ -6,8 +6,6 @@ import com.google.common.collect.Lists;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.RewriteResult;
-import com.mojang.datafixers.kinds.K1;
-import com.mojang.datafixers.kinds.K2;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.constant.EmptyPart;
@@ -284,21 +282,19 @@ public interface PointFreeRule {
                 if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> lensPFFirst && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> lensPFSecond) {
                     // TODO: better equality - has to be the same lens; find out more about lens profunctor composition
                     if (Objects.equals(lensPFFirst.optic, lensPFSecond.optic)) {
-                        return cap(lensPFFirst, lensPFSecond, applyFirst.arg, applySecond.arg);
+                        return Optional.of(capApp(lensPFFirst, capComp(applyFirst.arg, applySecond.arg)));
                     }
                 }
             }
             return Optional.empty();
         }
 
-        private <R, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<?, U, ?, C> l2, final PointFree<?> f1, final PointFree<?> f2) {
-            return cap2(l1, (ProfunctorTransformer<T, U, B, C>) l2, (PointFree<Function<B, C>>) f1, (PointFree<Function<A, B>>) f2);
+        private <A, B, C> PointFree<Function<A, C>> capComp(final PointFree<?> f1, final PointFree<?> f2) {
+            return Functions.comp((PointFree<Function<B, C>>) f1, (PointFree<Function<A, B>>) f2);
         }
 
-        private <R, P extends K2, Proof extends K1, A, B, C, S, T, U> Optional<? extends PointFree<R>> cap2(final ProfunctorTransformer<S, T, A, B> l1, final ProfunctorTransformer<T, U, B, C> l2, final PointFree<Function<B, C>> f1, final PointFree<Function<A, B>> f2) {
-            final PointFree<Function<Function<A, C>, Function<S, U>>> lens = (PointFree<Function<Function<A, C>, Function<S, U>>>) (PointFree<?>) l1;
-            final PointFree<Function<A, C>> arg = Functions.comp(f1, f2);
-            return Optional.of((PointFree<R>) Functions.app(lens, arg));
+        private <R, A, B, S, T> PointFree<R> capApp(final ProfunctorTransformer<S, T, A, B> optic, final PointFree<?> f) {
+            return (PointFree<R>) Functions.app(optic, (PointFree<Function<A, B>>) f);
         }
     }
 
