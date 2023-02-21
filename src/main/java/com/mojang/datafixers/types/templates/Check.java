@@ -8,7 +8,6 @@ import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.functions.PointFreeRule;
-import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.families.TypeFamily;
@@ -19,21 +18,10 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
-public final class Check implements TypeTemplate {
-    private final String name;
-    private final int index;
-    private final TypeTemplate element;
-
-    public Check(final String name, final int index, final TypeTemplate element) {
-        this.name = name;
-        this.index = index;
-        this.element = element;
-    }
-
+public record Check(String name, int index, TypeTemplate element) implements TypeTemplate {
     @Override
     public int size() {
         return Math.max(index + 1, element.size());
@@ -83,26 +71,6 @@ public final class Check implements TypeTemplate {
 
     private <A> RewriteResult<?, ?> cap(final TypeFamily family, final int index, final RewriteResult<A, ?> elementResult) {
         return CheckType.fix((CheckType<A>) apply(family).apply(index), elementResult);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Check)) {
-            return false;
-        }
-        final Check that = (Check) obj;
-        return Objects.equals(name, that.name) && index == that.index && Objects.equals(element, that.element);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + index;
-        result = 31 * result + element.hashCode();
-        return result;
     }
 
     @Override

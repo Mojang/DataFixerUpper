@@ -28,19 +28,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
-public final class Product implements TypeTemplate {
-    private final TypeTemplate f;
-    private final TypeTemplate g;
-
-    public Product(final TypeTemplate f, final TypeTemplate g) {
-        this.f = f;
-        this.g = g;
-    }
-
+public record Product(TypeTemplate f, TypeTemplate g) implements TypeTemplate {
     @Override
     public int size() {
         return Math.max(f.size(), g.size());
@@ -130,25 +121,6 @@ public final class Product implements TypeTemplate {
 
     private <L, R> RewriteResult<?, ?> cap(final Type<?> type, final RewriteResult<L, ?> f1, final RewriteResult<R, ?> f2) {
         return ((ProductType<L, R>) type).mergeViews(f1, f2);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Product)) {
-            return false;
-        }
-        final Product that = (Product) obj;
-        return Objects.equals(f, that.f) && Objects.equals(g, that.g);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = f.hashCode();
-        result = 31 * result + g.hashCode();
-        return result;
     }
 
     @Override

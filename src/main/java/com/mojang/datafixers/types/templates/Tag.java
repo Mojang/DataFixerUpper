@@ -21,15 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
-public final class Tag implements TypeTemplate {
-    private final String name;
-    private final TypeTemplate element;
-
-    public Tag(final String name, final TypeTemplate element) {
-        this.name = name;
-        this.element = element;
-    }
-
+public record Tag(String name, TypeTemplate element) implements TypeTemplate {
     @Override
     public int size() {
         return element.size();
@@ -106,25 +98,6 @@ public final class Tag implements TypeTemplate {
     @Override
     public IntFunction<RewriteResult<?, ?>> hmap(final TypeFamily family, final IntFunction<RewriteResult<?, ?>> function) {
         return element.hmap(family, function);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Tag)) {
-            return false;
-        }
-        final Tag that = (Tag) obj;
-        return Objects.equals(name, that.name) && Objects.equals(element, that.element);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + element.hashCode();
-        return result;
     }
 
     @Override

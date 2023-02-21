@@ -27,20 +27,11 @@ import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntFunction;
 
-public final class CompoundList implements TypeTemplate {
-    private final TypeTemplate key;
-    private final TypeTemplate element;
-
-    public CompoundList(final TypeTemplate key, final TypeTemplate element) {
-        this.key = key;
-        this.element = element;
-    }
-
+public record CompoundList(TypeTemplate key, TypeTemplate element) implements TypeTemplate {
     @Override
     public int size() {
         return Math.max(key.size(), element.size());
@@ -83,16 +74,6 @@ public final class CompoundList implements TypeTemplate {
 
     private <L, R> RewriteResult<?, ?> cap(final Type<?> type, final RewriteResult<L, ?> f1, final RewriteResult<R, ?> f2) {
         return ((CompoundListType<L, R>) type).mergeViews(f1, f2);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return obj instanceof CompoundList && Objects.equals(element, ((CompoundList) obj).element);
-    }
-
-    @Override
-    public int hashCode() {
-        return element.hashCode();
     }
 
     @Override

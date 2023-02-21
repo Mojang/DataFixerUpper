@@ -28,13 +28,7 @@ import java.util.Optional;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
-public final class RecursivePoint implements TypeTemplate {
-    private final int index;
-
-    public RecursivePoint(final int index) {
-        this.index = index;
-    }
-
+public record RecursivePoint(int index) implements TypeTemplate {
     @Override
     public int size() {
         return index + 1;
@@ -89,22 +83,8 @@ public final class RecursivePoint implements TypeTemplate {
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        return obj instanceof RecursivePoint && index == ((RecursivePoint) obj).index;
-    }
-
-    @Override
-    public int hashCode() {
-        return index;
-    }
-
-    @Override
     public String toString() {
         return "Id[" + index + "]";
-    }
-
-    public int index() {
-        return index;
     }
 
     public static final class RecursivePointType<A> extends Type<A> {

@@ -22,17 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
-public final class Hook implements TypeTemplate {
-    private final TypeTemplate element;
-    private final HookFunction preRead;
-    private final HookFunction postWrite;
-
-    public Hook(final TypeTemplate element, final HookFunction preRead, final HookFunction postWrite) {
-        this.element = element;
-        this.preRead = preRead;
-        this.postWrite = postWrite;
-    }
-
+public record Hook(TypeTemplate element, HookFunction preRead, HookFunction postWrite) implements TypeTemplate {
     public interface HookFunction {
         HookFunction IDENTITY = new HookFunction() {
             @Override
@@ -74,26 +64,6 @@ public final class Hook implements TypeTemplate {
 
     private <A> RewriteResult<A, ?> cap(final TypeFamily family, final int index, final RewriteResult<A, ?> elementResult) {
         return HookType.fix((HookType<A>) apply(family).apply(index), elementResult);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Hook)) {
-            return false;
-        }
-        final Hook that = (Hook) obj;
-        return Objects.equals(element, that.element) && Objects.equals(preRead, that.preRead) && Objects.equals(postWrite, that.postWrite);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = element.hashCode();
-        result = 31 * result + preRead.hashCode();
-        result = 31 * result + postWrite.hashCode();
-        return result;
     }
 
     @Override

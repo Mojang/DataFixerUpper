@@ -20,13 +20,7 @@ import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.function.IntFunction;
 
-public final class Const implements TypeTemplate {
-    private final Type<?> type;
-
-    public Const(final Type<?> type) {
-        this.type = type;
-    }
-
+public record Const(Type<?> type) implements TypeTemplate {
     @Override
     public int size() {
         return 0;
@@ -78,22 +72,8 @@ public final class Const implements TypeTemplate {
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        return obj instanceof Const && Objects.equals(type, ((Const) obj).type);
-    }
-
-    @Override
-    public int hashCode() {
-        return type.hashCode();
-    }
-
-    @Override
     public String toString() {
         return "Const[" + type + "]";
-    }
-
-    public Type<?> type() {
-        return type;
     }
 
     public static final class PrimitiveType<A> extends Type<A> {
