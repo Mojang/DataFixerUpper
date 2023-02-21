@@ -3,9 +3,13 @@
 package com.mojang.datafixers.functions;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.RewriteResult;
+import com.mojang.datafixers.TypedOptic;
+import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.constant.EmptyPart;
@@ -25,6 +29,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -273,28 +278,54 @@ public interface PointFreeRule {
         INSTANCE;
 
         // (ap lens f)◦(ap lens g) -> (ap lens (f ◦ g))
-        @SuppressWarnings("unchecked")
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof final Apply<?, ?> applyFirst && second instanceof final Apply<?, ?> applySecond) {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
-                if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> lensPFFirst && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> lensPFSecond) {
-                    // TODO: better equality - has to be the same lens; find out more about lens profunctor composition
-                    if (Objects.equals(lensPFFirst.optic, lensPFSecond.optic)) {
-                        return Optional.of(capApp(lensPFFirst, capComp(applyFirst.arg, applySecond.arg)));
+                if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> transformerFirst && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> transformerSecond) {
+                    final var decomposedFirst = transformerFirst.optic.elements();
+                    final var decomposedSecond = transformerSecond.optic.elements();
+                    final int prefixSize = findCommonPrefix(decomposedFirst, decomposedSecond);
+                    if (prefixSize == 0) {
+                        return Optional.empty();
                     }
+
+                    if (prefixSize == decomposedFirst.size() && prefixSize == decomposedSecond.size()) {
+                        return Optional.of(capApp(transformerFirst.optic, capComp(applyFirst.arg, applySecond.arg)));
+                    }
+
+                    final Set<TypeToken<? extends K1>> bounds = Sets.union(transformerFirst.optic.bounds(), transformerSecond.optic.bounds());
+
+                    final TypedOptic<?, ?, ?, ?> prefix = new TypedOptic<>(bounds, decomposedFirst.subList(0, prefixSize));
+                    final PointFree<?> firstFork = capApp(new TypedOptic<>(bounds, decomposedFirst.subList(prefixSize, decomposedFirst.size())), applyFirst.arg);
+                    final PointFree<?> secondFork = capApp(new TypedOptic<>(bounds, decomposedSecond.subList(prefixSize, decomposedSecond.size())), applySecond.arg);
+
+                    return Optional.of(capApp(prefix, capComp(firstFork, secondFork)));
                 }
             }
             return Optional.empty();
+        }
+
+        private static int findCommonPrefix(final List<? extends TypedOptic.Element<?, ?, ?, ?>> first, final List<? extends TypedOptic.Element<?, ?, ?, ?>> second) {
+            final int size = Math.min(first.size(), second.size());
+            for (int i = 0; i < size; i++) {
+                if (!first.get(i).optic().equals(second.get(i).optic())) {
+                    return i;
+                }
+            }
+            return size;
         }
 
         private <A, B, C> PointFree<Function<A, C>> capComp(final PointFree<?> f1, final PointFree<?> f2) {
             return Functions.comp((PointFree<Function<B, C>>) f1, (PointFree<Function<A, B>>) f2);
         }
 
-        private <R, A, B, S, T> PointFree<R> capApp(final ProfunctorTransformer<S, T, A, B> optic, final PointFree<?> f) {
-            return (PointFree<R>) Functions.app(optic, (PointFree<Function<A, B>>) f);
+        private <R, A, B, S, T> PointFree<R> capApp(final TypedOptic<S, T, A, B> optic, final PointFree<?> f) {
+            if (optic.elements().isEmpty()) {
+                return (PointFree<R>) f;
+            }
+            return (PointFree<R>) Functions.app(new ProfunctorTransformer<>(optic), (PointFree<Function<A, B>>) f);
         }
     }
 
