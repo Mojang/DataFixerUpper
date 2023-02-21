@@ -77,6 +77,8 @@ public record Sum(TypeTemplate f, TypeTemplate g) implements TypeTemplate {
 
     private <A, B, LS, RS, LT, RT> OpticParts<A, B> cap(final FamilyOptic<A, B> lo, final FamilyOptic<A, B> ro, final int index) {
         final TypeToken<TraversalP.Mu> bound = TraversalP.Mu.TYPE_TOKEN;
+        final OpticParts<A, B> lp = lo.apply(index);
+        final OpticParts<A, B> rp = ro.apply(index);
 
         return new OpticParts<>(
             ImmutableSet.of(bound),
@@ -85,13 +87,11 @@ public record Sum(TypeTemplate f, TypeTemplate g) implements TypeTemplate {
                 public <F extends K1> FunctionType<Either<LS, RS>, App<F, Either<LT, RT>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
                     return e -> e.map(
                         l -> {
-                            final OpticParts<A, B> parts = lo.apply(index);
-                            final Traversal<LS, LT, A, B> traversal = (Traversal<LS, LT, A, B>) Optics.toTraversal(parts.optic().upCast(parts.bounds(), bound).orElseThrow(IllegalArgumentException::new));
+                            final Traversal<LS, LT, A, B> traversal = (Traversal<LS, LT, A, B>) Optics.toTraversal(lp.optic().upCast(lp.bounds(), bound).orElseThrow(IllegalArgumentException::new));
                             return applicative.ap(Either::left, traversal.wander(applicative, input).apply(l));
                         },
                         r -> {
-                            final OpticParts<A, B> parts = ro.apply(index);
-                            final Traversal<RS, RT, A, B> traversal = (Traversal<RS, RT, A, B>) Optics.toTraversal(parts.optic().upCast(parts.bounds(), bound).orElseThrow(IllegalArgumentException::new));
+                            final Traversal<RS, RT, A, B> traversal = (Traversal<RS, RT, A, B>) Optics.toTraversal(rp.optic().upCast(rp.bounds(), bound).orElseThrow(IllegalArgumentException::new));
                             return applicative.ap(Either::right, traversal.wander(applicative, input).apply(r));
                         }
                     );
