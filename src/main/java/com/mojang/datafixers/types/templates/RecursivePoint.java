@@ -206,14 +206,7 @@ public record RecursivePoint(int index) implements TypeTemplate {
         }
 
         private <B, FT, FR> TypedOptic<A, B, FT, FR> wrapOptic(final TypedOptic<A, B, FT, FR> optic) {
-            return new TypedOptic<>(
-                optic.bounds(),
-                this,
-                optic.tType(),
-                optic.aType(),
-                optic.bType(),
-                optic.optic()
-            );
+            return optic.castOuter(this, optic.tType());
         }
 
         /*private <B, FT, FR> FieldOptic<A, ?, FT, FR> cap(final MuType<B> newType, final Type<FT> type, final Type<FR> resultType, final FieldOptic<A, ?, FT, FR> optic) {

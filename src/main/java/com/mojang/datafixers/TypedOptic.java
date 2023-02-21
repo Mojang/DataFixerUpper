@@ -21,6 +21,7 @@ import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -217,6 +218,10 @@ public final class TypedOptic<S, T, A, B> {
         final Map<K, Type<?>> newTypes = Maps.newHashMap(sType.types());
         newTypes.put(key, bType);
         return DSL.taggedChoiceType(sType.getName(), sType.getKeyType(), newTypes);
+    }
+
+    public TypedOptic<S, T, A, B> castOuter(final Type<S> sType, final Type<T> tType) {
+        return castOuterUnchecked(sType, tType);
     }
 
     @SuppressWarnings("unchecked")
