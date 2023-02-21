@@ -169,10 +169,17 @@ public final class TypedOptic<S, T, A, B> {
             TraversalP.Mu.TYPE_TOKEN,
             DSL.compoundList(aType, valueType),
             DSL.compoundList(bType, valueType),
+            DSL.and(aType, valueType),
+            DSL.and(bType, valueType),
+            Optics.listTraversal()
+        ).compose(new TypedOptic<>(
+            TraversalP.Mu.TYPE_TOKEN,
+            DSL.and(aType, valueType),
+            DSL.and(bType, valueType),
             aType,
             bType,
-            Optics.<Pair<K, V>, Pair<K2, V>>listTraversal().compose(Optics.proj1())
-        );
+            Optics.proj1()
+        ));
     }
 
     public static <K, V, V2> TypedOptic<List<Pair<K, V>>, List<Pair<K, V2>>, V, V2> compoundListElements(final Type<K> keyType, final Type<V> aType, final Type<V2> bType) {
@@ -180,10 +187,17 @@ public final class TypedOptic<S, T, A, B> {
             TraversalP.Mu.TYPE_TOKEN,
             DSL.compoundList(keyType, aType),
             DSL.compoundList(keyType, bType),
+            DSL.and(keyType, aType),
+            DSL.and(keyType, bType),
+            Optics.listTraversal()
+        ).compose(new TypedOptic<>(
+            TraversalP.Mu.TYPE_TOKEN,
+            DSL.and(keyType, aType),
+            DSL.and(keyType, bType),
             aType,
             bType,
-            Optics.<Pair<K, V>, Pair<K, V2>>listTraversal().compose(Optics.proj2())
-        );
+            Optics.proj2()
+        ));
     }
 
     public static <A, B> TypedOptic<List<A>, List<B>, A, B> list(final Type<A> aType, final Type<B> bType) {

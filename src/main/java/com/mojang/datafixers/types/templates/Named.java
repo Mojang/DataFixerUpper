@@ -176,17 +176,14 @@ public record Named(String name, TypeTemplate element) implements TypeTemplate {
         }
 
         protected static <A, B, FT, FR> TypedOptic<Pair<String, A>, Pair<String, B>, FT, FR> wrapOptic(final String name, final TypedOptic<A, B, FT, FR> optic) {
-            final ImmutableSet.Builder<TypeToken<? extends K1>> builder = ImmutableSet.builder();
-            builder.addAll(optic.bounds());
-            builder.add(Cartesian.Mu.TYPE_TOKEN);
             return new TypedOptic<>(
-                builder.build(),
+                Cartesian.Mu.TYPE_TOKEN,
                 DSL.named(name, optic.sType()),
                 DSL.named(name, optic.tType()),
-                optic.aType(),
-                optic.bType(),
-                Optics.<String, A, B>proj2().composeUnchecked(optic.optic())
-            );
+                optic.sType(),
+                optic.tType(),
+                Optics.proj2()
+            ).compose(optic);
         }
     }
 }
