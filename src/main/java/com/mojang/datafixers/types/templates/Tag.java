@@ -198,14 +198,7 @@ public record Tag(String name, TypeTemplate element) implements TypeTemplate {
         }
 
         private <B, FT, FR> TypedOptic<A, B, FT, FR> wrapOptic(final TypedOptic<A, B, FT, FR> optic) {
-            return new TypedOptic<>(
-                optic.bounds(),
-                DSL.field(name, optic.sType()),
-                DSL.field(name, optic.tType()),
-                optic.aType(),
-                optic.bType(),
-                optic.optic()
-            );
+            return optic.castOuter(DSL.field(name, optic.sType()), DSL.field(name, optic.tType()));
         }
 
         public String name() {

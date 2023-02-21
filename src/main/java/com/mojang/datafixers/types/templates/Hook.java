@@ -150,13 +150,9 @@ public record Hook(TypeTemplate element, HookFunction preRead, HookFunction post
         }
 
         protected static <A, B, FT, FR> TypedOptic<A, B, FT, FR> wrapOptic(final TypedOptic<A, B, FT, FR> optic, final HookFunction preRead, final HookFunction postWrite) {
-            return new TypedOptic<>(
-                optic.bounds(),
+            return optic.castOuter(
                 DSL.hook(optic.sType(), preRead, postWrite),
-                DSL.hook(optic.tType(), preRead, postWrite),
-                optic.aType(),
-                optic.bType(),
-                optic.optic()
+                DSL.hook(optic.tType(), preRead, postWrite)
             );
         }
 

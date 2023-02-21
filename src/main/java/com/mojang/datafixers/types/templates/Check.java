@@ -185,14 +185,7 @@ public record Check(String name, int index, TypeTemplate element) implements Typ
         }
 
         protected static <A, B, FT, FR> TypedOptic<A, B, FT, FR> wrapOptic(final CheckType<A> type, final TypedOptic<A, B, FT, FR> optic) {
-            return new TypedOptic<>(
-                optic.bounds(),
-                type,
-                new CheckType<>(type.name, type.index, type.expectedIndex, optic.tType()),
-                optic.aType(),
-                optic.bType(),
-                optic.optic()
-            );
+            return optic.castOuter(type, new CheckType<>(type.name, type.index, type.expectedIndex, optic.tType()));
         }
 
         @Override
