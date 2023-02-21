@@ -24,18 +24,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntFunction;
 
-public final class List implements TypeTemplate {
-    private final TypeTemplate element;
-
-    public List(final TypeTemplate element) {
-        this.element = element;
-    }
-
+public record List(TypeTemplate element) implements TypeTemplate {
     @Override
     public int size() {
         return element.size();
@@ -92,16 +85,6 @@ public final class List implements TypeTemplate {
 
     private <E> RewriteResult<?, ?> cap(final Type<?> type, final RewriteResult<E, ?> view) {
         return ((ListType<E>) type).fix(view);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return obj instanceof List && Objects.equals(element, ((List) obj).element);
-    }
-
-    @Override
-    public int hashCode() {
-        return element.hashCode();
     }
 
     @Override

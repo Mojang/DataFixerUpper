@@ -2,14 +2,11 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.types.templates;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
-import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.Cartesian;
 import com.mojang.datafixers.types.Type;
@@ -27,15 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
-public final class Named implements TypeTemplate {
-    private final String name;
-    private final TypeTemplate element;
-
-    public Named(final String name, final TypeTemplate element) {
-        this.name = name;
-        this.element = element;
-    }
-
+public record Named(String name, TypeTemplate element) implements TypeTemplate {
     @Override
     public int size() {
         return element.size();
@@ -66,25 +55,6 @@ public final class Named implements TypeTemplate {
 
     private <A> RewriteResult<Pair<String, A>, ?> cap(final TypeFamily family, final int index, final RewriteResult<A, ?> elementResult) {
         return NamedType.fix((NamedType<A>) apply(family).apply(index), elementResult);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof Named)) {
-            return false;
-        }
-        final Named that = (Named) obj;
-        return Objects.equals(name, that.name) && Objects.equals(element, that.element);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + element.hashCode();
-        return result;
     }
 
     @Override
