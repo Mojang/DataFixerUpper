@@ -194,26 +194,21 @@ public interface PointFreeRule {
         // (ap π1 f)◦(ap π2 g) -> (ap π2 g)◦(ap π1 f)
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
-            if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
-                final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
-                final Apply<?, ?> applySecond = (Apply<?, ?>) second;
+            if (first instanceof final Apply<?, ?> applyFirst && second instanceof final Apply<?, ?> applySecond) {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
-                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?>) firstFunc;
-                    final ProfunctorTransformer<?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?>) secondFunc;
-
+                if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> firstOptic && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> secondOptic) {
                     Optic<?, ?, ?, ?, ?> fo = firstOptic.optic;
-                    while (fo instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
-                        fo = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) fo).outer();
+                    while (fo instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
+                        fo = composition.outer();
                     }
                     if (!Optics.isProj2(fo)) {
                         return Optional.empty();
                     }
 
                     Optic<?, ?, ?, ?, ?> so = secondOptic.optic;
-                    while (so instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
-                        so = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) so).outer();
+                    while (so instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
+                        so = composition.outer();
                     }
                     if (!Optics.isProj1(so)) {
                         return Optional.empty();
@@ -256,26 +251,21 @@ public interface PointFreeRule {
         // (ap i1 f)◦(ap i2 g) -> (ap i2 g)◦(ap i1 f)
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
-            if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
-                final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
-                final Apply<?, ?> applySecond = (Apply<?, ?>) second;
+            if (first instanceof final Apply<?, ?> applyFirst && second instanceof final Apply<?, ?> applySecond) {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
-                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?> firstOptic = (ProfunctorTransformer<?, ?, ?, ?>) firstFunc;
-                    final ProfunctorTransformer<?, ?, ?, ?> secondOptic = (ProfunctorTransformer<?, ?, ?, ?>) secondFunc;
-
+                if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> firstOptic && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> secondOptic) {
                     Optic<?, ?, ?, ?, ?> fo = firstOptic.optic;
-                    while (fo instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
-                        fo = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) fo).outer();
+                    while (fo instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
+                        fo = composition.outer();
                     }
                     if (!Optics.isInj2(fo)) {
                         return Optional.empty();
                     }
 
                     Optic<?, ?, ?, ?, ?> so = secondOptic.optic;
-                    while (so instanceof Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) {
-                        so = ((Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?>) so).outer();
+                    while (so instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
+                        so = composition.outer();
                     }
                     if (!Optics.isInj1(so)) {
                         return Optional.empty();
@@ -319,14 +309,10 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
-          if (first instanceof Apply<?, ?> && second instanceof Apply<?, ?>) {
-                final Apply<?, ?> applyFirst = (Apply<?, ?>) first;
-                final Apply<?, ?> applySecond = (Apply<?, ?>) second;
+            if (first instanceof final Apply<?, ?> applyFirst && second instanceof final Apply<?, ?> applySecond) {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
-                if (firstFunc instanceof ProfunctorTransformer<?, ?, ?, ?> && secondFunc instanceof ProfunctorTransformer<?, ?, ?, ?>) {
-                    final ProfunctorTransformer<?, ?, ?, ?> lensPFFirst = (ProfunctorTransformer<?, ?, ?, ?>) firstFunc;
-                    final ProfunctorTransformer<?, ?, ?, ?> lensPFSecond = (ProfunctorTransformer<?, ?, ?, ?>) secondFunc;
+                if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> lensPFFirst && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> lensPFSecond) {
                     // TODO: better equality - has to be the same lens; find out more about lens profunctor composition
                     if (Objects.equals(lensPFFirst.optic, lensPFSecond.optic)) {
                         return cap(lensPFFirst, lensPFSecond, applyFirst.arg, applySecond.arg);
@@ -354,10 +340,8 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
-            if (first instanceof Fold<?, ?> && second instanceof Fold<?, ?>) {
+            if (first instanceof final Fold<?, ?> firstFold && second instanceof final Fold<?, ?> secondFold) {
                 // fold (_) ◦ fold (_)
-                final Fold<?, ?> firstFold = (Fold<?, ?>) first;
-                final Fold<?, ?> secondFold = (Fold<?, ?>) second;
                 final RecursiveTypeFamily family = firstFold.aType.family();
                 if (firstFold.index == secondFold.index && Objects.equals(family, secondFold.aType.family())) {
                     final RecursiveTypeFamily newFamily = firstFold.bType.family();
@@ -402,10 +386,8 @@ public interface PointFreeRule {
         @SuppressWarnings("unchecked")
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
-            if (first instanceof Fold<?, ?> && second instanceof Fold<?, ?>) {
+            if (first instanceof final Fold<?, ?> firstFold && second instanceof final Fold<?, ?> secondFold) {
                 // fold (_) ◦ fold (_)
-                final Fold<?, ?> firstFold = (Fold<?, ?>) first;
-                final Fold<?, ?> secondFold = (Fold<?, ?>) second;
                 final RecursiveTypeFamily family = firstFold.aType.family();
                 if (firstFold.index == secondFold.index && Objects.equals(family, secondFold.aType.family())) {
                     final RecursiveTypeFamily newFamily = firstFold.bType.family();
