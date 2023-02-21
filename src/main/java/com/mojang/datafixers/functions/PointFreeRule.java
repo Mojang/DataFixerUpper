@@ -233,14 +233,8 @@ public interface PointFreeRule {
             final Product.ProductType<A2, B2> output = (Product.ProductType<A2, B2>) firstType.second();
 
             return (R) new Comp<>(
-                new Apply<>(secondFunc.castOuterUnchecked(DSL.func(
-                    DSL.func(input.second(), output.second()),
-                    DSL.func(DSL.and(output.first(), input.second()), output)
-                )), secondArg),
-                new Apply<>(firstFunc.castOuterUnchecked(DSL.func(
-                    DSL.func(input.first(), output.first()),
-                    DSL.func(input, DSL.and(output.first(), input.second()))
-                )), firstArg)
+                new Apply<>(secondFunc.castOuterUnchecked(DSL.and(output.first(), input.second()), output), secondArg),
+                new Apply<>(firstFunc.castOuterUnchecked(input, DSL.and(output.first(), input.second())), firstArg)
             );
         }
     }
@@ -290,14 +284,8 @@ public interface PointFreeRule {
             final Sum.SumType<A2, B2> output = (Sum.SumType<A2, B2>) firstType.second();
 
             return (R) new Comp<>(
-                new Apply<>(secondFunc.castOuterUnchecked(DSL.func(
-                    DSL.func(input.second(), output.second()),
-                    DSL.func(DSL.or(output.first(), input.second()), output)
-                )), secondArg),
-                new Apply<>(firstFunc.castOuterUnchecked(DSL.func(
-                    DSL.func(input.first(), output.first()),
-                    DSL.func(input, DSL.or(output.first(), input.second()))
-                )), firstArg)
+                new Apply<>(secondFunc.castOuterUnchecked(DSL.or(output.first(), input.second()), output), secondArg),
+                new Apply<>(firstFunc.castOuterUnchecked(input, DSL.or(output.first(), input.second())), firstArg)
             );
         }
     }

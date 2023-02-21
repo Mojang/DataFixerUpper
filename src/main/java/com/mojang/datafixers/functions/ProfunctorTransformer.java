@@ -2,9 +2,11 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers.functions;
 
+import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FunctionType;
 import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.optics.Optic;
+import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
@@ -21,8 +23,9 @@ final class ProfunctorTransformer<S, T, A, B> extends PointFree<Function<Functio
     }
 
     @SuppressWarnings("unchecked")
-    public <S2, T2> ProfunctorTransformer<S2, T2, A, B> castOuterUnchecked(final Type<Function<Function<A, B>, Function<S2, T2>>> newType) {
-        return new ProfunctorTransformer<>((Optic<? super FunctionType.Instance.Mu, S2, T2, A, B>) optic, newType);
+    public <S2, T2> ProfunctorTransformer<S2, T2, A, B> castOuterUnchecked(final Type<S2> sType, final Type<T2> tType) {
+        final Func<Function<A, B>, Function<S, T>> func = (Func<Function<A, B>, Function<S, T>>) type;
+        return new ProfunctorTransformer<>((Optic<? super FunctionType.Instance.Mu, S2, T2, A, B>) optic, DSL.func(func.first(), DSL.func(sType, tType)));
     }
 
     @Override
