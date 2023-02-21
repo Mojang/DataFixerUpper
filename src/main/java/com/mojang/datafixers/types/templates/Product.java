@@ -8,7 +8,6 @@ import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
 import com.mojang.datafixers.FunctionType;
-import com.mojang.datafixers.OpticParts;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
@@ -75,21 +74,25 @@ public record Product(TypeTemplate f, TypeTemplate g) implements TypeTemplate {
         );
     }
 
-    private <A, B, LS, RS, LT, RT> OpticParts<A, B> cap(final FamilyOptic<A, B> lo, final FamilyOptic<A, B> ro, final int index) {
+    @SuppressWarnings("unchecked")
+    private <A, B, LS, RS, LT, RT> TypedOptic<?, ?, A, B> cap(final FamilyOptic<A, B> lo, final FamilyOptic<A, B> ro, final int index) {
         final TypeToken<TraversalP.Mu> bound = TraversalP.Mu.TYPE_TOKEN;
 
-        final OpticParts<A, B> lp = lo.apply(index);
-        final OpticParts<A, B> rp = ro.apply(index);
+        final TypedOptic<LS, LT, A, B> lp = (TypedOptic<LS, LT, A, B>) lo.apply(index);
+        final TypedOptic<RS, RT, A, B> rp = (TypedOptic<RS, RT, A, B>) ro.apply(index);
 
-        final Optic<? super TraversalP.Mu, ?, ?, A, B> l = lp.optic().upCast(lp.bounds(), bound).orElseThrow(IllegalArgumentException::new);
-        final Optic<? super TraversalP.Mu, ?, ?, A, B> r = rp.optic().upCast(rp.bounds(), bound).orElseThrow(IllegalArgumentException::new);
+        final Optic<? super TraversalP.Mu, LS, LT, A, B> l = lp.upCast(bound).orElseThrow(IllegalArgumentException::new);
+        final Optic<? super TraversalP.Mu, RS, RT, A, B> r = rp.upCast(bound).orElseThrow(IllegalArgumentException::new);
 
-        final Traversal<LS, LT, A, B> lt = Optics.toTraversal((Optic<? super TraversalP.Mu, LS, LT, A, B>) l);
-        final Traversal<RS, RT, A, B> rt = Optics.toTraversal((Optic<? super TraversalP.Mu, RS, RT, A, B>) r);
+        final Traversal<LS, LT, A, B> lt = Optics.toTraversal(l);
+        final Traversal<RS, RT, A, B> rt = Optics.toTraversal(r);
 
-        return new OpticParts<>(
+        return new TypedOptic<>(
             ImmutableSet.of(bound),
-            new Traversal<Pair<LS, RS>, Pair<LT, RT>, A, B>() {
+            DSL.and(lp.sType(), rp.sType()),
+            DSL.and(lp.tType(), rp.tType()),
+            lp.aType(), lp.bType(),
+            new Traversal<>() {
                 @Override
                 public <F extends K1> FunctionType<Pair<LS, RS>, App<F, Pair<LT, RT>>> wander(final Applicative<F, ?> applicative, final FunctionType<A, App<F, B>> input) {
                     return p -> applicative.ap2(applicative.point(Pair::of),

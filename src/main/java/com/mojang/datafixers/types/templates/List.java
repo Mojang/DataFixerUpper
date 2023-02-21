@@ -3,17 +3,11 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
-import com.mojang.datafixers.OpticParts;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
-import com.mojang.datafixers.kinds.K1;
-import com.mojang.datafixers.optics.ListTraversal;
-import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
 import com.mojang.datafixers.types.Type;
@@ -25,7 +19,6 @@ import com.mojang.serialization.DynamicOps;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.IntFunction;
 
 public record List(TypeTemplate element) implements TypeTemplate {
@@ -56,18 +49,18 @@ public record List(TypeTemplate element) implements TypeTemplate {
 
     @Override
     public <A, B> FamilyOptic<A, B> applyO(final FamilyOptic<A, B> input, final Type<A> aType, final Type<B> bType) {
-        return TypeFamily.familyOptic(
-            i -> {
-                final OpticParts<A, B> pair = element.applyO(input, aType, bType).apply(i);
-                final Set<TypeToken<? extends K1>> bounds = Sets.newHashSet(pair.bounds());
-                bounds.add(TraversalP.Mu.TYPE_TOKEN);
-                return new OpticParts<>(bounds, cap(pair.optic()));
-            }
-        );
+        return TypeFamily.familyOptic(i -> cap(element.applyO(input, aType, bType).apply(i)));
     }
 
-    private <S, T, A, B> Optic<?, ?, ?, A, B> cap(final Optic<?, S, T, A, B> concreteOptic) {
-        return Optics.<S, T>listTraversal().composeUnchecked(concreteOptic);
+    private <S, T, A, B> TypedOptic<?, ?, A, B> cap(final TypedOptic<S, T, A, B> concreteOptic) {
+        return new TypedOptic<>(
+            TraversalP.Mu.TYPE_TOKEN,
+            DSL.list(concreteOptic.sType()),
+            DSL.list(concreteOptic.tType()),
+            concreteOptic.sType(),
+            concreteOptic.tType(),
+            Optics.listTraversal()
+        ).compose(concreteOptic);
     }
 
     @Override

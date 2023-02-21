@@ -3,19 +3,14 @@
 package com.mojang.datafixers.types.templates;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
-import com.mojang.datafixers.OpticParts;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
-import com.mojang.datafixers.kinds.K1;
-import com.mojang.datafixers.optics.ListTraversal;
-import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
+import com.mojang.datafixers.optics.profunctors.Cartesian;
 import com.mojang.datafixers.optics.profunctors.TraversalP;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.RecursiveTypeFamily;
@@ -28,7 +23,6 @@ import com.mojang.serialization.DynamicOps;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.IntFunction;
 
 public record CompoundList(TypeTemplate key, TypeTemplate element) implements TypeTemplate {
@@ -44,18 +38,27 @@ public record CompoundList(TypeTemplate key, TypeTemplate element) implements Ty
 
     @Override
     public <A, B> FamilyOptic<A, B> applyO(final FamilyOptic<A, B> input, final Type<A> aType, final Type<B> bType) {
-        return TypeFamily.familyOptic(
-            i -> {
-                final OpticParts<A, B> optic = element.applyO(input, aType, bType).apply(i);
-                final Set<TypeToken<? extends K1>> bounds = Sets.newHashSet(optic.bounds());
-                bounds.add(TraversalP.Mu.TYPE_TOKEN);
-                return new OpticParts<>(bounds, cap(optic.optic()));
-            }
-        );
+        return TypeFamily.familyOptic(i -> cap(element.applyO(input, aType, bType).apply(i)));
     }
 
-    private <S, T, A, B> Optic<?, ?, ?, A, B> cap(final Optic<?, S, T, A, B> concreteOptic) {
-        return Optics.<Pair<String, S>, Pair<String, T>>listTraversal().compose(Optics.proj2()).composeUnchecked(concreteOptic);
+    private <S, T, A, B> TypedOptic<?, ?, A, B> cap(final TypedOptic<S, T, A, B> concreteOptic) {
+        final Type<Pair<String, S>> sTypeEntry = DSL.and(DSL.string(), concreteOptic.sType());
+        final Type<Pair<String, T>> tTypeEntry = DSL.and(DSL.string(), concreteOptic.tType());
+        return new TypedOptic<>(
+            TraversalP.Mu.TYPE_TOKEN,
+            DSL.compoundList(concreteOptic.sType()),
+            DSL.compoundList(concreteOptic.tType()),
+            sTypeEntry,
+            tTypeEntry,
+            Optics.listTraversal()
+        ).compose(new TypedOptic<>(
+            Cartesian.Mu.TYPE_TOKEN,
+            sTypeEntry,
+            tTypeEntry,
+            concreteOptic.sType(),
+            concreteOptic.tType(),
+            Optics.proj2()
+        )).compose(concreteOptic);
     }
 
     @Override

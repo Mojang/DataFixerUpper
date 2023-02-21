@@ -7,7 +7,6 @@ import com.google.common.collect.Interners;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.FamilyOptic;
-import com.mojang.datafixers.OpticParts;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.TypedOptic;
@@ -15,7 +14,6 @@ import com.mojang.datafixers.View;
 import com.mojang.datafixers.functions.Functions;
 import com.mojang.datafixers.functions.PointFree;
 import com.mojang.datafixers.functions.PointFreeRule;
-import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.types.templates.TypeTemplate;
@@ -128,28 +126,16 @@ public final class RecursiveTypeFamily implements TypeFamily {
                 final FamilyOptic<A, B> arg = i -> fo.get(0).apply(i);
 
                 fo.add(template.applyO(arg, aType, bType));
-                final OpticParts<A, B> parts = fo.get(0).apply(index);
-                return Either.left(mkOptic(sType, tType, aType, bType, parts));
+                final TypedOptic<?, ?, A, B> parts = fo.get(0).apply(index);
+                return Either.left(parts.castOuterUnchecked(sType, tType));
             } else {
                 return mkSimpleOptic(sType, tType, aType, bType, matcher);
             }
         });
     }
 
-    @SuppressWarnings("unchecked")
-    private <S, T, A, B> TypedOptic<S, T, A, B> mkOptic(final Type<S> sType, final Type<T> tType, final Type<A> aType, final Type<B> bType, final OpticParts<A, B> parts) {
-        return new TypedOptic<>(
-            parts.bounds(),
-            sType,
-            tType,
-            aType,
-            bType,
-            (Optic<?, S, T, A, B>) parts.optic()
-        );
-    }
-
     private <S, T, A, B> Either<TypedOptic<?, ?, A, B>, Type.FieldNotFoundException> mkSimpleOptic(final RecursivePoint.RecursivePointType<S> sType, final RecursivePoint.RecursivePointType<T> tType, final Type<A> aType, final Type<B> bType, final Type.TypeMatcher<A, B> matcher) {
-        return sType.unfold().findType(aType, bType, matcher, false).mapLeft(o -> mkOptic(sType, tType, o.aType(), o.bType(), new OpticParts<>(o.bounds(), o.optic())));
+        return sType.unfold().findType(aType, bType, matcher, false).mapLeft(o -> o.castOuterUnchecked(sType, tType));
     }
 
     public Optional<RewriteResult<?, ?>> everywhere(final int index, final TypeRewriteRule rule, final PointFreeRule optimizationRule) {

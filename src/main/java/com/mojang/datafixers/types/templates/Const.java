@@ -5,7 +5,6 @@ package com.mojang.datafixers.types.templates;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.FamilyOptic;
-import com.mojang.datafixers.OpticParts;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.optics.Optics;
@@ -44,10 +43,10 @@ public record Const(Type<?> type) implements TypeTemplate {
     @Override
     public <A, B> FamilyOptic<A, B> applyO(final FamilyOptic<A, B> input, final Type<A> aType, final Type<B> bType) {
         if (Objects.equals(type, aType)) {
-            return TypeFamily.familyOptic(i -> new OpticParts<>(ImmutableSet.of(Profunctor.Mu.TYPE_TOKEN), Optics.id()));
+            return TypeFamily.familyOptic(i -> new TypedOptic<>(ImmutableSet.of(Profunctor.Mu.TYPE_TOKEN), aType, bType, aType, bType, Optics.id()));
         }
         final TypedOptic<?, ?, A, B> ignoreOptic = makeIgnoreOptic(type, aType, bType);
-        return TypeFamily.familyOptic(i -> new OpticParts<>(ignoreOptic.bounds(), ignoreOptic.optic()));
+        return TypeFamily.familyOptic(i -> ignoreOptic);
     }
 
     private <T, A, B> TypedOptic<T, T, A, B> makeIgnoreOptic(final Type<T> type, final Type<A> aType, final Type<B> bType) {
