@@ -8,36 +8,42 @@ import com.mojang.datafixers.kinds.App2;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public interface Optic<Proof extends K1, S, T, A, B> {
     <P extends K2> Function<App2<P, A, B>, App2<P, S, T>> eval(final App<? extends Proof, P> proof);
 
-    default <Proof2 extends Proof, A1, B1> Optic<Proof2, S, T, A1, B1> compose(final Optic<? super Proof2, A, B, A1, B1> optic) {
-        return composeUnchecked(optic);
-    }
-
-    @SuppressWarnings("unchecked")
-    default <Proof2 extends K1, A1, B1> Optic<Proof2, S, T, A1, B1> composeUnchecked(final Optic<?, A, B, A1, B1> optic) {
-        if (Optics.isId(optic)) {
-            return (Optic<Proof2, S, T, A1, B1>) this;
-        } else if (Optics.isId(this)) {
-            return (Optic<Proof2, S, T, A1, B1>) optic;
-        }
-        return new CompositionOptic<>((Optic<? super Proof2, S, T, A, B>) this, (Optic<? super Proof2, A, B, A1, B1>) optic);
-    }
-
-    record CompositionOptic<Proof extends K1, S, T, A, B, A1, B1>(Optic<? super Proof, S, T, A, B> outer, Optic<? super Proof, A, B, A1, B1> inner) implements Optic<Proof, S, T, A1, B1> {
+    record CompositionOptic<Proof extends K1, S, T, A, B>(List<? extends Optic<? super Proof, ?, ?, ?, ?>> optics) implements Optic<Proof, S, T, A, B> {
         @Override
-        public <P extends K2> Function<App2<P, A1, B1>, App2<P, S, T>> eval(final App<? extends Proof, P> proof) {
-            return outer.eval(proof).compose(inner.eval(proof));
+        @SuppressWarnings("unchecked")
+        public <P extends K2> Function<App2<P, A, B>, App2<P, S, T>> eval(final App<? extends Proof, P> proof) {
+            final List<Function<? extends App2<P, ?, ?>, ? extends App2<P, ?, ?>>> functions = new ArrayList<>(optics.size());
+            for (int i = optics.size() - 1; i >= 0; i--) {
+                functions.add(optics.get(i).eval(proof));
+            }
+            return input -> {
+                App2<P, ?, ?> result = input;
+                for (final Function<? extends App2<P, ?, ?>, ? extends App2<P, ?, ?>> function : functions) {
+                    result = applyUnchecked(function, result);
+                }
+                return (App2<P, S, T>) result;
+            };
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <P extends K2, T extends App2<P, ?, ?>> App2<P, ?, ?> applyUnchecked(final Function<T, ? extends App2<P, ?, ?>> function, final App2<P, ?, ?> input) {
+            return function.apply((T) input);
         }
 
         @Override
         public String toString() {
-            return "(" + outer + " \u25E6 " + inner + ")";
+            return "(" + optics.stream().map(Object::toString).collect(Collectors.joining(" \u25E6 ")) + ")";
         }
     }
 

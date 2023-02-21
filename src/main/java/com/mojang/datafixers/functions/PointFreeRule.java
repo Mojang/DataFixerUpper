@@ -8,7 +8,6 @@ import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.kinds.K2;
-import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.constant.EmptyPart;
@@ -196,19 +195,11 @@ public interface PointFreeRule {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
                 if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> firstOptic && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> secondOptic) {
-                    Optic<?, ?, ?, ?, ?> fo = firstOptic.optic.optic();
-                    while (fo instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
-                        fo = composition.outer();
-                    }
-                    if (!Optics.isProj2(fo)) {
+                    if (!Optics.isProj2(firstOptic.optic.outermost())) {
                         return Optional.empty();
                     }
 
-                    Optic<?, ?, ?, ?, ?> so = secondOptic.optic.optic();
-                    while (so instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
-                        so = composition.outer();
-                    }
-                    if (!Optics.isProj1(so)) {
+                    if (!Optics.isProj1(secondOptic.optic.outermost())) {
                         return Optional.empty();
                     }
 
@@ -247,19 +238,11 @@ public interface PointFreeRule {
                 final PointFree<? extends Function<?, ?>> firstFunc = applyFirst.func;
                 final PointFree<? extends Function<?, ?>> secondFunc = applySecond.func;
                 if (firstFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> firstOptic && secondFunc instanceof final ProfunctorTransformer<?, ?, ?, ?> secondOptic) {
-                    Optic<?, ?, ?, ?, ?> fo = firstOptic.optic.optic();
-                    while (fo instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
-                        fo = composition.outer();
-                    }
-                    if (!Optics.isInj2(fo)) {
+                    if (!Optics.isInj2(firstOptic.optic.outermost())) {
                         return Optional.empty();
                     }
 
-                    Optic<?, ?, ?, ?, ?> so = secondOptic.optic.optic();
-                    while (so instanceof final Optic.CompositionOptic<?, ?, ?, ?, ?, ?, ?> composition) {
-                        so = composition.outer();
-                    }
-                    if (!Optics.isInj1(so)) {
+                    if (!Optics.isInj1(secondOptic.optic.outermost())) {
                         return Optional.empty();
                     }
 
