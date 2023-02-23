@@ -65,8 +65,8 @@ public abstract class Functions {
         return new Out<>(type);
     }
 
-    public static <A, B> PointFree<Function<A, B>> fold(final RecursivePoint.RecursivePointType<A> aType, final RecursivePoint.RecursivePointType<B> bType, final RewriteResult<A, B> function, final Algebra algebra, final int index) {
-        return new Fold<>(aType, bType, function, algebra, index);
+    public static <A, B> PointFree<Function<A, B>> fold(final RecursivePoint.RecursivePointType<A> aType, final RecursivePoint.RecursivePointType<B> bType, final Algebra algebra, final int index) {
+        return new Fold<>(aType, bType, algebra, index);
     }
 
     public static <A> PointFree<Function<A, A>> id(final Type<A> type) {

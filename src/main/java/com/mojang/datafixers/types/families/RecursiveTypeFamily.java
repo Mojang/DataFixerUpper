@@ -96,15 +96,15 @@ public final class RecursiveTypeFamily implements TypeFamily {
         return index -> {
             final RewriteResult<?, ?> result = algebra.apply(index);
             // FIXME: is this corrext?
-            return RewriteResult.create(View.create(foldUnchecked(this, newFamily, algebra, index, result)), result.recData());
+            return RewriteResult.create(View.create(foldUnchecked(this, newFamily, algebra, index)), result.recData());
         };
     }
 
     @SuppressWarnings("unchecked")
-    private static <A, B> PointFree<Function<A, B>> foldUnchecked(final RecursiveTypeFamily family, final RecursiveTypeFamily newFamily, final Algebra algebra, final int index, final RewriteResult<?, B> result) {
+    private static <A, B> PointFree<Function<A, B>> foldUnchecked(final RecursiveTypeFamily family, final RecursiveTypeFamily newFamily, final Algebra algebra, final int index) {
         final RecursivePoint.RecursivePointType<A> type = (RecursivePoint.RecursivePointType<A>) family.apply(index);
         final RecursivePoint.RecursivePointType<B> newType = (RecursivePoint.RecursivePointType<B>) newFamily.apply(index);
-        return Functions.fold(type, newType, (RewriteResult<A, B>) result, algebra, index);
+        return Functions.fold(type, newType, algebra, index);
     }
 
     @Override

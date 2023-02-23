@@ -25,14 +25,12 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
 
     protected final RecursivePoint.RecursivePointType<A> aType;
     protected final RecursivePoint.RecursivePointType<B> bType;
-    protected final RewriteResult<A, B> function;
     protected final Algebra algebra;
     protected final int index;
 
-    public Fold(final RecursivePoint.RecursivePointType<A> aType, final RecursivePoint.RecursivePointType<B> bType, final RewriteResult<A, B> function, final Algebra algebra, final int index) {
+    public Fold(final RecursivePoint.RecursivePointType<A> aType, final RecursivePoint.RecursivePointType<B> bType, final Algebra algebra, final int index) {
         this.aType = aType;
         this.bType = bType;
-        this.function = function;
         this.algebra = algebra;
         this.index = index;
     }
@@ -42,7 +40,8 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
         return DSL.func(aType, bType);
     }
 
-    private <FB> PointFree<Function<A, B>> cap(final RewriteResult<?, B> op, final RewriteResult<?, FB> resResult) {
+    private <FB> PointFree<Function<A, B>> cap(final RewriteResult<?, FB> resResult) {
+        final RewriteResult<A, B> op = (RewriteResult<A, B>) algebra.apply(index);
         return Functions.comp(((View<FB, B>) op.view()).function(), ((View<A, FB>) resResult.view()).function());
     }
 
@@ -55,7 +54,7 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
             final IntFunction<RewriteResult<?, ?>> hmapped = HMAP_CACHE.computeIfAbsent(Triple.of(family, newFamily, algebra), key -> key.getLeft().template().hmap(key.getLeft(), key.getLeft().fold(key.getRight(), key.getMiddle())));
             final RewriteResult<?, ?> result = HMAP_APPLY_CACHE.computeIfAbsent(Pair.of(hmapped, index), key -> key.getFirst().apply(key.getSecond()));
 
-            final PointFree<Function<A, B>> eval = cap(function, result);
+            final PointFree<Function<A, B>> eval = cap(result);
             return eval.evalCached().apply(ops).apply(a);
         };
     }
