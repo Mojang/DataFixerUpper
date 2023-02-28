@@ -275,7 +275,7 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
 
         @Override
         public String toString() {
-            return "DynamicException[" + message + ' ' + partialResult + ']';
+            return "DynamicException[" + message() + ' ' + partialResult + ']';
         }
     }
 
