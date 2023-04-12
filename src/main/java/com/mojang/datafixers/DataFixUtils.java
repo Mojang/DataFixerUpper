@@ -14,13 +14,8 @@ public class DataFixUtils {
 
     // Based on: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
     public static int smallestEncompassingPowerOfTwo(final int input) {
-        int result = input - 1;
-        result |= result >> 1;
-        result |= result >> 2;
-        result |= result >> 4;
-        result |= result >> 8;
-        result |= result >> 16;
-        return result + 1;
+        int n = -1 >>> Integer.numberOfLeadingZeros(input - 1);
+        return n + 1;
     }
 
     // Based on: http://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
