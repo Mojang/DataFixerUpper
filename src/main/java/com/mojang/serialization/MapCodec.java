@@ -97,6 +97,28 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         }
 
         @Override
+        @SuppressWarnings("unchecked")
+        public <S> Codec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
+            return (Codec<S>) codec.xmap(to, from).codec();
+        }
+
+        @Override
+        public <S> Codec<S> comapFlatMap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends A> from) {
+            return codec.comapFlatMap(to, from).codec();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <S> Codec<S> flatComapMap(Function<? super A, ? extends S> to, Function<? super S, ? extends DataResult<? extends A>> from) {
+            return (Codec<S>) codec.flatComapMap(to, from).codec();
+        }
+
+        @Override
+        public <S> Codec<S> flatXmap(Function<? super A, ? extends DataResult<? extends S>> to, Function<? super S, ? extends DataResult<? extends A>> from) {
+            return codec.flatXmap(to, from).codec();
+        }
+
+        @Override
         public String toString() {
             return codec.toString();
         }
@@ -116,6 +138,14 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
     public <S> MapCodec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
         return MapCodec.of(comap(from), map(to), () -> toString() + "[xmapped]");
+    }
+
+    public <S> MapCodec<S> comapFlatMap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends A> from) {
+        return MapCodec.of(comap(from), flatMap(to), () -> toString() + "[comapFlatMapped]");
+    }
+
+    public <S> MapCodec<S> flatComapMap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
+        return MapCodec.of(flatComap(from), map(to), () -> toString() + "[flatComapMapped]");
     }
 
     public <S> MapCodec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
