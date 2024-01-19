@@ -88,7 +88,7 @@ public class DataFixerUpper implements DataFixer {
     }
 
     protected Type<?> getType(final DSL.TypeReference type, final int version) {
-        return getSchema(DataFixUtils.makeKey(version)).getType(type);
+        return getSchema(DataFixUtils.makeKey(version)).getTypeRaw(type);
     }
 
     protected static int getLowestSchemaSameVersion(final Int2ObjectSortedMap<Schema> schemas, final int versionKey) {
