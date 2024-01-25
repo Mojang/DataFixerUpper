@@ -146,7 +146,10 @@ public record RecursivePoint(int index) implements TypeTemplate {
         @Override
         public Optional<RewriteResult<A, ?>> everywhere(final TypeRewriteRule rule, final PointFreeRule optimizationRule, final boolean recurse, final boolean checkIndex) {
             if (recurse) {
-                return family.everywhere(this.index, rule, optimizationRule).map(view -> (RewriteResult<A, ?>) view);
+                final Optional<RewriteResult<A, ?>> result = family.everywhere(this.index, rule, optimizationRule).map(view -> (RewriteResult<A, ?>) view);
+                if (result.isPresent()) {
+                    return result;
+                }
             }
             return Optional.of(RewriteResult.nop(this));
         }
