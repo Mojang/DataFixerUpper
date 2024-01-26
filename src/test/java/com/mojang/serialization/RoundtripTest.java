@@ -2,7 +2,7 @@ package com.mojang.serialization;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +13,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 public class RoundtripTest {
     // Constructors, equals and hashcode are auto-generated
@@ -249,7 +250,7 @@ public class RoundtripTest {
         final DataResult<T> encoded = TestData.CODEC.encodeStart(ops, data);
         final DataResult<TestData> decoded = encoded.flatMap(r -> TestData.CODEC.parse(ops, r));
 
-        assertEquals("read(write(x)) == x", DataResult.success(data), decoded);
+        assertThat("read(write(x)) == x", DataResult.success(data), equalTo(decoded));
     }
 
     private <T> void testReadWrite(final DynamicOps<T> ops) {
@@ -259,7 +260,7 @@ public class RoundtripTest {
         final DataResult<TestData> decoded = encoded.flatMap(r -> TestData.CODEC.parse(ops, r));
         final DataResult<T> reEncoded = decoded.flatMap(r -> TestData.CODEC.encodeStart(ops, r));
 
-        assertEquals("write(read(x)) == x", encoded, reEncoded);
+        assertThat("write(read(x)) == x", encoded, equalTo(reEncoded));
     }
 
     @Test
