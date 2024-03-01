@@ -54,8 +54,12 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
         }
 
         return keyCodec.decode(ops, elementName).flatMap(type -> {
-            final DataResult<? extends Decoder<? extends V>> elementDecoder = decoder.apply(type.getFirst());
+            final K key = type.getFirst();
+            final DataResult<? extends Decoder<? extends V>> elementDecoder = decoder.apply(key);
             return elementDecoder.flatMap(c -> {
+                if (c == null) {
+                    return DataResult.error(() -> "Decoder returned null for \"" + key + "\" in " + input);
+                }
                 if (ops.compressMaps()) {
                     final T value = input.get(ops.createString(valueKey));
                     if (value == null) {
