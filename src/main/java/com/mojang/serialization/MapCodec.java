@@ -75,17 +75,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         };
     }
 
-    public static final class MapCodecCodec<A> implements Codec<A> {
-        private final MapCodec<A> codec;
-
-        public MapCodecCodec(final MapCodec<A> codec) {
-            this.codec = codec;
-        }
-
-        public MapCodec<A> codec() {
-            return codec;
-        }
-
+    public record MapCodecCodec<A>(MapCodec<A> codec) implements Codec<A> {
         @Override
         public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
             return codec.compressedDecode(ops, input).map(r -> Pair.of(r, input));
@@ -94,6 +84,12 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         @Override
         public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
             return codec.encode(input, ops, codec.compressedBuilder(ops)).build(prefix);
+        }
+
+        @Override
+        public Codec<A> validate(final Function<A, DataResult<A>> checker) {
+            // KeyDispatchCodec matches MapCodecCodec to inline values, so try to validate on the MapCodec and re-wrap
+            return codec.validate(checker).codec();
         }
 
         @Override
@@ -120,6 +116,10 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
     public <S> MapCodec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
         return Codec.of(flatComap(from), flatMap(to), () -> toString() + "[flatXmapped]");
+    }
+
+    public MapCodec<A> validate(final Function<A, DataResult<A>> checker) {
+        return flatXmap(checker, checker);
     }
 
     public <E> MapCodec<A> dependent(final MapCodec<E> initialInstance, final Function<A, Pair<E, MapCodec<E>>> splitter, final BiFunction<A, E, A> combiner) {
