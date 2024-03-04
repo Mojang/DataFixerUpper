@@ -345,6 +345,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new KeyDispatchCodec<>(typeKey, this, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
+    default Codec<A> validate(final Function<A, DataResult<A>> checker) {
+        return flatXmap(checker, checker);
+    }
+
     // private
     static <N extends Number & Comparable<N>> Function<N, DataResult<N>> checkRange(final N minInclusive, final N maxInclusive) {
         return value -> {
