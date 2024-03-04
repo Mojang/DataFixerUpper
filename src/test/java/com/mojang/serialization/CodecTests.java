@@ -160,4 +160,25 @@ public class CodecTests {
             fromJavaOrPartial(codec, List.of("foo", 2, "baz", false))
         );
     }
+
+    @Test
+    public void withAlternative_simple() {
+        final Codec<String> codec = Codec.withAlternative(Codec.STRING, Codec.INT, integer -> "integer:" + integer);
+        assertRoundTrip(codec, "string", "string");
+        assertEquals("integer:23", fromJava(codec, 23));
+        // Alternative is only used for reads
+        assertEquals("integer:4", toJava(codec, "integer:4"));
+
+        assertFromJavaFails(codec, Map.of());
+        assertFromJavaFails(codec, false);
+    }
+
+    @Test
+    public void withAlternative_bothSuccessful() {
+        final Codec<String> codec = Codec.withAlternative(Codec.STRING, TO_LOWER_CASE);
+        assertRoundTrip(codec, "string", "string");
+
+        // Primary codec is chosen over alternative
+        assertRoundTrip(codec, "STRING", "STRING");
+    }
 }

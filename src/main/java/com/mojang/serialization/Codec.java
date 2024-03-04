@@ -119,6 +119,26 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new EitherCodec<>(first, second);
     }
 
+    static <T> Codec<T> withAlternative(final Codec<T> primary, final Codec<? extends T> alternative) {
+        return Codec.either(
+            primary,
+            alternative
+        ).xmap(
+            either -> either.map(v -> v, v -> v),
+            Either::left
+        );
+    }
+
+    static <T, U> Codec<T> withAlternative(final Codec<T> primary, final Codec<U> alternative, final Function<U, T> converter) {
+        return Codec.either(
+            primary,
+            alternative
+        ).xmap(
+            either -> either.map(v -> v, converter),
+            Either::left
+        );
+    }
+
     static <F, S> MapCodec<Pair<F, S>> mapPair(final MapCodec<F> first, final MapCodec<S> second) {
         return new PairMapCodec<>(first, second);
     }
