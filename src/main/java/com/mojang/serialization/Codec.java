@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.google.common.base.Suppliers;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
@@ -165,6 +166,39 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {
         return new OptionalFieldCodec<>(name, elementCodec);
+    }
+
+    static <A> Codec<A> recursive(final String name, final Function<Codec<A>, Codec<A>> wrapped) {
+        return new RecursiveCodec<>(name, wrapped);
+    }
+
+    static <A> Codec<A> lazyInitialized(final Supplier<Codec<A>> delegate) {
+        return new RecursiveCodec<>(delegate.toString(), self -> delegate.get());
+    }
+
+    class RecursiveCodec<T> implements Codec<T> {
+        private final String name;
+        private final Supplier<Codec<T>> wrapped;
+
+        private RecursiveCodec(final String name, final Function<Codec<T>, Codec<T>> wrapped) {
+            this.name = name;
+            this.wrapped = Suppliers.memoize(() -> wrapped.apply(this));
+        }
+
+        @Override
+        public <S> DataResult<Pair<T, S>> decode(final DynamicOps<S> ops, final S input) {
+            return wrapped.get().decode(ops, input);
+        }
+
+        @Override
+        public <S> DataResult<S> encode(final T input, final DynamicOps<S> ops, final S prefix) {
+            return wrapped.get().encode(input, ops, prefix);
+        }
+
+        @Override
+        public String toString() {
+            return "RecursiveCodec[" + name + ']';
+        }
     }
 
     default Codec<List<A>> listOf() {
