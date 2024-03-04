@@ -3,11 +3,15 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -180,5 +184,112 @@ public class CodecTests {
 
         // Primary codec is chosen over alternative
         assertRoundTrip(codec, "STRING", "STRING");
+    }
+
+    private record Node(String value, Optional<Node> next) {
+        public static final Codec<Node> CODEC = Codec.recursive("Node", self ->
+            RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("value").forGetter(o -> o.value),
+                self.optionalFieldOf("next").forGetter(o -> o.next)
+            ).apply(i, Node::new))
+        );
+
+        public void toList(final List<String> output) {
+            output.add(value);
+            next.ifPresent(l -> l.toList(output));
+        }
+
+        public List<String> toList() {
+            final List<String> result = new ArrayList<>();
+            toList(result);
+            return result;
+        }
+
+        private static Optional<Node> create(final Iterator<String> values) {
+            if (values.hasNext()) {
+                final String value = values.next();
+                final Optional<Node> next = create(values);
+                return Optional.of(new Node(value, next));
+            }
+            return Optional.empty();
+        }
+
+        public static void assertParsingEquals(final List<String> asList, final Object asData) {
+            testDecode(asList, asData);
+            testEncode(asList, asData);
+        }
+
+        private static void testDecode(final List<String> expected, final Object asData) {
+            assertEquals(expected, fromJava(CODEC, asData).toList());
+        }
+
+        private static void testEncode(final List<String> asList, final Object expected) {
+            final Node fromList = create(asList.iterator()).orElseThrow(AssertionError::new);
+            assertEquals(expected, toJava(CODEC, fromList));
+        }
+    }
+
+    @Test
+    public void selfRecursive() {
+        Node.assertParsingEquals(List.of("a"), Map.of("value", "a"));
+        Node.assertParsingEquals(List.of("a", "b"), Map.of("value", "a", "next", Map.of("value", "b")));
+        Node.assertParsingEquals(List.of("a", "b", "c"), Map.of("value", "a", "next", Map.of("value", "b", "next", Map.of("value", "c"))));
+    }
+
+    private record Left(Optional<Right> next) {
+        private static final Codec<Left> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Right.CODEC.optionalFieldOf("next").forGetter(o -> o.next)
+        ).apply(i, Left::new));
+
+        public int count() {
+            return 1 + next.map(Right::depth).orElse(0);
+        }
+
+        public static Optional<Left> create(final int length) {
+            return length == 0 ? Optional.empty() : Optional.of(new Left(Right.create(length - 1)));
+        }
+    }
+
+    private record Right(Optional<Left> next) {
+        private static final Codec<Right> CODEC = Codec.recursive("Right", self ->
+            RecordCodecBuilder.create(i -> i.group(
+                Left.CODEC.optionalFieldOf("next").forGetter(o -> o.next)
+            ).apply(i, Right::new))
+        );
+
+        public int depth() {
+            return 1 + next.map(Left::count).orElse(0);
+        }
+
+        public static Optional<Right> create(final int depth) {
+            return depth == 0 ? Optional.empty() : Optional.of(new Right(Left.create(depth - 1)));
+        }
+
+        public static Map<String, Object> createChain(final int depth) {
+            return depth == 1 ? Map.of() : Map.of("next", createChain(depth - 1));
+        }
+
+        public static void assertParsingAtDepth(final int depth) {
+            final Map<String, Object> asData = createChain(depth);
+            testDecode(depth, asData);
+            testEncode(depth, asData);
+        }
+
+        private static void testDecode(final int depth, final Map<String, Object> asData) {
+            final Right parsed = fromJava(CODEC, asData);
+            assertEquals(depth, parsed.depth());
+        }
+
+        private static void testEncode(final int depth, final Map<String, Object> asData) {
+            final Right fresh = create(depth).orElseThrow(AssertionError::new);
+            assertEquals(asData, toJava(CODEC, fresh));
+        }
+    }
+
+    @Test
+    public void mutuallyRecursiveCodecTest() {
+        Right.assertParsingAtDepth(1);
+        Right.assertParsingAtDepth(2);
+        Right.assertParsingAtDepth(3);
     }
 }
