@@ -10,7 +10,9 @@ import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -145,6 +147,25 @@ public class Dynamic<T> extends DynamicLike<T> {
         return map(v -> ops.updateGeneric(v, key, function));
     }
 
+    public Dynamic<T> setFieldIfPresent(final String field, final Optional<? extends Dynamic<?>> value) {
+        if (value.isEmpty()) {
+            return this;
+        }
+        return set(field, value.get());
+    }
+
+    public Dynamic<T> renameField(final String oldFieldName, final String newFieldName) {
+        return renameAndFixField(oldFieldName, newFieldName, UnaryOperator.identity());
+    }
+
+    public Dynamic<T> replaceField(final String oldFieldName, final String newFieldName, final Optional<? extends Dynamic<?>> newValue) {
+        return remove(oldFieldName).setFieldIfPresent(newFieldName, newValue);
+    }
+
+    public Dynamic<T> renameAndFixField(final String oldFieldName, final String newFieldName, final UnaryOperator<Dynamic<?>> fixer) {
+        return remove(oldFieldName).setFieldIfPresent(newFieldName, get(oldFieldName).result().map(fixer));
+    }
+
     @Override
     public DataResult<T> getElement(final String key) {
         return getElementGeneric(ops.createString(key));
@@ -199,5 +220,17 @@ public class Dynamic<T> extends DynamicLike<T> {
         }
 
         return inOps.convertTo(outOps, input);
+    }
+
+    public static Dynamic<?> copyField(final Dynamic<?> source, final String sourceFieldName, final Dynamic<?> target, final String targetFieldName) {
+        return copyAndFixField(source, sourceFieldName, target, targetFieldName, UnaryOperator.identity());
+    }
+
+    public static <T> Dynamic<?> copyAndFixField(final Dynamic<T> source, final String sourceFieldName, final Dynamic<?> target, final String targetFieldName, final UnaryOperator<Dynamic<T>> fixer) {
+        final Optional<Dynamic<T>> value = source.get(sourceFieldName).result();
+        if (value.isPresent()) {
+            return target.set(targetFieldName, fixer.apply(value.get()));
+        }
+        return target;
     }
 }
