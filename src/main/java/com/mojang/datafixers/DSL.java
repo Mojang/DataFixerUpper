@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public interface DSL {
     interface TypeReference {
@@ -153,6 +154,17 @@ public interface DSL {
             result = and(rest[i], result);
         }
         return and(first, result);
+    }
+
+    static TypeTemplate and(final java.util.List<TypeTemplate> types) {
+        return switch (types.size()) {
+            case 0 -> throw new IllegalArgumentException("Must have at least one type");
+            case 1 -> types.get(0);
+            default -> and(
+                types.get(0),
+                types.subList(1, types.size()).toArray(TypeTemplate[]::new)
+            );
+        };
     }
 
     static TypeTemplate allWithRemainder(final TypeTemplate first, final TypeTemplate... rest) {
@@ -410,6 +422,21 @@ public interface DSL {
             optional(field(name5, element5)),
             rest
         );
+    }
+
+    @SafeVarargs
+    static TypeTemplate optionalFields(final Pair<String, TypeTemplate>... fields) {
+        return and(Stream.concat(
+            Arrays.stream(fields).map(entry -> optional(field(entry.getFirst(), entry.getSecond()))),
+            Stream.of(remainder())
+        ).toList());
+    }
+
+    static TypeTemplate optionalFieldsLazy(final Map<String, Supplier<TypeTemplate>> fields) {
+        return and(Stream.concat(
+            fields.entrySet().stream().map(entry -> optional(field(entry.getKey(), entry.getValue().get()))),
+            Stream.of(remainder())
+        ).toList());
     }
 
     // Type matchers
