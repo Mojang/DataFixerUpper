@@ -89,18 +89,32 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         );
     }
 
-    public R getOrThrow(final boolean allowPartial, final Consumer<String> onError) {
-        return result.map(
-            l -> l,
-            r -> {
-                final String message = r.message.get();
-                onError.accept(message);
-                if (allowPartial && r.partialResult.isPresent()) {
-                    return r.partialResult.get();
-                }
-                throw new RuntimeException(message);
+    public <E extends Throwable> R getOrThrow(final Function<String, E> exceptionSupplier) throws E {
+        final Optional<PartialResult<R>> error = result.right();
+        if (error.isPresent()) {
+            throw exceptionSupplier.apply(error.get().message());
+        }
+        return result.left().orElseThrow();
+    }
+
+    public <E extends Throwable> R getPartialOrThrow(final Function<String, E> exceptionSupplier) throws E {
+        final Optional<PartialResult<R>> error = result.right();
+        if (error.isPresent()) {
+            final Optional<R> partialResult = error.get().partialResult;
+            if (partialResult.isPresent()) {
+                return partialResult.get();
             }
-        );
+            throw exceptionSupplier.apply(error.get().message());
+        }
+        return result.left().orElseThrow();
+    }
+
+    public R getOrThrow() {
+        return getOrThrow(IllegalStateException::new);
+    }
+
+    public R getPartialOrThrow() {
+        return getPartialOrThrow(IllegalStateException::new);
     }
 
     public Optional<PartialResult<R>> error() {
