@@ -6,12 +6,15 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CodecTests {
+    private static final Codec<String> TO_LOWER_CASE = Codec.STRING.xmap(s -> s.toLowerCase(Locale.ROOT), s -> s.toLowerCase(Locale.ROOT));
+
     private static <T> Object toJava(final Codec<T> codec, final T value) {
         return codec.encodeStart(JavaOps.INSTANCE, value).getOrThrow(AssertionError::new);
     }
@@ -103,6 +106,32 @@ public class CodecTests {
                     "bar", "garbage",
                     "baz", 3
                 )
+            ))
+        );
+    }
+
+    @Test
+    public void unboundedMap_repeatedKeys() {
+        final Codec<Map<String, Integer>> codec = Codec.unboundedMap(TO_LOWER_CASE, Codec.INT);
+        assertFromJavaFails(codec, Map.of(
+            "foo", 1,
+            "FOO", 2
+        ));
+    }
+
+    @Test
+    public void unboundedMap_repeatedKeysPartial() {
+        final Codec<Map<String, Integer>> codec = Codec.unboundedMap(TO_LOWER_CASE, Codec.INT);
+        assertEquals(
+            Map.of(
+                // The first entry is picked for the partial result
+                "foo", 1,
+                "bar", 2
+            ),
+            fromJavaOrPartial(codec, ImmutableMap.of(
+                "foo", 1,
+                "bar", 2,
+                "FOO", 3
             ))
         );
     }
