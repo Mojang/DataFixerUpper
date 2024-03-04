@@ -154,7 +154,11 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     static <E> Codec<List<E>> list(final Codec<E> elementCodec) {
-        return new ListCodec<>(elementCodec);
+        return list(elementCodec, 0, Integer.MAX_VALUE);
+    }
+
+    static <E> Codec<List<E>> list(final Codec<E> elementCodec, final int minSize, final int maxSize) {
+        return new ListCodec<>(elementCodec, minSize, maxSize);
     }
 
     static <K, V> Codec<List<Pair<K, V>>> compoundList(final Codec<K> keyCodec, final Codec<V> elementCodec) {
@@ -208,6 +212,14 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     default Codec<List<A>> listOf() {
         return list(this);
+    }
+
+    default Codec<List<A>> listOf(final int minSize, final int maxSize) {
+        return list(this, minSize, maxSize);
+    }
+
+    default Codec<List<A>> sizeLimitedListOf(final int maxSize) {
+        return listOf(0, maxSize);
     }
 
     default <S> Codec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {

@@ -36,6 +36,16 @@ public class CodecTests {
         assertTrue("Expected data result error, but got: " + result.result(), result.result().isEmpty());
     }
 
+    private static void assertFromJavaFailsPartial(final Codec<?> codec, final Object value) {
+        final DataResult<?> result = codec.parse(JavaOps.INSTANCE, value);
+        assertTrue("Expected data result error, but got: " + result.resultOrPartial(), result.resultOrPartial().isEmpty());
+    }
+
+    private static <T> void assertToJavaFails(final Codec<T> codec, final T value) {
+        final DataResult<Object> result = codec.encodeStart(JavaOps.INSTANCE, value);
+        assertTrue("Expected data result error, but got: " + result.result(), result.result().isEmpty());
+    }
+
     private static <T> void assertRoundTrip(final Codec<T> codec, final T value, final Object java) {
         assertEquals(
             java,
@@ -162,6 +172,61 @@ public class CodecTests {
         assertEquals(
             List.of("foo", "baz"),
             fromJavaOrPartial(codec, List.of("foo", 2, "baz", false))
+        );
+    }
+
+    @Test
+    public void sizeLimitedList_roundTrip() {
+        assertRoundTrip(
+            Codec.STRING.sizeLimitedListOf(2),
+            List.of("foo", "bar"),
+            List.of("foo", "bar")
+        );
+    }
+
+    @Test
+    public void sizeLimitedList_tooLong() {
+        final Codec<List<String>> codec = Codec.STRING.sizeLimitedListOf(2);
+        assertFromJavaFails(codec, List.of("foo", "bar", "baz"));
+        assertToJavaFails(codec, List.of("foo", "bar", "baz"));
+
+        // Input is clipped in partial result
+        assertEquals(
+            List.of("foo", "bar"),
+            fromJavaOrPartial(codec, List.of("foo", "bar", "baz"))
+        );
+    }
+
+    @Test
+    public void sizeLimitedList_tooLongWithInvalid() {
+        final Codec<List<String>> codec = Codec.STRING.sizeLimitedListOf(2);
+
+        // Input is clipped only by valid entries
+        assertEquals(
+            List.of("foo", "bar"),
+            fromJavaOrPartial(codec, List.of("foo", 2, "bar", "baz", false))
+        );
+    }
+
+    @Test
+    public void sizeLimitedList_tooShort() {
+        final Codec<List<String>> codec = Codec.STRING.listOf(2, 3);
+        assertToJavaFails(codec, List.of("foo"));
+        // We can't get any partial result if the data is too short
+        assertFromJavaFailsPartial(codec, List.of("foo"));
+
+        assertRoundTrip(codec, List.of("foo", "bar"), List.of("foo", "bar"));
+        assertRoundTrip(codec, List.of("foo", "bar", "baz"), List.of("foo", "bar", "baz"));
+    }
+
+    @Test
+    public void sizeLimitedList_tooShortWithInvalid() {
+        final Codec<List<String>> codec = Codec.STRING.listOf(2, 3);
+        assertFromJavaFailsPartial(codec, List.of("foo", 1, 2));
+
+        assertEquals(
+            List.of("foo", "bar"),
+            fromJavaOrPartial(codec, List.of("foo", 2, "bar", 3))
         );
     }
 
