@@ -84,6 +84,11 @@ public class Dynamic<T> extends DynamicLike<T> {
     }
 
     @Override
+    public DataResult<Boolean> asBoolean() {
+        return ops.getBooleanValue(value);
+    }
+
+    @Override
     public DataResult<Stream<Dynamic<T>>> asStreamOpt() {
         return ops.getStream(value).map(s -> s.map(e -> new Dynamic<>(ops, e)));
     }

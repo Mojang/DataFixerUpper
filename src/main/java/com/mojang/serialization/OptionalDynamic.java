@@ -47,6 +47,11 @@ public final class OptionalDynamic<T> extends DynamicLike<T> {
     }
 
     @Override
+    public DataResult<Boolean> asBoolean() {
+        return flatMap(DynamicLike::asBoolean);
+    }
+
+    @Override
     public DataResult<Stream<Dynamic<T>>> asStreamOpt() {
         return flatMap(DynamicLike::asStreamOpt);
     }
