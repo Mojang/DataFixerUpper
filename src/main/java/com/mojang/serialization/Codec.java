@@ -18,6 +18,7 @@ import com.mojang.serialization.codecs.PairMapCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.SimpleMapCodec;
 import com.mojang.serialization.codecs.UnboundedMapCodec;
+import com.mojang.serialization.codecs.XorCodec;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -118,6 +119,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <F, S> Codec<Either<F, S>> either(final Codec<F> first, final Codec<S> second) {
         return new EitherCodec<>(first, second);
+    }
+
+    static <F, S> Codec<Either<F, S>> xor(final Codec<F> first, final Codec<S> second) {
+        return new XorCodec<>(first, second);
     }
 
     static <T> Codec<T> withAlternative(final Codec<T> primary, final Codec<? extends T> alternative) {
