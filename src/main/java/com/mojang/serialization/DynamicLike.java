@@ -33,6 +33,7 @@ public abstract class DynamicLike<T> {
 
     public abstract DataResult<Number> asNumber();
     public abstract DataResult<String> asString();
+    public abstract DataResult<Boolean> asBoolean();
     public abstract DataResult<Stream<Dynamic<T>>> asStreamOpt();
     public abstract DataResult<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt();
     public abstract DataResult<ByteBuffer> asByteBufferOpt();
@@ -124,7 +125,7 @@ public abstract class DynamicLike<T> {
     }
 
     public boolean asBoolean(final boolean defaultValue) {
-        return asNumber(defaultValue ? 1 : 0).intValue() != 0;
+        return asBoolean().result().orElse(defaultValue);
     }
 
     public String asString(final String defaultValue) {
