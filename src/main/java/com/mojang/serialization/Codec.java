@@ -8,6 +8,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.CompoundListCodec;
+import com.mojang.serialization.codecs.DispatchedMapCodec;
 import com.mojang.serialization.codecs.EitherCodec;
 import com.mojang.serialization.codecs.EitherMapCodec;
 import com.mojang.serialization.codecs.KeyDispatchCodec;
@@ -22,6 +23,7 @@ import com.mojang.serialization.codecs.XorCodec;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -171,6 +173,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <K, V> UnboundedMapCodec<K, V> unboundedMap(final Codec<K> keyCodec, final Codec<V> elementCodec) {
         return new UnboundedMapCodec<>(keyCodec, elementCodec);
+    }
+
+    static <K, V> Codec<Map<K, V>> dispatchedMap(final Codec<K> keyCodec, final Function<K, Codec<? extends V>> valueCodecFunction) {
+        return new DispatchedMapCodec<>(keyCodec, valueCodecFunction);
     }
 
     static <E> Codec<E> stringResolver(final Function<E, String> toString, final Function<String, E> fromString) {

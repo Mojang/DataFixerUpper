@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -381,5 +382,149 @@ public class CodecTests {
         assertRoundTrip(Variant.CODEC, Variant.FOO, "foo");
         assertRoundTrip(Variant.CODEC, Variant.BAR, "bar");
         assertFromJavaFails(Variant.CODEC, "baz");
+    }
+
+    private enum MapDispatchType {
+        ANY("any", Codec.STRING),
+        LOWER_CASE("lower_case", Codec.STRING.validate(s -> s.toLowerCase(Locale.ROOT).equals(s) ? DataResult.success(s) : DataResult.error(() -> "Not lower case: " + s))),
+        UPPER_CASE("upper_case", Codec.STRING.validate(s -> s.toUpperCase(Locale.ROOT).equals(s) ? DataResult.success(s) : DataResult.error(() -> "Not upper case: " + s))),
+        NEVER("never", Codec.STRING.validate(s -> DataResult.error(() -> "No"))),
+        NEVER_WITH_PARTIAL("never_with_partial", Codec.STRING.validate(s -> DataResult.error(() -> "No", s)))
+        ;
+
+        public static final Codec<MapDispatchType> CODEC = Codec.stringResolver(MapDispatchType::getSerializedName, MapDispatchType::lookup);
+        public static final Codec<MapDispatchType> CASE_INSENSITIVE_CODEC = Codec.stringResolver(MapDispatchType::getSerializedName, string -> lookup(string.toLowerCase(Locale.ROOT)));
+
+        private final String name;
+        private final Codec<String> codec;
+
+        MapDispatchType(final String name, final Codec<String> codec) {
+            this.name = name;
+            this.codec = codec;
+        }
+
+        @Nullable
+        private static MapDispatchType lookup(final String name) {
+            for (final MapDispatchType type : values()) {
+                if (type.getSerializedName().equals(name)) {
+                    return type;
+                }
+            }
+            return null;
+        }
+
+        public String getSerializedName() {
+            return name;
+        }
+    }
+
+    private static final Codec<Map<MapDispatchType, String>> DISPATCHED_MAP_CODEC = Codec.dispatchedMap(MapDispatchType.CODEC, t -> t.codec);
+
+    @Test
+    public void dispatchedMap_encode() {
+        assertEquals(
+            Map.of(
+                "any", "Some text",
+                "lower_case", "very quietly",
+                "upper_case", "NOT SHOUTING"
+            ),
+            toJava(DISPATCHED_MAP_CODEC, Map.of(
+                MapDispatchType.ANY, "Some text",
+                MapDispatchType.LOWER_CASE, "very quietly",
+                MapDispatchType.UPPER_CASE, "NOT SHOUTING"
+            ))
+        );
+    }
+
+    @Test
+    public void dispatchedMap_decode() {
+        assertEquals(
+            Map.of(
+                MapDispatchType.ANY, "Some text",
+                MapDispatchType.LOWER_CASE, "very quietly",
+                MapDispatchType.UPPER_CASE, "NOT SHOUTING"
+            ),
+            fromJava(DISPATCHED_MAP_CODEC, Map.of(
+                "any", "Some text",
+                "lower_case", "very quietly",
+                "upper_case", "NOT SHOUTING"
+            ))
+        );
+    }
+
+    @Test
+    public void dispatchedMap_decodeInvalidType() {
+        assertFromJavaFails(DISPATCHED_MAP_CODEC, Map.of(
+            "invalid", "Some text"
+        ));
+    }
+
+    @Test
+    public void dispatchedMap_decodeInvalidValue() {
+        assertFromJavaFails(DISPATCHED_MAP_CODEC, Map.of(
+            "lower_case", "SHOUTING"
+        ));
+    }
+
+    @Test
+    public void dispatchedMap_decodePartialResult() {
+        assertEquals(
+            Map.of(
+                MapDispatchType.ANY, "Some text",
+                MapDispatchType.UPPER_CASE, "NOT SHOUTING"
+            ),
+            fromJavaOrPartial(DISPATCHED_MAP_CODEC, Map.of(
+                "any", "Some text",
+                "invalid", "",
+                "lower_case", "SHOUTING",
+                "upper_case", "NOT SHOUTING"
+            ))
+        );
+
+        assertEquals(
+            Map.of(
+                MapDispatchType.ANY, "Some text",
+                MapDispatchType.UPPER_CASE, "NOT SHOUTING"
+            ),
+            fromJavaOrPartial(DISPATCHED_MAP_CODEC, Map.of(
+                "invalid", "",
+                "any", "Some text",
+                "upper_case", "NOT SHOUTING"
+            ))
+        );
+    }
+
+    @Test
+    public void dispatchedMap_decodeNestedPartialResult() {
+        assertEquals(
+            Map.of(
+                MapDispatchType.NEVER_WITH_PARTIAL, "Fails with partial result",
+                MapDispatchType.ANY, "Something else"
+            ),
+            fromJavaOrPartial(DISPATCHED_MAP_CODEC, Map.of(
+                "never_with_partial", "Fails with partial result",
+                "any", "Something else"
+            ))
+        );
+    }
+
+    @Test
+    public void dispatchedMap_decodeRepeatedEntries() {
+        final Codec<Map<MapDispatchType, String>> dispatchedMapCodec = Codec.dispatchedMap(MapDispatchType.CASE_INSENSITIVE_CODEC, t -> t.codec);
+
+        assertFromJavaFails(dispatchedMapCodec, Map.of(
+            "lower_case", "first",
+            "LOWER_CASE", "second"
+        ));
+
+        assertEquals(
+            Map.of(
+                MapDispatchType.LOWER_CASE, "first"
+            ),
+            fromJavaOrPartial(dispatchedMapCodec, ImmutableMap.of(
+                "lower_case", "first",
+                "LOWER_CASE", "second"
+            ))
+        );
     }
 }
