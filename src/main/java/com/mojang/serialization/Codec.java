@@ -458,6 +458,23 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return Codec.DOUBLE.flatXmap(checker, checker);
     }
 
+    static Codec<String> string(final int minSize, final int maxSize) {
+        return Codec.STRING.validate(value -> {
+            final int length = value.length();
+            if (length < minSize) {
+                return DataResult.error(() -> "String \"" + value + "\" is too short: " + length + ", expected range [" + minSize + "-" + maxSize + "]");
+            }
+            if (length > maxSize) {
+                return DataResult.error(() -> "String \"" + value + "\" is too long: " + length + ", expected range [" + minSize + "-" + maxSize + "]");
+            }
+            return DataResult.success(value);
+        });
+    }
+
+    static Codec<String> sizeLimitedString(final int maxSize) {
+        return string(0, maxSize);
+    }
+
     PrimitiveCodec<Boolean> BOOL = new PrimitiveCodec<Boolean>() {
         @Override
         public <T> DataResult<Boolean> read(final DynamicOps<T> ops, final T input) {
