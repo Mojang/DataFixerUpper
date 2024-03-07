@@ -413,12 +413,7 @@ public class JavaOps implements DynamicOps<Object> {
 
         @Override
         protected DataResult<T> build(final ImmutableMap.Builder<T, T> builder, final T prefix) {
-            final ImmutableMap<T, T> result;
-            try {
-                result = builder.buildOrThrow();
-            } catch (final IllegalArgumentException e) {
-                return DataResult.error(() -> "Can't build map: " + e.getMessage());
-            }
+            final ImmutableMap<T, T> result = builder.buildKeepingLast();
             return ops().mergeToMap(prefix, result);
         }
     }

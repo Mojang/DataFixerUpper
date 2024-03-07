@@ -172,7 +172,7 @@ public interface RecordBuilder<T> {
 
         @Override
         protected DataResult<T> build(final ImmutableMap.Builder<T, T> builder, final T prefix) {
-            return ops().mergeToMap(prefix, builder.build());
+            return ops().mergeToMap(prefix, builder.buildKeepingLast());
         }
     }
 }
