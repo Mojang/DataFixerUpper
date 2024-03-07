@@ -34,8 +34,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.Encoder;
-import com.mojang.serialization.codecs.KeyDispatchCodec;
+import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -198,24 +197,24 @@ public final class TaggedChoice<K> implements TypeTemplate {
             return DSL.taggedChoice(name, keyType, templates);
         }
 
-        @SuppressWarnings("unchecked")
-        private <V> DataResult<? extends Encoder<Pair<K, ?>>> encoder(final Pair<K, V> pair) {
-            return getCodec(pair.getFirst()).map(c -> ((Encoder<V>) c).comap(p -> (V) p.getSecond()));
-        }
-
         @Override
         protected Codec<Pair<K, ?>> buildCodec() {
-            return KeyDispatchCodec.<K, Pair<K, ?>>unsafe(
+            return keyType.codec().partialDispatch(
                 name,
-                keyType.codec(),
-                p -> DataResult.success(p.getFirst()),
-                k -> getCodec(k).map(c -> c.map(v -> Pair.of(k, v))),
-                this::encoder
-            ).codec();
+                pair -> DataResult.success(pair.getFirst()),
+                // Must be a MapCodecCodec to be inlined
+                key -> getMapCodec(key).map(codec -> asEntryPair(key, codec).codec())
+            );
         }
 
-        private DataResult<? extends Codec<?>> getCodec(final K k) {
-            return Optional.ofNullable(types.get(k)).map(t -> DataResult.success(t.codec())).orElseGet(() -> DataResult.error(() -> "Unsupported key: " + k));
+        private static <K, V> MapCodec<Pair<K, V>> asEntryPair(final K key, final MapCodec<V> valueCodec) {
+            return valueCodec.xmap(value -> Pair.of(key, value), Pair::getSecond);
+        }
+
+        private DataResult<? extends MapCodec<?>> getMapCodec(final K key) {
+            return Optional.ofNullable(types.get(key))
+                .map(type -> DataResult.success(MapCodec.assumeMapUnsafe(type.codec())))
+                .orElseGet(() -> DataResult.error(() -> "Unsupported key: " + key));
         }
 
         @Override

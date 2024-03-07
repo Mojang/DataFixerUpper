@@ -661,4 +661,45 @@ public class CodecTests {
             ))
         );
     }
+
+    private record Simple(String string, int integer) {
+        public static final Codec<Simple> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.STRING.fieldOf("string").forGetter(Simple::string),
+            Codec.INT.fieldOf("integer").forGetter(Simple::integer)
+        ).apply(i, Simple::new));
+    }
+
+    @Test
+    public void assumeMap_recordCodec() {
+        assertRoundTrips(
+            List.of(
+                Simple.CODEC,
+                // Wrapped directly
+                MapCodec.assumeMapUnsafe(Simple.CODEC).codec(),
+                // From a non-MapCodecCodec
+                MapCodec.assumeMapUnsafe(obfuscateCodecType(Simple.CODEC)).codec()
+            ),
+            new Simple("hello", 1),
+            Map.of(
+                "string", "hello",
+                "integer", 1
+            )
+        );
+
+        assertFromJavaFails(
+            MapCodec.assumeMapUnsafe(Simple.CODEC).codec(),
+            "not a map"
+        );
+    }
+
+    private static <A> Codec<A> obfuscateCodecType(final Codec<A> codec) {
+        return Codec.of(codec, codec);
+    }
+
+    @Test
+    public void assumeMap_primitiveCodec() {
+        final Codec<Integer> codec = MapCodec.assumeMapUnsafe(Codec.INT).codec();
+        assertFromJavaFails(codec, 123);
+        assertToJavaFails(codec, 123);
+    }
 }
