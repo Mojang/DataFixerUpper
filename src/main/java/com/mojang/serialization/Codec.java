@@ -173,6 +173,13 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new UnboundedMapCodec<>(keyCodec, elementCodec);
     }
 
+    static <E> Codec<E> stringResolver(final Function<E, String> toString, final Function<String, E> fromString) {
+        return Codec.STRING.flatXmap(
+            name -> Optional.ofNullable(fromString.apply(name)).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Unknown element name:" + name)),
+            e -> Optional.ofNullable(toString.apply(e)).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Element with unknown name: " + e))
+        );
+    }
+
     static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {
         return new OptionalFieldCodec<>(name, elementCodec);
     }
