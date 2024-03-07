@@ -202,8 +202,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
             return keyType.codec().partialDispatch(
                 name,
                 pair -> DataResult.success(pair.getFirst()),
-                // Must be a MapCodecCodec to be inlined
-                key -> getMapCodec(key).map(codec -> asEntryPair(key, codec).codec())
+                key -> getMapCodec(key).map(codec -> asEntryPair(key, codec))
             );
         }
 

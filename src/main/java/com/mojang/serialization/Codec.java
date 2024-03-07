@@ -430,27 +430,27 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return MapCodec.unit(defaultValue).codec();
     }
 
-    default <E> Codec<E> dispatch(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> Codec<E> dispatch(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return dispatch("type", type, codec);
     }
 
-    default <E> Codec<E> dispatch(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> Codec<E> dispatch(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return partialDispatch(typeKey, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
-    default <E> Codec<E> dispatchStable(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> Codec<E> dispatchStable(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return partialDispatch("type", e -> DataResult.success(type.apply(e), Lifecycle.stable()), a -> DataResult.success(codec.apply(a), Lifecycle.stable()));
     }
 
-    default <E> Codec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends Codec<? extends E>>> codec) {
+    default <E> Codec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends MapCodec<? extends E>>> codec) {
         return new KeyDispatchCodec<>(typeKey, this, type, codec).codec();
     }
 
-    default <E> MapCodec<E> dispatchMap(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> MapCodec<E> dispatchMap(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return dispatchMap("type", type, codec);
     }
 
-    default <E> MapCodec<E> dispatchMap(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> MapCodec<E> dispatchMap(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return new KeyDispatchCodec<>(typeKey, this, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
