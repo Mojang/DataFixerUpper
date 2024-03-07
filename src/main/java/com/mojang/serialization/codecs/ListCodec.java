@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
@@ -11,71 +10,54 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.ListBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-public final class ListCodec<A> implements Codec<List<A>> {
-    private final Codec<A> elementCodec;
-
-    public ListCodec(final Codec<A> elementCodec) {
-        this.elementCodec = elementCodec;
-    }
-
+public record ListCodec<E>(Codec<E> elementCodec) implements Codec<List<E>> {
     @Override
-    public <T> DataResult<T> encode(final List<A> input, final DynamicOps<T> ops, final T prefix) {
+    public <T> DataResult<T> encode(final List<E> input, final DynamicOps<T> ops, final T prefix) {
         final ListBuilder<T> builder = ops.listBuilder();
 
-        for (final A a : input) {
-            builder.add(elementCodec.encodeStart(ops, a));
+        for (final E element : input) {
+            builder.add(elementCodec.encodeStart(ops, element));
         }
 
         return builder.build(prefix);
     }
 
     @Override
-    public <T> DataResult<Pair<List<A>, T>> decode(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<Pair<List<E>, T>> decode(final DynamicOps<T> ops, final T input) {
         return ops.getList(input).setLifecycle(Lifecycle.stable()).flatMap(stream -> {
-            final ImmutableList.Builder<A> read = ImmutableList.builder();
-            final Stream.Builder<T> failed = Stream.builder();
-            final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
-
-            stream.accept(t -> {
-                final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);
-                element.error().ifPresent(e -> failed.add(t));
-                element.resultOrPartial().ifPresent(pair -> read.add(pair.getFirst()));
-                result.setPlain(result.getPlain().apply2stable((r, v) -> r, element));
-            });
-
-            final ImmutableList<A> elements = read.build();
-            final T errors = ops.createList(failed.build());
-
-            final Pair<List<A>, T> pair = Pair.of(elements, errors);
-
-            return result.getPlain().map(unit -> pair).setPartial(pair);
+            final DecoderState<T> decoder = new DecoderState<>(ops);
+            stream.accept(decoder::accept);
+            return decoder.build();
         });
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final ListCodec<?> listCodec = (ListCodec<?>) o;
-        return Objects.equals(elementCodec, listCodec.elementCodec);
-    }
+    private class DecoderState<T> {
+        private static final DataResult<Unit> INITIAL_RESULT = DataResult.success(Unit.INSTANCE, Lifecycle.stable());
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(elementCodec);
-    }
+        private final DynamicOps<T> ops;
+        private final List<E> elements = new ArrayList<>();
+        private final Stream.Builder<T> failed = Stream.builder();
+        private DataResult<Unit> result = INITIAL_RESULT;
 
-    @Override
-    public String toString() {
-        return "ListCodec[" + elementCodec + ']';
+        private DecoderState(final DynamicOps<T> ops) {
+            this.ops = ops;
+        }
+
+        public void accept(final T value) {
+            final DataResult<Pair<E, T>> elementResult = elementCodec.decode(ops, value);
+            elementResult.error().ifPresent(error -> failed.add(value));
+            elementResult.resultOrPartial().ifPresent(pair -> elements.add(pair.getFirst()));
+            result = result.apply2stable((result, element) -> result, elementResult);
+        }
+
+        public DataResult<Pair<List<E>, T>> build() {
+            final T errors = ops.createList(failed.build());
+            final Pair<List<E>, T> pair = Pair.of(List.copyOf(elements), errors);
+            return result.map(ignored -> pair).setPartial(pair);
+        }
     }
 }
