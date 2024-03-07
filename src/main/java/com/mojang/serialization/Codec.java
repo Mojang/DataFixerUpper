@@ -186,8 +186,8 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         );
     }
 
-    static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {
-        return new OptionalFieldCodec<>(name, elementCodec);
+    static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec, final boolean lenient) {
+        return new OptionalFieldCodec<>(name, elementCodec, lenient);
     }
 
     static <A> Codec<A> recursive(final String name, final Function<Codec<A>, Codec<A>> wrapped) {
@@ -261,14 +261,11 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default MapCodec<Optional<A>> optionalFieldOf(final String name) {
-        return optionalField(name, this);
+        return optionalField(name, this, false);
     }
 
     default MapCodec<A> optionalFieldOf(final String name, final A defaultValue) {
-        return optionalField(name, this).xmap(
-            o -> o.orElse(defaultValue),
-            a -> Objects.equals(a, defaultValue) ? Optional.empty() : Optional.of(a)
-        );
+        return optionalFieldOf(name, defaultValue, false);
     }
 
     default MapCodec<A> optionalFieldOf(final String name, final A defaultValue, final Lifecycle lifecycleOfDefault) {
@@ -277,7 +274,35 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     default MapCodec<A> optionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
         // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
-        return optionalField(name, this).stable().flatXmap(
+        return optionalFieldOf(name, fieldLifecycle, defaultValue, lifecycleOfDefault, false);
+    }
+
+    default MapCodec<Optional<A>> lenientOptionalFieldOf(final String name) {
+        return optionalField(name, this, true);
+    }
+
+    default MapCodec<A> lenientOptionalFieldOf(final String name, final A defaultValue) {
+        return optionalFieldOf(name, defaultValue, true);
+    }
+
+    default MapCodec<A> lenientOptionalFieldOf(final String name, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return lenientOptionalFieldOf(name, Lifecycle.experimental(), defaultValue, lifecycleOfDefault);
+    }
+
+    default MapCodec<A> lenientOptionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return optionalFieldOf(name, fieldLifecycle, defaultValue, lifecycleOfDefault, true);
+    }
+
+    private MapCodec<A> optionalFieldOf(final String name, final A defaultValue, final boolean lenient) {
+        return optionalField(name, this, lenient).xmap(
+            o -> o.orElse(defaultValue),
+            a -> Objects.equals(a, defaultValue) ? Optional.empty() : Optional.of(a)
+        );
+    }
+
+    private MapCodec<A> optionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault, final boolean lenient) {
+        // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
+        return optionalField(name, this, lenient).stable().flatXmap(
             o -> o.map(v -> DataResult.success(v, fieldLifecycle)).orElse(DataResult.success(defaultValue, lifecycleOfDefault)),
             a -> Objects.equals(a, defaultValue) ? DataResult.success(Optional.empty(), lifecycleOfDefault) : DataResult.success(Optional.of(a), fieldLifecycle)
         );
