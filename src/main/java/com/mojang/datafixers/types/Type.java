@@ -25,17 +25,19 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
-import org.apache.commons.lang3.mutable.MutableObject;
-import org.apache.commons.lang3.tuple.Triple;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class Type<A> implements App<Type.Mu, A> {
-    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
-    private static final Map<Triple<Type<?>, TypeRewriteRule, PointFreeRule>, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
+    private static final Map<RewriteCacheKey, CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> PENDING_REWRITE_CACHE = Maps.newConcurrentMap();
+    private static final Map<RewriteCacheKey, Optional<? extends RewriteResult<?, ?>>> REWRITE_CACHE = Maps.newConcurrentMap();
+
+    private record RewriteCacheKey(Type<?> type, TypeRewriteRule rule, PointFreeRule optimizationRule) {
+    }
 
     public static class Mu implements K1 {}
 
@@ -167,7 +169,7 @@ public abstract class Type<A> implements App<Type.Mu, A> {
 
     @SuppressWarnings("unchecked")
     public Optional<RewriteResult<A, ?>> rewrite(final TypeRewriteRule rule, final PointFreeRule fRule) {
-        final Triple<Type<?>, TypeRewriteRule, PointFreeRule> key = Triple.of(this, rule, fRule);
+        final RewriteCacheKey key = new RewriteCacheKey(this, rule, fRule);
         // This code under contention would generate multiple rewrites, so we use CompletableFuture for pending rewrites.
         // We can not use computeIfAbsent because this is a recursive call that will block server startup
         // during the Bootstrap phrase that's trying to pre cache these rewrites.
@@ -175,17 +177,16 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         if (rewrite != null) {
             return (Optional<RewriteResult<A, ?>>) rewrite;
         }
-        // TODO: AtomicReference.getPlain/setPlain in java9+
-        final MutableObject<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new MutableObject<>();
+        final AtomicReference<CompletableFuture<Optional<? extends RewriteResult<?, ?>>>> ref = new AtomicReference<>();
 
         final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> pending = PENDING_REWRITE_CACHE.computeIfAbsent(key, k -> {
             final CompletableFuture<Optional<? extends RewriteResult<?, ?>>> value = new CompletableFuture<>();
-            ref.setValue(value);
+            ref.setPlain(value);
             return value;
         });
 
-        if (ref.getValue() != null) {
-            Optional<RewriteResult<A, ?>> result = rule.rewrite(this).flatMap(r -> r.view().rewrite(fRule).map(view -> RewriteResult.create(view, r.recData())));
+        if (ref.getPlain() != null) {
+            final Optional<RewriteResult<A, ?>> result = rule.rewrite(this).flatMap(r -> r.view().rewrite(fRule).map(view -> RewriteResult.create(view, r.recData())));
             REWRITE_CACHE.put(key, result);
             pending.complete(result);
             PENDING_REWRITE_CACHE.remove(key);

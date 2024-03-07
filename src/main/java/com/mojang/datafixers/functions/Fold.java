@@ -13,7 +13,6 @@ import com.mojang.datafixers.types.families.RecursiveTypeFamily;
 import com.mojang.datafixers.types.templates.RecursivePoint;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DynamicOps;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +23,11 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 
 final class Fold<A, B> extends PointFree<Function<A, B>> {
-    private static final Map<Triple<RecursiveTypeFamily, RecursiveTypeFamily, Algebra>, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = Maps.newConcurrentMap();
+    private static final Map<HmapCacheKey, IntFunction<RewriteResult<?, ?>>> HMAP_CACHE = Maps.newConcurrentMap();
     private static final Map<Pair<IntFunction<RewriteResult<?, ?>>, Integer>, RewriteResult<?, ?>> HMAP_APPLY_CACHE = Maps.newConcurrentMap();
+
+    private record HmapCacheKey(RecursiveTypeFamily family, RecursiveTypeFamily newFamily, Algebra algebra) {
+    }
 
     protected final RecursivePoint.RecursivePointType<A> aType;
     protected final RecursivePoint.RecursivePointType<B> bType;
@@ -82,7 +84,7 @@ final class Fold<A, B> extends PointFree<Function<A, B>> {
             final RecursiveTypeFamily family = aType.family();
             final RecursiveTypeFamily newFamily = bType.family();
 
-            final IntFunction<RewriteResult<?, ?>> hmapped = HMAP_CACHE.computeIfAbsent(Triple.of(family, newFamily, algebra), key -> key.getLeft().template().hmap(key.getLeft(), key.getLeft().fold(key.getRight(), key.getMiddle())));
+            final IntFunction<RewriteResult<?, ?>> hmapped = HMAP_CACHE.computeIfAbsent(new HmapCacheKey(family, newFamily, algebra), key -> key.family().template().hmap(key.family(), key.family().fold(key.algebra(), key.newFamily())));
             final RewriteResult<?, ?> result = HMAP_APPLY_CACHE.computeIfAbsent(Pair.of(hmapped, index), key -> key.getFirst().apply(key.getSecond()));
 
             final PointFree<Function<A, B>> eval = cap(result);

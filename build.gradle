@@ -31,7 +31,6 @@ dependencies {
 
     compileOnlyApi 'com.google.code.findbugs:jsr305:3.0.2'
     implementation 'org.slf4j:slf4j-api:2.0.9'
-    implementation 'org.apache.commons:commons-lang3:3.14.0'
 
     testImplementation 'junit:junit-dep:4.11'
     testImplementation "org.slf4j:slf4j-simple:2.0.9"
