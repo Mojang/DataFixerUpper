@@ -11,10 +11,10 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.RecordBuilder;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
     private final Codec<K> keyCodec;
@@ -31,8 +31,7 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
             final ImmutableList.Builder<Pair<K, V>> read = ImmutableList.builder();
             final ImmutableMap.Builder<T, T> failed = ImmutableMap.builder();
 
-            // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<Unit>> result = new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.experimental()));
+            final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE, Lifecycle.experimental()));
 
             map.accept((key, value) -> {
                 final DataResult<K> k = keyCodec.parse(ops, key);
@@ -42,7 +41,7 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
 
                 readEntry.error().ifPresent(e -> failed.put(key, value));
 
-                result.setValue(result.getValue().apply2stable((u, e) -> {
+                result.setPlain(result.getPlain().apply2stable((u, e) -> {
                     read.add(e);
                     return u;
                 }, readEntry));
@@ -53,7 +52,7 @@ public final class CompoundListCodec<K, V> implements Codec<List<Pair<K, V>>> {
 
             final Pair<List<Pair<K, V>>, T> pair = Pair.of(elements, errors);
 
-            return result.getValue().map(unit -> pair).setPartial(pair);
+            return result.getPlain().map(unit -> pair).setPartial(pair);
         });
     }
 

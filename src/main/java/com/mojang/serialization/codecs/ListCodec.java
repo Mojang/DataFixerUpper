@@ -10,10 +10,10 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.ListBuilder;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 public final class ListCodec<A> implements Codec<List<A>> {
@@ -39,13 +39,12 @@ public final class ListCodec<A> implements Codec<List<A>> {
         return ops.getList(input).setLifecycle(Lifecycle.stable()).flatMap(stream -> {
             final ImmutableList.Builder<A> read = ImmutableList.builder();
             final Stream.Builder<T> failed = Stream.builder();
-            // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<Unit>> result = new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
+            final AtomicReference<DataResult<Unit>> result = new AtomicReference<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
 
             stream.accept(t -> {
                 final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);
                 element.error().ifPresent(e -> failed.add(t));
-                result.setValue(result.getValue().apply2stable((r, v) -> {
+                result.setPlain(result.getPlain().apply2stable((r, v) -> {
                     read.add(v.getFirst());
                     return r;
                 }, element));
@@ -56,7 +55,7 @@ public final class ListCodec<A> implements Codec<List<A>> {
 
             final Pair<List<A>, T> pair = Pair.of(elements, errors);
 
-            return result.getValue().map(unit -> pair).setPartial(pair);
+            return result.getPlain().map(unit -> pair).setPartial(pair);
         });
     }
 

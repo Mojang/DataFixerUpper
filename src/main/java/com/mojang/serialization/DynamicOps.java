@@ -4,13 +4,13 @@ package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -100,13 +100,12 @@ public interface DynamicOps<T> {
     }
 
     default DataResult<T> mergeToMap(final T map, final MapLike<T> values) {
-        // TODO: AtomicReference.getPlain/setPlain in java9+
-        final MutableObject<DataResult<T>> result = new MutableObject<>(DataResult.success(map));
+        final AtomicReference<DataResult<T>> result = new AtomicReference<>(DataResult.success(map));
 
         values.entries().forEach(entry ->
-            result.setValue(result.getValue().flatMap(r -> mergeToMap(r, entry.getFirst(), entry.getSecond())))
+            result.setPlain(result.getPlain().flatMap(r -> mergeToMap(r, entry.getFirst(), entry.getSecond())))
         );
-        return result.getValue();
+        return result.getPlain();
     }
 
     /**

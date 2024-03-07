@@ -19,7 +19,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
-import org.apache.commons.lang3.ObjectUtils;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
@@ -77,7 +76,7 @@ public record RecursivePoint(int index) implements TypeTemplate {
         if (!Objects.equals(result.view().type(), sourceType)) {
             throw new IllegalArgumentException("Type error: hmap function input type");
         }
-        final BitSet bitSet = ObjectUtils.clone(result.recData());
+        final BitSet bitSet = (BitSet) result.recData().clone();
         bitSet.set(index);
         return RewriteResult.create(result.view(), bitSet);
     }
