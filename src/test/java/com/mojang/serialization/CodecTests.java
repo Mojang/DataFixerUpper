@@ -357,4 +357,29 @@ public class CodecTests {
         Right.assertParsingAtDepth(2);
         Right.assertParsingAtDepth(3);
     }
+
+    private enum Variant {
+        FOO,
+        BAR,
+        ;
+
+        public static final Codec<Variant> CODEC = Codec.stringResolver(
+            variant -> switch (variant) {
+                case FOO -> "foo";
+                case BAR -> "bar";
+            },
+            string -> switch (string) {
+                case "foo" -> FOO;
+                case "bar" -> BAR;
+                default -> null;
+            }
+        );
+    }
+
+    @Test
+    public void stringResolver_simple() {
+        assertRoundTrip(Variant.CODEC, Variant.FOO, "foo");
+        assertRoundTrip(Variant.CODEC, Variant.BAR, "bar");
+        assertFromJavaFails(Variant.CODEC, "baz");
+    }
 }
