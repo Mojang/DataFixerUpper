@@ -164,12 +164,6 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         }
 
         @Override
-        public Codec<A> validate(final Function<A, DataResult<A>> checker) {
-            // KeyDispatchCodec matches MapCodecCodec to inline values, so try to validate on the MapCodec and re-wrap
-            return codec.validate(checker).codec();
-        }
-
-        @Override
         public String toString() {
             return codec.toString();
         }

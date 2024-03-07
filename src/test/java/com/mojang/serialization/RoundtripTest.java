@@ -25,14 +25,14 @@ public class RoundtripTest {
         public static final Codec<Day> CODEC = Codec.STRING.comapFlatMap(DataResult.partialGet(BY_NAME::get, () -> "unknown day"), d -> d.name);
 
         private final String name;
-        private final Codec<? extends DayData> codec;
+        private final MapCodec<? extends DayData> codec;
 
-        Day(final String name, final Codec<? extends DayData> codec) {
+        Day(final String name, final MapCodec<? extends DayData> codec) {
             this.name = name;
             this.codec = codec;
         }
 
-        public Codec<? extends DayData> codec() {
+        public MapCodec<? extends DayData> codec() {
             return codec;
         }
     }
@@ -44,7 +44,7 @@ public class RoundtripTest {
     }
 
     private record TuesdayData(int x) implements DayData {
-        public static final Codec<TuesdayData> CODEC = Codec.INT.xmap(TuesdayData::new, d -> d.x);
+        public static final MapCodec<TuesdayData> CODEC = Codec.INT.xmap(TuesdayData::new, d -> d.x).fieldOf("value");
 
         @Override
         public Day type() {
@@ -53,7 +53,7 @@ public class RoundtripTest {
     }
 
     private record WednesdayData(String y) implements DayData {
-        public static final Codec<WednesdayData> CODEC = Codec.STRING.xmap(WednesdayData::new, d -> d.y);
+        public static final MapCodec<WednesdayData> CODEC = Codec.STRING.xmap(WednesdayData::new, d -> d.y).fieldOf("value");
 
         @Override
         public Day type() {
@@ -62,7 +62,7 @@ public class RoundtripTest {
     }
 
     private record SundayData(float z) implements DayData {
-        public static final Codec<SundayData> CODEC = Codec.FLOAT.xmap(SundayData::new, d -> d.z);
+        public static final MapCodec<SundayData> CODEC = Codec.FLOAT.xmap(SundayData::new, d -> d.z).fieldOf("value");
 
         @Override
         public Day type() {
