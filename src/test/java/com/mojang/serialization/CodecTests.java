@@ -58,6 +58,12 @@ public class CodecTests {
         );
     }
 
+    private static <T> void assertRoundTrips(final List<Codec<T>> codecs, final T value, final Object java) {
+        for (final Codec<T> codec : codecs) {
+            assertRoundTrip(codec, value, java);
+        }
+    }
+
     @Test
     public void unboundedMap_simple() {
         assertRoundTrip(
@@ -524,6 +530,134 @@ public class CodecTests {
             fromJavaOrPartial(dispatchedMapCodec, ImmutableMap.of(
                 "lower_case", "first",
                 "LOWER_CASE", "second"
+            ))
+        );
+    }
+
+    private record SimpleOptionals(
+        Optional<String> string,
+        Optional<Integer> integer
+    ) {
+        public static final Codec<SimpleOptionals> STRICT_CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.STRING.optionalFieldOf("string").forGetter(SimpleOptionals::string),
+            Codec.INT.optionalFieldOf("integer").forGetter(SimpleOptionals::integer)
+        ).apply(i, SimpleOptionals::new));
+
+        public static final Codec<SimpleOptionals> LENIENT_CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.STRING.lenientOptionalFieldOf("string").forGetter(SimpleOptionals::string),
+            Codec.INT.lenientOptionalFieldOf("integer").forGetter(SimpleOptionals::integer)
+        ).apply(i, SimpleOptionals::new));
+    }
+
+    @Test
+    public void optionalField_roundTrip() {
+        assertRoundTrips(
+            List.of(SimpleOptionals.STRICT_CODEC, SimpleOptionals.LENIENT_CODEC),
+            new SimpleOptionals(Optional.of("foo"), Optional.of(1)),
+            Map.of(
+                "string", "foo",
+                "integer", 1
+            )
+        );
+        assertRoundTrips(
+            List.of(SimpleOptionals.STRICT_CODEC, SimpleOptionals.LENIENT_CODEC),
+            new SimpleOptionals(Optional.empty(), Optional.of(1)),
+            Map.of(
+                "integer", 1
+            )
+        );
+    }
+
+    @Test
+    public void optionalField_strictInvalidValues() {
+        assertFromJavaFails(
+            SimpleOptionals.STRICT_CODEC,
+            Map.of("string", 54)
+        );
+        assertFromJavaFails(
+            SimpleOptionals.STRICT_CODEC,
+            Map.of("integer", "not an int")
+        );
+    }
+
+    @Test
+    public void optionalField_strictInvalidValuesPartial() {
+        assertEquals(
+            new SimpleOptionals(Optional.empty(), Optional.of(23)),
+            fromJavaOrPartial(SimpleOptionals.STRICT_CODEC, Map.of(
+                "string", false,
+                "integer", 23
+            ))
+        );
+    }
+
+    @Test
+    public void optionalField_lenientInvalidValues() {
+        assertEquals(
+            new SimpleOptionals(Optional.empty(), Optional.of(23)),
+            fromJava(SimpleOptionals.LENIENT_CODEC, Map.of(
+                "string", false,
+                "integer", 23
+            ))
+        );
+    }
+
+    private record NestedStrictOptionals(
+        Optional<SimpleOptionals> nested
+    ) {
+        public static final Codec<NestedStrictOptionals> TOP_LEVEL_STRICT_CODEC = RecordCodecBuilder.create(i -> i.group(
+            SimpleOptionals.STRICT_CODEC.optionalFieldOf("nested").forGetter(NestedStrictOptionals::nested)
+        ).apply(i, NestedStrictOptionals::new));
+
+        public static final Codec<NestedStrictOptionals> TOP_LEVEL_LENIENT_CODEC = RecordCodecBuilder.create(i -> i.group(
+            SimpleOptionals.STRICT_CODEC.lenientOptionalFieldOf("nested").forGetter(NestedStrictOptionals::nested)
+        ).apply(i, NestedStrictOptionals::new));
+    }
+
+    @Test
+    public void optionalField_nestedStrictOptionals() {
+        assertEquals(
+            new NestedStrictOptionals(
+                Optional.of(new SimpleOptionals(
+                    Optional.of("foo"),
+                    Optional.of(1)
+                ))
+            ),
+            fromJava(NestedStrictOptionals.TOP_LEVEL_STRICT_CODEC, Map.of(
+                "nested", Map.of(
+                    "string", "foo",
+                    "integer", 1
+                )
+            ))
+        );
+    }
+
+    @Test
+    public void optionalField_nestedStrictOptionalsPartialResult() {
+        assertEquals(
+            new NestedStrictOptionals(
+                Optional.of(new SimpleOptionals(
+                    Optional.of("foo"),
+                    Optional.empty()
+                ))
+            ),
+            fromJavaOrPartial(NestedStrictOptionals.TOP_LEVEL_STRICT_CODEC, Map.of(
+                "nested", Map.of(
+                    "string", "foo",
+                    "integer", "not an int"
+                )
+            ))
+        );
+
+        assertEquals(
+            new NestedStrictOptionals(
+                Optional.empty()
+            ),
+            fromJava(NestedStrictOptionals.TOP_LEVEL_LENIENT_CODEC, Map.of(
+                "nested", Map.of(
+                    "string", "foo",
+                    "integer", "not an int"
+                )
             ))
         );
     }
