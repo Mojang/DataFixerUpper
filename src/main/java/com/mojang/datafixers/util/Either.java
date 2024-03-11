@@ -191,6 +191,10 @@ public abstract class Either<L, R> implements App<Either.Mu<R>, L> {
         return map(function, Either::right);
     }
 
+    public static <U> U unwrap(final Either<? extends U, ? extends U> either) {
+        return either.map(Function.identity(), Function.identity());
+    }
+
     public static final class Instance<R2> implements Applicative<Mu<R2>, Instance.Mu<R2>>, Traversable<Mu<R2>, Instance.Mu<R2>>, CocartesianLike<Mu<R2>, R2, Instance.Mu<R2>> {
         public static final class Mu<R2> implements Applicative.Mu, Traversable.Mu, CocartesianLike.Mu {}
 
