@@ -132,6 +132,20 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         ), lifecycle);
     }
 
+    public <T> T mapOrElse(final Function<? super R, ? extends T> successFunction, final Function<? super PartialResult<R>, ? extends T> errorFunction) {
+        return result.map(successFunction, errorFunction);
+    }
+
+    public DataResult<R> ifSuccess(final Consumer<? super R> ifSuccess) {
+        result.ifLeft(ifSuccess);
+        return this;
+    }
+
+    public DataResult<R> ifError(final Consumer<? super PartialResult<R>> ifError) {
+        result.ifRight(ifError);
+        return this;
+    }
+
     public DataResult<R> promotePartial(final Consumer<String> onError) {
         return result.map(
             r -> new DataResult<>(Either.left(r), lifecycle),
