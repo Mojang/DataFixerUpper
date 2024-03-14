@@ -89,6 +89,10 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
         );
     }
 
+    public Optional<R> resultOrPartial() {
+        return result.map(Optional::of, error -> error.partialResult);
+    }
+
     public <E extends Throwable> R getOrThrow(final Function<String, E> exceptionSupplier) throws E {
         final Optional<PartialResult<R>> error = result.right();
         if (error.isPresent()) {

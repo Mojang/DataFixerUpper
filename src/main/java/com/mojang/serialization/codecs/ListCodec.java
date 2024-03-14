@@ -44,10 +44,8 @@ public final class ListCodec<A> implements Codec<List<A>> {
             stream.accept(t -> {
                 final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);
                 element.error().ifPresent(e -> failed.add(t));
-                result.setPlain(result.getPlain().apply2stable((r, v) -> {
-                    read.add(v.getFirst());
-                    return r;
-                }, element));
+                element.resultOrPartial().ifPresent(pair -> read.add(pair.getFirst()));
+                result.setPlain(result.getPlain().apply2stable((r, v) -> r, element));
             });
 
             final ImmutableList<A> elements = read.build();
