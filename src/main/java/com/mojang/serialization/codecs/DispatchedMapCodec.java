@@ -68,7 +68,7 @@ public record DispatchedMapCodec<K, V>(
                 return result.apply2stable((u, p) -> u, DataResult.error(() -> "Duplicate entry for key: '" + key + "'"));
             }
         }
-        if (entryResult.error().isPresent()) {
+        if (entryResult.isError()) {
             failed.add(input);
         }
 

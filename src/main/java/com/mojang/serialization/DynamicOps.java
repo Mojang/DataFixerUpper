@@ -151,7 +151,7 @@ public interface DynamicOps<T> {
     default DataResult<ByteBuffer> getByteBuffer(final T input) {
         return getStream(input).flatMap(stream -> {
             final List<T> list = stream.collect(Collectors.toList());
-            if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
+            if (list.stream().allMatch(element -> getNumberValue(element).isSuccess())) {
                 final ByteBuffer buffer = ByteBuffer.wrap(new byte[list.size()]);
                 for (int i = 0; i < list.size(); i++) {
                     buffer.put(i, getNumberValue(list.get(i)).result().get().byteValue());
@@ -168,9 +168,9 @@ public interface DynamicOps<T> {
 
     default DataResult<IntStream> getIntStream(final T input) {
         return getStream(input).flatMap(stream -> {
-            final List<T> list = stream.collect(Collectors.toList());
-            if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
-                return DataResult.success(list.stream().mapToInt(element -> getNumberValue(element).result().get().intValue()));
+            final List<T> list = stream.toList();
+            if (list.stream().allMatch(element -> getNumberValue(element).isSuccess())) {
+                return DataResult.success(list.stream().mapToInt(element -> getNumberValue(element).getOrThrow().intValue()));
             }
             return DataResult.error(() -> "Some elements are not ints: " + input);
         });
@@ -182,9 +182,9 @@ public interface DynamicOps<T> {
 
     default DataResult<LongStream> getLongStream(final T input) {
         return getStream(input).flatMap(stream -> {
-            final List<T> list = stream.collect(Collectors.toList());
-            if (list.stream().allMatch(element -> getNumberValue(element).result().isPresent())) {
-                return DataResult.success(list.stream().mapToLong(element -> getNumberValue(element).result().get().longValue()));
+            final List<T> list = stream.toList();
+            if (list.stream().allMatch(element -> getNumberValue(element).isSuccess())) {
+                return DataResult.success(list.stream().mapToLong(element -> getNumberValue(element).getOrThrow().longValue()));
             }
             return DataResult.error(() -> "Some elements are not longs: " + input);
         });

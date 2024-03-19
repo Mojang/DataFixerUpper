@@ -60,7 +60,7 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
     public <T> RecordBuilder<T> encode(final V input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
         final DataResult<? extends MapEncoder<V>> encoderResult = encoder.apply(input);
         final RecordBuilder<T> builder = prefix.withErrorsFrom(encoderResult);
-        if (encoderResult.result().isEmpty()) {
+        if (encoderResult.isError()) {
             return builder;
         }
 

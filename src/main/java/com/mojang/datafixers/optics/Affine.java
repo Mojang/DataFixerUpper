@@ -32,9 +32,7 @@ public interface Affine<S, T, A, B> extends App2<Affine.Mu<A, B>, S, T>, Optic<A
         return input -> cartesian.dimap(
             cocartesian.left(cartesian.rmap(cartesian.<A, B, S>first(input), p -> set(p.getFirst(), p.getSecond()))),
             (S s) -> preview(s).map(Either::right, a -> Either.left(Pair.of(a, s))),
-            (Either<T, T> e) -> {
-                return e.map(Function.identity(), Function.identity());
-            }
+            Either::unwrap
         );
     }
 

@@ -34,7 +34,7 @@ public class CodecTests {
 
     private static void assertFromJavaFails(final Codec<?> codec, final Object value) {
         final DataResult<?> result = codec.parse(JavaOps.INSTANCE, value);
-        assertTrue("Expected data result error, but got: " + result.result(), result.result().isEmpty());
+        assertTrue("Expected data result error, but got: " + result.result(), result.isError());
     }
 
     private static void assertFromJavaFailsPartial(final Codec<?> codec, final Object value) {
@@ -44,7 +44,7 @@ public class CodecTests {
 
     private static <T> void assertToJavaFails(final Codec<T> codec, final T value) {
         final DataResult<Object> result = codec.encodeStart(JavaOps.INSTANCE, value);
-        assertTrue("Expected data result error, but got: " + result.result(), result.result().isEmpty());
+        assertTrue("Expected data result error, but got: " + result.result(), result.isError());
     }
 
     private static <T> void assertRoundTrip(final Codec<T> codec, final T value, final Object java) {
