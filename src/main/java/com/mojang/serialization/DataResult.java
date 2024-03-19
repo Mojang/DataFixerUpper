@@ -126,6 +126,12 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
         return setLifecycle(lifecycle().add(lifecycle));
     }
 
+    boolean isSuccess();
+
+    default boolean isError() {
+        return !isSuccess();
+    }
+
     record Success<R>(R value, Lifecycle lifecycle) implements DataResult<R> {
         @Override
         public Optional<R> result() {
@@ -221,6 +227,11 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
                 return this;
             }
             return new Success<>(value, lifecycle);
+        }
+
+        @Override
+        public boolean isSuccess() {
+            return true;
         }
 
         @Override
@@ -359,6 +370,11 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
                 return this;
             }
             return new Error<>(messageSupplier, partialValue, lifecycle);
+        }
+
+        @Override
+        public boolean isSuccess() {
+            return false;
         }
 
         @Override

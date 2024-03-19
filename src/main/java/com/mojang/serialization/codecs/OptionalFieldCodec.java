@@ -32,7 +32,7 @@ public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
             return DataResult.success(Optional.empty());
         }
         final DataResult<A> parsed = elementCodec.parse(ops, value);
-        if (parsed.result().isEmpty() && lenient) {
+        if (parsed.isError() && lenient) {
             return DataResult.success(Optional.empty());
         }
         return parsed.map(Optional::of).setPartial(parsed.resultOrPartial());

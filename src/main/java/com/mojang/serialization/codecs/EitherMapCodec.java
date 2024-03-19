@@ -25,11 +25,11 @@ public final class EitherMapCodec<F, S> extends MapCodec<Either<F, S>> {
     @Override
     public <T> DataResult<Either<F, S>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
         final DataResult<Either<F, S>> firstRead = first.decode(ops, input).map(Either::left);
-        if (firstRead.error().isEmpty()) {
+        if (firstRead.isSuccess()) {
             return firstRead;
         }
         final DataResult<Either<F, S>> secondRead = second.decode(ops, input).map(Either::right);
-        if (secondRead.error().isEmpty()) {
+        if (secondRead.isSuccess()) {
             return secondRead;
         }
         return firstRead.apply2((f, s) -> s, secondRead);

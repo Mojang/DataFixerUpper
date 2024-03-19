@@ -132,7 +132,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
             primary,
             alternative
         ).xmap(
-            either -> either.map(v -> v, v -> v),
+            Either::unwrap,
             Either::left
         );
     }

@@ -42,7 +42,7 @@ public interface BaseMapCodec<K, V> {
                         return r.apply2stable((u, p) -> u, DataResult.error(() -> "Duplicate entry for key: '" + entry.get().getFirst() + "'"));
                     }
                 }
-                if (entryResult.error().isPresent()) {
+                if (entryResult.isError()) {
                     failed.add(pair);
                 }
 

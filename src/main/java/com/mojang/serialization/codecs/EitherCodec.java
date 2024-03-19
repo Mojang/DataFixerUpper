@@ -12,11 +12,11 @@ public record EitherCodec<F, S>(Codec<F> first, Codec<S> second) implements Code
     @Override
     public <T> DataResult<Pair<Either<F, S>, T>> decode(final DynamicOps<T> ops, final T input) {
         final DataResult<Pair<Either<F, S>, T>> firstRead = first.decode(ops, input).map(vo -> vo.mapFirst(Either::left));
-        if (firstRead.error().isEmpty()) {
+        if (firstRead.isSuccess()) {
             return firstRead;
         }
         final DataResult<Pair<Either<F, S>, T>> secondRead = second.decode(ops, input).map(vo -> vo.mapFirst(Either::right));
-        if (secondRead.error().isEmpty()) {
+        if (secondRead.isSuccess()) {
             return secondRead;
         }
         return firstRead.apply2((f, s) -> s, secondRead);
