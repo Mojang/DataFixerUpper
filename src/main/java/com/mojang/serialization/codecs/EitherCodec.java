@@ -19,7 +19,13 @@ public record EitherCodec<F, S>(Codec<F> first, Codec<S> second) implements Code
         if (secondRead.isSuccess()) {
             return secondRead;
         }
-        return firstRead.apply2((f, s) -> s, secondRead);
+        if (firstRead.hasResultOrPartial()) {
+            return firstRead;
+        }
+        if (secondRead.hasResultOrPartial()) {
+            return secondRead;
+        }
+        return DataResult.error(() -> "Failed to parse either. First: " + firstRead.error().orElseThrow().message() + "; Second: " + secondRead.error().orElseThrow().message());
     }
 
     @Override
