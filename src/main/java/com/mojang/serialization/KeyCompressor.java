@@ -46,7 +46,7 @@ public final class KeyCompressor<T> {
     }
 
     public int compress(final T key) {
-        return compress.get(key);
+        return compress.getInt(key);
     }
 
     public int size() {
