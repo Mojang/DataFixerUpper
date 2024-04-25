@@ -67,6 +67,8 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
 
     Lifecycle lifecycle();
 
+    boolean hasResultOrPartial();
+
     Optional<R> resultOrPartial(Consumer<String> onError);
 
     Optional<R> resultOrPartial();
@@ -141,6 +143,11 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
         @Override
         public Optional<Error<R>> error() {
             return Optional.empty();
+        }
+
+        @Override
+        public boolean hasResultOrPartial() {
+            return true;
         }
 
         @Override
@@ -257,6 +264,11 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
         @Override
         public Optional<Error<R>> error() {
             return Optional.of(this);
+        }
+
+        @Override
+        public boolean hasResultOrPartial() {
+            return partialValue.isPresent();
         }
 
         @Override
