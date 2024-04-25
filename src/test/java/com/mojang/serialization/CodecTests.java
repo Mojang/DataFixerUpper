@@ -32,6 +32,10 @@ public class CodecTests {
         return codec.parse(JavaOps.INSTANCE, value).getPartialOrThrow(AssertionError::new);
     }
 
+    private static String fromJavaErrorMessage(final Codec<String> codec, final Object value) {
+        return codec.parse(JavaOps.INSTANCE, value).error().orElseThrow(AssertionError::new).message();
+    }
+
     private static void assertFromJavaFails(final Codec<?> codec, final Object value) {
         final DataResult<?> result = codec.parse(JavaOps.INSTANCE, value);
         assertTrue("Expected data result error, but got: " + result.result(), result.isError());
@@ -247,6 +251,69 @@ public class CodecTests {
 
         assertFromJavaFails(codec, Map.of());
         assertFromJavaFails(codec, false);
+    }
+
+    public static final Codec<String> NEVER_PRIMARY = Codec.STRING.validate(s -> DataResult.error(() -> "Failed Primary"));
+    public static final Codec<String> NEVER_ALTERNATIVE = Codec.STRING.validate(s -> DataResult.error(() -> "Failed Alternative"));
+    public static final Codec<String> NEVER_WITH_PARTIAL_PRIMARY = Codec.STRING.validate(s -> DataResult.error(() -> "Failed Primary with partial", "Partial Primary: " + s));
+    public static final Codec<String> NEVER_WITH_PARTIAL_ALTERNATIVE = Codec.STRING.validate(s -> DataResult.error(() -> "Failed Alternative with partial", "Partial Alternative: " + s));
+
+    @Test
+    public void withAlternative_primaryPartialAlternativeFails() {
+        final Codec<String> codec = Codec.withAlternative(
+            NEVER_WITH_PARTIAL_PRIMARY,
+            NEVER_ALTERNATIVE
+        );
+        assertEquals(
+            "Partial Primary: value",
+            fromJavaOrPartial(codec, "value")
+        );
+
+        assertEquals(
+            "Failed Primary with partial",
+            fromJavaErrorMessage(codec, "value")
+        );
+    }
+
+    @Test
+    public void withAlternative_primaryFailsAlternativePartial() {
+        final Codec<String> codec = Codec.withAlternative(
+            NEVER_PRIMARY,
+            NEVER_WITH_PARTIAL_ALTERNATIVE
+        );
+        assertEquals(
+            "Partial Alternative: value",
+            fromJavaOrPartial(codec, "value")
+        );
+
+        assertEquals(
+            "Failed Alternative with partial",
+            fromJavaErrorMessage(codec, "value")
+        );
+    }
+
+    @Test
+    public void withAlternative_bothPartialPrefersPrimary() {
+        final Codec<String> codec = Codec.withAlternative(
+            NEVER_WITH_PARTIAL_PRIMARY,
+            NEVER_WITH_PARTIAL_ALTERNATIVE
+        );
+        assertEquals(
+            "Partial Primary: value",
+            fromJavaOrPartial(codec, "value")
+        );
+    }
+
+    @Test
+    public void withAlternative_bothFail() {
+        final Codec<String> codec = Codec.withAlternative(
+            NEVER_PRIMARY,
+            NEVER_ALTERNATIVE
+        );
+        assertEquals(
+            "Failed to parse either. First: Failed Primary; Second: Failed Alternative",
+            fromJavaErrorMessage(codec, "value")
+        );
     }
 
     @Test
