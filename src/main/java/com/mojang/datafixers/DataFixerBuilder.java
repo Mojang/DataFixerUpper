@@ -2,13 +2,12 @@
 // Licensed under the MIT license.
 package com.mojang.datafixers;
 
-import com.google.common.collect.Lists;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Type;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,7 @@ public class DataFixerBuilder {
 
     private final int dataVersion;
     private final Int2ObjectSortedMap<Schema> schemas = new Int2ObjectAVLTreeMap<>();
-    private final List<DataFix> globalList = Lists.newArrayList();
+    private final List<DataFix> globalList = new ArrayList<>();
     private final IntSortedSet fixerVersions = new IntAVLTreeSet();
 
     public DataFixerBuilder(final int dataVersion) {
@@ -63,47 +62,60 @@ public class DataFixerBuilder {
         fixerVersions.add(fix.getVersionKey());
     }
 
-    public DataFixer buildUnoptimized() {
-        return build();
+    public Result build() {
+        final DataFixerUpper fixer = new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
+        return new Result(fixer);
     }
 
-    public DataFixer buildOptimized(final Set<DSL.TypeReference> requiredTypes, final Executor executor) {
-        final DataFixerUpper fixerUpper = build();
+    public class Result {
+        private final DataFixerUpper fixerUpper;
 
-        final Instant started = Instant.now();
-        final List<CompletableFuture<Void>> futures = Lists.newArrayList();
-
-        final Set<String> requiredTypeNames = requiredTypes.stream().map(DSL.TypeReference::typeName).collect(Collectors.toSet());
-
-        final IntBidirectionalIterator iterator = fixerUpper.fixerVersions().iterator();
-        while (iterator.hasNext()) {
-            final int versionKey = iterator.nextInt();
-            final Schema schema = schemas.get(versionKey);
-            for (final String typeName : schema.types()) {
-                if (!requiredTypeNames.contains(typeName)) {
-                    continue;
-                }
-                final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                    final Type<?> dataType = schema.getType(() -> typeName);
-                    final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
-                    dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
-                }, executor).exceptionally(e -> {
-                    LOGGER.error("Unable to build datafixers", e);
-                    Runtime.getRuntime().exit(1);
-                    return null;
-                });
-                futures.add(future);
-            }
+        public Result(final DataFixerUpper fixerUpper) {
+            this.fixerUpper = fixerUpper;
         }
 
-        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenAccept(ignored -> {
-            LOGGER.info("{} Datafixer optimizations took {} milliseconds", futures.size(), Duration.between(started, Instant.now()).toMillis());
-        });
+        public DataFixer fixer() {
+            return fixerUpper;
+        }
 
-        return fixerUpper;
-    }
+        public CompletableFuture<?> optimize(final Set<DSL.TypeReference> requiredTypes, final Executor executor) {
+            final Instant started = Instant.now();
+            final List<CompletableFuture<?>> doneFutures = new ArrayList<>();
+            final List<CompletableFuture<?>> failFutures = new ArrayList<>();
 
-    private DataFixerUpper build() {
-        return new DataFixerUpper(new Int2ObjectAVLTreeMap<>(schemas), new ArrayList<>(globalList), new IntAVLTreeSet(fixerVersions));
+            final Set<String> requiredTypeNames = requiredTypes.stream().map(DSL.TypeReference::typeName).collect(Collectors.toSet());
+
+            final IntIterator iterator = fixerUpper.fixerVersions().iterator();
+            while (iterator.hasNext()) {
+                final int versionKey = iterator.nextInt();
+                final Schema schema = schemas.get(versionKey);
+                for (final String typeName : schema.types()) {
+                    if (!requiredTypeNames.contains(typeName)) {
+                        continue;
+                    }
+                    final CompletableFuture<Void> doneFuture = CompletableFuture.runAsync(() -> {
+                        final Type<?> dataType = schema.getType(() -> typeName);
+                        final TypeRewriteRule rule = fixerUpper.getRule(DataFixUtils.getVersion(versionKey), dataVersion);
+                        dataType.rewrite(rule, DataFixerUpper.OPTIMIZATION_RULE);
+                    }, executor);
+                    doneFutures.add(doneFuture);
+
+                    final CompletableFuture<?> failFuture = new CompletableFuture<>();
+                    doneFuture.exceptionally(e -> {
+                        failFuture.completeExceptionally(e);
+                        return null;
+                    });
+                    failFutures.add(failFuture);
+                }
+            }
+
+            final CompletableFuture<?> doneFuture = CompletableFuture.allOf(doneFutures.toArray(CompletableFuture[]::new)).thenAccept(ignored -> {
+                LOGGER.info("{} Datafixer optimizations took {} milliseconds", doneFutures.size(), Duration.between(started, Instant.now()).toMillis());
+            });
+
+            final CompletableFuture<?> failFuture = CompletableFuture.anyOf(failFutures.toArray(CompletableFuture[]::new));
+
+            return CompletableFuture.anyOf(doneFuture, failFuture);
+        }
     }
 }
