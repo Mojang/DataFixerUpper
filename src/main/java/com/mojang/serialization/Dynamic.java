@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Pair;
 
+import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -131,22 +132,27 @@ public class Dynamic<T> extends DynamicLike<T> {
         return ops.getGeneric(value, key);
     }
 
+    @CheckReturnValue
     public Dynamic<T> remove(final String key) {
         return map(v -> ops.remove(v, key));
     }
 
+    @CheckReturnValue
     public Dynamic<T> set(final String key, final Dynamic<?> value) {
         return map(v -> ops.set(v, key, value.cast(ops)));
     }
 
+    @CheckReturnValue
     public Dynamic<T> update(final String key, final Function<Dynamic<?>, Dynamic<?>> function) {
         return map(v -> ops.update(v, key, value -> function.apply(new Dynamic<>(ops, value)).cast(ops)));
     }
 
+    @CheckReturnValue
     public Dynamic<T> updateGeneric(final T key, final Function<T, T> function) {
         return map(v -> ops.updateGeneric(v, key, function));
     }
 
+    @CheckReturnValue
     public Dynamic<T> setFieldIfPresent(final String field, final Optional<? extends Dynamic<?>> value) {
         if (value.isEmpty()) {
             return this;
@@ -154,14 +160,17 @@ public class Dynamic<T> extends DynamicLike<T> {
         return set(field, value.get());
     }
 
+    @CheckReturnValue
     public Dynamic<T> renameField(final String oldFieldName, final String newFieldName) {
         return renameAndFixField(oldFieldName, newFieldName, UnaryOperator.identity());
     }
 
+    @CheckReturnValue
     public Dynamic<T> replaceField(final String oldFieldName, final String newFieldName, final Optional<? extends Dynamic<?>> newValue) {
         return remove(oldFieldName).setFieldIfPresent(newFieldName, newValue);
     }
 
+    @CheckReturnValue
     public Dynamic<T> renameAndFixField(final String oldFieldName, final String newFieldName, final UnaryOperator<Dynamic<?>> fixer) {
         return remove(oldFieldName).setFieldIfPresent(newFieldName, get(oldFieldName).result().map(fixer));
     }
@@ -222,10 +231,12 @@ public class Dynamic<T> extends DynamicLike<T> {
         return inOps.convertTo(outOps, input);
     }
 
+    @CheckReturnValue
     public static Dynamic<?> copyField(final Dynamic<?> source, final String sourceFieldName, final Dynamic<?> target, final String targetFieldName) {
         return copyAndFixField(source, sourceFieldName, target, targetFieldName, UnaryOperator.identity());
     }
 
+    @CheckReturnValue
     public static <T> Dynamic<?> copyAndFixField(final Dynamic<T> source, final String sourceFieldName, final Dynamic<?> target, final String targetFieldName, final UnaryOperator<Dynamic<T>> fixer) {
         final Optional<Dynamic<T>> value = source.get(sourceFieldName).result();
         if (value.isPresent()) {
