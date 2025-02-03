@@ -44,7 +44,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
         if (input instanceof JsonArray) {
             return convertList(outOps, input);
         }
-        if (input instanceof JsonNull) {
+        if (input instanceof JsonNull || input == null) {
             return outOps.empty();
         }
         final JsonPrimitive primitive = input.getAsJsonPrimitive();
