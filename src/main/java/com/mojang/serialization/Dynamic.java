@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Pair;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;

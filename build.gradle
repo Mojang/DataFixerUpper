@@ -29,7 +29,7 @@ dependencies {
     api 'com.google.guava:guava:32.1.2-jre' // TypeToken primarily exposed
     api 'it.unimi.dsi:fastutil:8.5.12' // various collection types are used in public API
 
-    compileOnlyApi 'com.google.code.findbugs:jsr305:3.0.2'
+    compileOnlyApi 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.9'
 
     testImplementation 'junit:junit-dep:4.11'
@@ -37,7 +37,6 @@ dependencies {
 }
 
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
     from sourceSets.main.allSource
 }
 

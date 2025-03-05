@@ -15,7 +15,7 @@ import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.IntFunction;
 

@@ -9,7 +9,7 @@ import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.function.IntFunction;
 
 public interface TypeTemplate {

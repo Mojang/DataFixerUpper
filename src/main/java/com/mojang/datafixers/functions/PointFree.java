@@ -5,7 +5,7 @@ package com.mojang.datafixers.functions;
 import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Optional;
 import java.util.function.Function;
 

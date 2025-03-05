@@ -20,7 +20,7 @@ import com.mojang.datafixers.optics.profunctors.TraversalP;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -42,8 +42,8 @@ public interface FunctionType<A, B> extends Function<A, B>, App2<FunctionType.Mu
     }
 
     @Override
-    @Nonnull
-    B apply(@Nonnull A a);
+    @NonNull
+    B apply(@NonNull A a);
 
     final class ReaderInstance<R> implements Representable<ReaderMu<R>, R, ReaderInstance.Mu<R>> {
         public static final class Mu<A> implements Representable.Mu {}
