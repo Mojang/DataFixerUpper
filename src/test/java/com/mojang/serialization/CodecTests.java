@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

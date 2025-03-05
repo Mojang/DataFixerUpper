@@ -10,7 +10,7 @@ import com.mojang.serialization.DynamicOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.Optional;
