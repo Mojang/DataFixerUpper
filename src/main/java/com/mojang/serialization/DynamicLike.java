@@ -8,11 +8,11 @@ import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.ListBox;
 import com.mojang.datafixers.util.Function3;
 import com.mojang.datafixers.util.Pair;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -33,6 +33,7 @@ public abstract class DynamicLike<T> {
 
     public abstract DataResult<Number> asNumber();
     public abstract DataResult<String> asString();
+    public abstract DataResult<Boolean> asBoolean();
     public abstract DataResult<Stream<Dynamic<T>>> asStreamOpt();
     public abstract DataResult<Stream<Pair<Dynamic<T>, Dynamic<T>>>> asMapOpt();
     public abstract DataResult<ByteBuffer> asByteBufferOpt();
@@ -89,10 +90,9 @@ public abstract class DynamicLike<T> {
 
     public <R> DataResult<R> readMap(final DataResult<R> empty, final Function3<R, Dynamic<T>, Dynamic<T>, DataResult<R>> combiner) {
         return asMapOpt().flatMap(stream -> {
-            // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<R>> result = new MutableObject<>(empty);
-            stream.forEach(p -> result.setValue(result.getValue().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
-            return result.getValue();
+            final AtomicReference<DataResult<R>> result = new AtomicReference<>(empty);
+            stream.forEach(p -> result.setPlain(result.getPlain().flatMap(r -> combiner.apply(r, p.getFirst(), p.getSecond()))));
+            return result.getPlain();
         });
     }
 
@@ -125,7 +125,7 @@ public abstract class DynamicLike<T> {
     }
 
     public boolean asBoolean(final boolean defaultValue) {
-        return asNumber(defaultValue ? 1 : 0).intValue() != 0;
+        return asBoolean().result().orElse(defaultValue);
     }
 
     public String asString(final String defaultValue) {

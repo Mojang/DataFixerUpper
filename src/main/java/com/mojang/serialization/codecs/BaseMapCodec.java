@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
@@ -12,8 +11,12 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface BaseMapCodec<K, V> {
     Codec<K> keyCodec();
@@ -21,28 +24,35 @@ public interface BaseMapCodec<K, V> {
     Codec<V> elementCodec();
 
     default <T> DataResult<Map<K, V>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        final ImmutableMap.Builder<K, V> read = ImmutableMap.builder();
-        final ImmutableList.Builder<Pair<T, T>> failed = ImmutableList.builder();
+        final Object2ObjectMap<K, V> read = new Object2ObjectArrayMap<>();
+        final Stream.Builder<Pair<T, T>> failed = Stream.builder();
 
         final DataResult<Unit> result = input.entries().reduce(
             DataResult.success(Unit.INSTANCE, Lifecycle.stable()),
             (r, pair) -> {
-                final DataResult<K> k = keyCodec().parse(ops, pair.getFirst());
-                final DataResult<V> v = elementCodec().parse(ops, pair.getSecond());
+                final DataResult<K> key = keyCodec().parse(ops, pair.getFirst());
+                final DataResult<V> value = elementCodec().parse(ops, pair.getSecond());
 
-                final DataResult<Pair<K, V>> entry = k.apply2stable(Pair::of, v);
-                entry.error().ifPresent(e -> failed.add(pair));
+                final DataResult<Pair<K, V>> entryResult = key.apply2stable(Pair::of, value);
+                final Optional<Pair<K, V>> entry = entryResult.resultOrPartial();
+                if (entry.isPresent()) {
+                    final V existingValue = read.putIfAbsent(entry.get().getFirst(), entry.get().getSecond());
+                    if (existingValue != null) {
+                        failed.add(pair);
+                        return r.apply2stable((u, p) -> u, DataResult.error(() -> "Duplicate entry for key: '" + entry.get().getFirst() + "'"));
+                    }
+                }
+                if (entryResult.isError()) {
+                    failed.add(pair);
+                }
 
-                return r.apply2stable((u, p) -> {
-                    read.put(p.getFirst(), p.getSecond());
-                    return u;
-                }, entry);
+                return r.apply2stable((u, p) -> u, entryResult);
             },
             (r1, r2) -> r1.apply2stable((u1, u2) -> u1, r2)
         );
 
-        final Map<K, V> elements = read.build();
-        final T errors = ops.createMap(failed.build().stream());
+        final Map<K, V> elements = ImmutableMap.copyOf(read);
+        final T errors = ops.createMap(failed.build());
 
         return result.map(unit -> elements).setPartial(elements).mapError(e -> e + " missed input: " + errors);
     }

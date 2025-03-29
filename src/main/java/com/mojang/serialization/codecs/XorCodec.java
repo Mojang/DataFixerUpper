@@ -8,24 +8,25 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
-public record EitherCodec<F, S>(Codec<F> first, Codec<S> second) implements Codec<Either<F, S>> {
+import java.util.Optional;
+
+public record XorCodec<F, S>(Codec<F> first, Codec<S> second) implements Codec<Either<F, S>> {
     @Override
     public <T> DataResult<Pair<Either<F, S>, T>> decode(final DynamicOps<T> ops, final T input) {
         final DataResult<Pair<Either<F, S>, T>> firstRead = first.decode(ops, input).map(vo -> vo.mapFirst(Either::left));
-        if (firstRead.isSuccess()) {
-            return firstRead;
-        }
         final DataResult<Pair<Either<F, S>, T>> secondRead = second.decode(ops, input).map(vo -> vo.mapFirst(Either::right));
-        if (secondRead.isSuccess()) {
-            return secondRead;
+        final Optional<Pair<Either<F, S>, T>> firstResult = firstRead.result();
+        final Optional<Pair<Either<F, S>, T>> secondResult = secondRead.result();
+        if (firstResult.isPresent() && secondResult.isPresent()) {
+            return DataResult.error(() -> "Both alternatives read successfully, can not pick the correct one; first: " + firstResult.get() + " second: " + secondResult.get(), firstResult.get());
         }
-        if (firstRead.hasResultOrPartial()) {
+        if (firstResult.isPresent()) {
             return firstRead;
         }
-        if (secondRead.hasResultOrPartial()) {
+        if (secondResult.isPresent()) {
             return secondRead;
         }
-        return DataResult.error(() -> "Failed to parse either. First: " + firstRead.error().orElseThrow().message() + "; Second: " + secondRead.error().orElseThrow().message());
+        return firstRead.apply2((f, s) -> s, secondRead);
     }
 
     @Override

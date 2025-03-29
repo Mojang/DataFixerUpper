@@ -5,10 +5,8 @@ package com.mojang.serialization;
 import com.mojang.datafixers.kinds.App;
 import com.mojang.datafixers.kinds.Applicative;
 import com.mojang.datafixers.kinds.K1;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Function3;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -20,266 +18,384 @@ import java.util.function.UnaryOperator;
  * Represents either a successful operation, or a partial operation with an error message and a partial result (if available)
  * Also stores an additional lifecycle marker (monoidal)
  */
-public class DataResult<R> implements App<DataResult.Mu, R> {
-    public static final class Mu implements K1 {}
+public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits DataResult.Success, DataResult.Error {
+    final class Mu implements K1 {}
 
-    public static <R> DataResult<R> unbox(final App<Mu, R> box) {
+    static <R> DataResult<R> unbox(final App<Mu, R> box) {
         return (DataResult<R>) box;
     }
 
-    private final Either<R, PartialResult<R>> result;
-    private final Lifecycle lifecycle;
-
-    public static <R> DataResult<R> success(final R result) {
+    static <R> DataResult<R> success(final R result) {
         return success(result, Lifecycle.experimental());
     }
 
-    public static <R> DataResult<R> error(final Supplier<String> message, final R partialResult) {
+    static <R> DataResult<R> error(final Supplier<String> message, final R partialResult) {
         return error(message, partialResult, Lifecycle.experimental());
     }
 
-    public static <R> DataResult<R> error(final Supplier<String> message) {
+    static <R> DataResult<R> error(final Supplier<String> message) {
         return error(message, Lifecycle.experimental());
     }
 
-    public static <R> DataResult<R> success(final R result, final Lifecycle experimental) {
-        return new DataResult<>(Either.left(result), experimental);
+    static <R> DataResult<R> success(final R result, final Lifecycle lifecycle) {
+        return new Success<>(result, lifecycle);
     }
 
-    public static <R> DataResult<R> error(final Supplier<String> message, final R partialResult, final Lifecycle lifecycle) {
-        return new DataResult<>(Either.right(new PartialResult<>(message, Optional.of(partialResult))), lifecycle);
+    static <R> DataResult<R> error(final Supplier<String> message, final R partialResult, final Lifecycle lifecycle) {
+        return new Error<>(message, Optional.of(partialResult), lifecycle);
     }
 
-    public static <R> DataResult<R> error(final Supplier<String> message, final Lifecycle lifecycle) {
-        return new DataResult<>(Either.right(new PartialResult<>(message, Optional.empty())), lifecycle);
+    static <R> DataResult<R> error(final Supplier<String> message, final Lifecycle lifecycle) {
+        return new Error<>(message, Optional.empty(), lifecycle);
     }
 
-    public static <K, V> Function<K, DataResult<V>> partialGet(final Function<K, V> partialGet, final Supplier<String> errorPrefix) {
+    static <K, V> Function<K, DataResult<V>> partialGet(final Function<K, V> partialGet, final Supplier<String> errorPrefix) {
         return name -> Optional.ofNullable(partialGet.apply(name)).map(DataResult::success).orElseGet(() -> error(() -> errorPrefix.get() + name));
     }
 
-    private static <R> DataResult<R> create(final Either<R, PartialResult<R>> result, final Lifecycle lifecycle) {
-        return new DataResult<>(result, lifecycle);
+    static Instance instance() {
+        return Instance.INSTANCE;
     }
 
-    private DataResult(final Either<R, PartialResult<R>> result, final Lifecycle lifecycle) {
-        this.result = result;
-        this.lifecycle = lifecycle;
-    }
-
-    public Either<R, PartialResult<R>> get() {
-        return result;
-    }
-
-    public Optional<R> result() {
-        return result.left();
-    }
-
-    public Lifecycle lifecycle() {
-        return lifecycle;
-    }
-
-    public Optional<R> resultOrPartial(final Consumer<String> onError) {
-        return result.map(
-            Optional::of,
-            r -> {
-                onError.accept(r.message.get());
-                return r.partialResult;
-            }
-        );
-    }
-
-    public R getOrThrow(final boolean allowPartial, final Consumer<String> onError) {
-        return result.map(
-            l -> l,
-            r -> {
-                final String message = r.message.get();
-                onError.accept(message);
-                if (allowPartial && r.partialResult.isPresent()) {
-                    return r.partialResult.get();
-                }
-                throw new RuntimeException(message);
-            }
-        );
-    }
-
-    public Optional<PartialResult<R>> error() {
-        return result.right();
-    }
-
-    public <T> DataResult<T> map(final Function<? super R, ? extends T> function) {
-        return create(result.mapBoth(
-            function,
-            r -> new PartialResult<>(r.message, r.partialResult.map(function))
-        ), lifecycle);
-    }
-
-    public DataResult<R> promotePartial(final Consumer<String> onError) {
-        return result.map(
-            r -> new DataResult<>(Either.left(r), lifecycle),
-            r -> {
-                onError.accept(r.message.get());
-                return r.partialResult
-                    .map(pr -> new DataResult<>(Either.left(pr), lifecycle))
-                    .orElseGet(() -> create(Either.right(r), lifecycle));
-            }
-        );
-    }
-
-    private static String appendMessages(final String first, final String second) {
+    static String appendMessages(final String first, final String second) {
         return first + "; " + second;
     }
+
+    Optional<R> result();
+
+    Optional<DataResult.Error<R>> error();
+
+    Lifecycle lifecycle();
+
+    boolean hasResultOrPartial();
+
+    Optional<R> resultOrPartial(Consumer<String> onError);
+
+    Optional<R> resultOrPartial();
+
+    <E extends Throwable> R getOrThrow(Function<String, E> exceptionSupplier) throws E;
+
+    <E extends Throwable> R getPartialOrThrow(Function<String, E> exceptionSupplier) throws E;
+
+    default R getOrThrow() {
+        return getOrThrow(IllegalStateException::new);
+    }
+
+    default R getPartialOrThrow() {
+        return getPartialOrThrow(IllegalStateException::new);
+    }
+
+    <T> DataResult<T> map(Function<? super R, ? extends T> function);
+
+    <T> T mapOrElse(Function<? super R, ? extends T> successFunction, Function<? super Error<R>, ? extends T> errorFunction);
+
+    DataResult<R> ifSuccess(Consumer<? super R> ifSuccess);
+
+    DataResult<R> ifError(Consumer<? super Error<R>> ifError);
+
+    DataResult<R> promotePartial(Consumer<String> onError);
 
     /**
      * Applies the function to either full or partial result, in case of partial concatenates errors.
      */
-    public <R2> DataResult<R2> flatMap(final Function<? super R, ? extends DataResult<R2>> function) {
-        return result.map(
-            l -> {
-                final DataResult<R2> second = function.apply(l);
-                return create(second.get(), lifecycle.add(second.lifecycle));
-            },
-            r -> r.partialResult
-                .map(value -> {
-                    final DataResult<R2> second = function.apply(value);
-                    return create(Either.right(second.get().map(
-                        l2 -> new PartialResult<>(r.message, Optional.of(l2)),
-                        r2 -> new PartialResult<>(() -> appendMessages(r.message.get(), r2.message.get()), r2.partialResult)
-                    )), lifecycle.add(second.lifecycle));
-                })
-                .orElseGet(
-                    () -> create(Either.right(new PartialResult<>(r.message, Optional.empty())), lifecycle)
-                )
-        );
-    }
+    <R2> DataResult<R2> flatMap(Function<? super R, ? extends DataResult<R2>> function);
 
-    public <R2> DataResult<R2> ap(final DataResult<Function<R, R2>> functionResult) {
-        return create(result.map(
-            arg -> functionResult.result.mapBoth(
-                func -> func.apply(arg),
-                funcError -> new PartialResult<>(funcError.message, funcError.partialResult.map(f -> f.apply(arg)))
-            ),
-            argError -> Either.right(functionResult.result.map(
-                func -> new PartialResult<>(argError.message, argError.partialResult.map(func)),
-                funcError -> new PartialResult<>(
-                    () -> appendMessages(argError.message.get(), funcError.message.get()),
-                    argError.partialResult.flatMap(a -> funcError.partialResult.map(f -> f.apply(a)))
-                )
-            ))
-        ), lifecycle.add(functionResult.lifecycle));
-    }
+    <R2> DataResult<R2> ap(DataResult<Function<R, R2>> functionResult);
 
-    public <R2, S> DataResult<S> apply2(final BiFunction<R, R2, S> function, final DataResult<R2> second) {
+    default <R2, S> DataResult<S> apply2(final BiFunction<R, R2, S> function, final DataResult<R2> second) {
         return unbox(instance().apply2(function, this, second));
     }
 
-    public <R2, S> DataResult<S> apply2stable(final BiFunction<R, R2, S> function, final DataResult<R2> second) {
-        final Applicative<Mu, Instance.Mu> instance = instance();
+    default <R2, S> DataResult<S> apply2stable(final BiFunction<R, R2, S> function, final DataResult<R2> second) {
+        final Applicative<DataResult.Mu, DataResult.Instance.Mu> instance = instance();
         final DataResult<BiFunction<R, R2, S>> f = unbox(instance.point(function)).setLifecycle(Lifecycle.stable());
         return unbox(instance.ap2(f, this, second));
     }
 
-    public <R2, R3, S> DataResult<S> apply3(final Function3<R, R2, R3, S> function, final DataResult<R2> second, final DataResult<R3> third) {
+    default <R2, R3, S> DataResult<S> apply3(final Function3<R, R2, R3, S> function, final DataResult<R2> second, final DataResult<R3> third) {
         return unbox(instance().apply3(function, this, second, third));
     }
 
-    public DataResult<R> setPartial(final Supplier<R> partial) {
-        return create(result.mapRight(r -> new PartialResult<>(r.message, Optional.of(partial.get()))), lifecycle);
+    DataResult<R> setPartial(Supplier<R> partial);
+
+    DataResult<R> setPartial(R partial);
+
+    DataResult<R> mapError(UnaryOperator<String> function);
+
+    DataResult<R> setLifecycle(Lifecycle lifecycle);
+
+    default DataResult<R> addLifecycle(final Lifecycle lifecycle) {
+        return setLifecycle(lifecycle().add(lifecycle));
     }
 
-    public DataResult<R> setPartial(final R partial) {
-        return create(result.mapRight(r -> new PartialResult<>(r.message, Optional.of(partial))), lifecycle);
+    boolean isSuccess();
+
+    default boolean isError() {
+        return !isSuccess();
     }
 
-    public DataResult<R> mapError(final UnaryOperator<String> function) {
-        return create(result.mapRight(r -> new PartialResult<>(() -> function.apply(r.message.get()), r.partialResult)), lifecycle);
-    }
+    record Success<R>(R value, Lifecycle lifecycle) implements DataResult<R> {
+        @Override
+        public Optional<R> result() {
+            return Optional.of(value);
+        }
 
-    public DataResult<R> setLifecycle(final Lifecycle lifecycle) {
-        return create(result, lifecycle);
-    }
+        @Override
+        public Optional<Error<R>> error() {
+            return Optional.empty();
+        }
 
-    public DataResult<R> addLifecycle(final Lifecycle lifecycle) {
-        return create(result, this.lifecycle.add(lifecycle));
-    }
-
-    public static Instance instance() {
-        return Instance.INSTANCE;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
+        @Override
+        public boolean hasResultOrPartial() {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final DataResult<?> that = (DataResult<?>) o;
-        return Objects.equals(result, that.result);
-    }
 
-    @Override
-    public int hashCode() {
-        return result.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "DataResult[" + result + ']';
-    }
-
-    public static class PartialResult<R> {
-        private final Supplier<String> message;
-        private final Optional<R> partialResult;
-
-        public PartialResult(final Supplier<String> message, final Optional<R> partialResult) {
-            this.message = message;
-            this.partialResult = partialResult;
-        }
-
-        public <R2> PartialResult<R2> map(final Function<? super R, ? extends R2> function) {
-            return new PartialResult<>(message, partialResult.map(function));
-        }
-
-        public <R2> PartialResult<R2> flatMap(final Function<R, PartialResult<R2>> function) {
-            if (partialResult.isPresent()) {
-                final PartialResult<R2> result = function.apply(partialResult.get());
-                return new PartialResult<>(() -> appendMessages(message.get(), result.message.get()), result.partialResult);
-            }
-            return new PartialResult<>(message, Optional.empty());
-        }
-
-        public String message() {
-            return message.get();
+        @Override
+        public Optional<R> resultOrPartial(final Consumer<String> onError) {
+            return Optional.of(value);
         }
 
         @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final PartialResult<?> that = (PartialResult<?>) o;
-            return Objects.equals(message, that.message) && Objects.equals(partialResult, that.partialResult);
+        public Optional<R> resultOrPartial() {
+            return Optional.of(value);
         }
 
         @Override
-        public int hashCode() {
-            int result = message.hashCode();
-            result = 31 * result + partialResult.hashCode();
-            return result;
+        public <E extends Throwable> R getOrThrow(final Function<String, E> exceptionSupplier) throws E {
+            return value;
+        }
+
+        @Override
+        public <E extends Throwable> R getPartialOrThrow(final Function<String, E> exceptionSupplier) throws E {
+            return value;
+        }
+
+        @Override
+        public <T> DataResult<T> map(final Function<? super R, ? extends T> function) {
+            return new Success<>(function.apply(value), lifecycle);
+        }
+
+        @Override
+        public <T> T mapOrElse(final Function<? super R, ? extends T> successFunction, final Function<? super Error<R>, ? extends T> errorFunction) {
+            return successFunction.apply(value);
+        }
+
+        @Override
+        public DataResult<R> ifSuccess(final Consumer<? super R> ifSuccess) {
+            ifSuccess.accept(value);
+            return this;
+        }
+
+        @Override
+        public DataResult<R> ifError(final Consumer<? super Error<R>> ifError) {
+            return this;
+        }
+
+        @Override
+        public DataResult<R> promotePartial(final Consumer<String> onError) {
+            return this;
+        }
+
+        @Override
+        public <R2> DataResult<R2> flatMap(final Function<? super R, ? extends DataResult<R2>> function) {
+            return function.apply(value).addLifecycle(lifecycle);
+        }
+
+        @Override
+        public <R2> DataResult<R2> ap(final DataResult<Function<R, R2>> functionResult) {
+            final Lifecycle combinedLifecycle = lifecycle.add(functionResult.lifecycle());
+            if (functionResult instanceof final Success<Function<R, R2>> funcSuccess) {
+                return new Success<>(funcSuccess.value.apply(value), combinedLifecycle);
+            } else if (functionResult instanceof final Error<Function<R, R2>> funcError) {
+                return new Error<>(funcError.messageSupplier, funcError.partialValue.map(f -> f.apply(value)), combinedLifecycle);
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        @Override
+        public DataResult<R> setPartial(final Supplier<R> partial) {
+            return this;
+        }
+
+        @Override
+        public DataResult<R> setPartial(final R partial) {
+            return this;
+        }
+
+        @Override
+        public DataResult<R> mapError(final UnaryOperator<String> function) {
+            return this;
+        }
+
+        @Override
+        public DataResult<R> setLifecycle(final Lifecycle lifecycle) {
+            if (this.lifecycle.equals(lifecycle)) {
+                return this;
+            }
+            return new Success<>(value, lifecycle);
+        }
+
+        @Override
+        public boolean isSuccess() {
+            return true;
         }
 
         @Override
         public String toString() {
-            return "DynamicException[" + message() + ' ' + partialResult + ']';
+            return "DataResult.Success[" + value + "]";
         }
     }
 
-    public enum Instance implements Applicative<Mu, Instance.Mu> {
+    record Error<R>(
+        Supplier<String> messageSupplier,
+        Optional<R> partialValue,
+        Lifecycle lifecycle
+    ) implements DataResult<R> {
+        public String message() {
+            return messageSupplier.get();
+        }
+
+        @Override
+        public Optional<R> result() {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Error<R>> error() {
+            return Optional.of(this);
+        }
+
+        @Override
+        public boolean hasResultOrPartial() {
+            return partialValue.isPresent();
+        }
+
+        @Override
+        public Optional<R> resultOrPartial(final Consumer<String> onError) {
+            onError.accept(messageSupplier.get());
+            return partialValue;
+        }
+
+        @Override
+        public Optional<R> resultOrPartial() {
+            return partialValue;
+        }
+
+        @Override
+        public <E extends Throwable> R getOrThrow(final Function<String, E> exceptionSupplier) throws E {
+            throw exceptionSupplier.apply(message());
+        }
+
+        @Override
+        public <E extends Throwable> R getPartialOrThrow(final Function<String, E> exceptionSupplier) throws E {
+            if (partialValue.isPresent()) {
+                return partialValue.get();
+            }
+            throw exceptionSupplier.apply(message());
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> Error<T> map(final Function<? super R, ? extends T> function) {
+            if (partialValue.isEmpty()) {
+                return (Error<T>) this;
+            }
+            return new Error<>(messageSupplier, partialValue.map(function), lifecycle);
+        }
+
+        @Override
+        public <T> T mapOrElse(final Function<? super R, ? extends T> successFunction, final Function<? super Error<R>, ? extends T> errorFunction) {
+            return errorFunction.apply(this);
+        }
+
+        @Override
+        public DataResult<R> ifSuccess(final Consumer<? super R> ifSuccess) {
+            return this;
+        }
+
+        @Override
+        public DataResult<R> ifError(final Consumer<? super Error<R>> ifError) {
+            ifError.accept(this);
+            return this;
+        }
+
+        @Override
+        public DataResult<R> promotePartial(final Consumer<String> onError) {
+            onError.accept(messageSupplier.get());
+            return partialValue.<DataResult<R>>map(value -> new Success<>(value, lifecycle)).orElse(this);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <R2> Error<R2> flatMap(final Function<? super R, ? extends DataResult<R2>> function) {
+            if (partialValue.isEmpty()) {
+                return (Error<R2>) this;
+            }
+            final DataResult<R2> second = function.apply(partialValue.get());
+            final Lifecycle combinedLifecycle = lifecycle.add(second.lifecycle());
+            if (second instanceof final Success<R2> secondSuccess) {
+                return new Error<>(messageSupplier, Optional.of(secondSuccess.value), combinedLifecycle);
+            } else if (second instanceof final Error<R2> secondError) {
+                return new Error<>(() -> appendMessages(messageSupplier.get(), secondError.messageSupplier.get()), secondError.partialValue, combinedLifecycle);
+            } else {
+                // TODO: Replace with record pattern matching in Java 21
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        @Override
+        public <R2> Error<R2> ap(final DataResult<Function<R, R2>> functionResult) {
+            final Lifecycle combinedLifecycle = lifecycle.add(functionResult.lifecycle());
+            if (functionResult instanceof final Success<Function<R, R2>> func) {
+                return new Error<>(messageSupplier, partialValue.map(func.value), combinedLifecycle);
+            } else if (functionResult instanceof final Error<Function<R, R2>> funcError) {
+                return new Error<>(
+                    () -> appendMessages(messageSupplier.get(), funcError.messageSupplier.get()),
+                    partialValue.flatMap(a -> funcError.partialValue.map(f -> f.apply(a))),
+                    combinedLifecycle
+                );
+            } else {
+                // TODO: Replace with record pattern matching in Java 21
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        @Override
+        public Error<R> setPartial(final Supplier<R> partial) {
+            return setPartial(partial.get());
+        }
+
+        @Override
+        public Error<R> setPartial(final R partial) {
+            return new Error<>(messageSupplier, Optional.of(partial), lifecycle);
+        }
+
+        @Override
+        public Error<R> mapError(final UnaryOperator<String> function) {
+            return new Error<>(() -> function.apply(messageSupplier.get()), partialValue, lifecycle);
+        }
+
+        @Override
+        public Error<R> setLifecycle(final Lifecycle lifecycle) {
+            if (this.lifecycle.equals(lifecycle)) {
+                return this;
+            }
+            return new Error<>(messageSupplier, partialValue, lifecycle);
+        }
+
+        @Override
+        public boolean isSuccess() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "DataResult.Error['" + message() + "'" + partialValue.map(value -> ": " + value).orElse("") + "]";
+        }
+    }
+
+    enum Instance implements Applicative<Mu, Instance.Mu> {
         INSTANCE;
 
         public static final class Mu implements Applicative.Mu {}
@@ -311,14 +427,14 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             final DataResult<B> rb = unbox(b);
 
             // for less recursion
-            if (fr.result.left().isPresent()
-                && ra.result.left().isPresent()
-                && rb.result.left().isPresent()
+            if (fr.result().isPresent()
+                && ra.result().isPresent()
+                && rb.result().isPresent()
             ) {
-                return new DataResult<>(Either.left(fr.result.left().get().apply(
-                    ra.result.left().get(),
-                    rb.result.left().get()
-                )), fr.lifecycle.add(ra.lifecycle).add(rb.lifecycle));
+                return new Success<>(fr.result().get().apply(
+                    ra.result().get(),
+                    rb.result().get()
+                ), fr.lifecycle().add(ra.lifecycle()).add(rb.lifecycle()));
             }
 
             return Applicative.super.ap2(func, a, b);
@@ -332,16 +448,16 @@ public class DataResult<R> implements App<DataResult.Mu, R> {
             final DataResult<T3> dr3 = unbox(t3);
 
             // for less recursion
-            if (fr.result.left().isPresent()
-                && dr1.result.left().isPresent()
-                && dr2.result.left().isPresent()
-                && dr3.result.left().isPresent()
+            if (fr.result().isPresent()
+                && dr1.result().isPresent()
+                && dr2.result().isPresent()
+                && dr3.result().isPresent()
             ) {
-                return new DataResult<>(Either.left(fr.result.left().get().apply(
-                    dr1.result.left().get(),
-                    dr2.result.left().get(),
-                    dr3.result.left().get()
-                )), fr.lifecycle.add(dr1.lifecycle).add(dr2.lifecycle).add(dr3.lifecycle));
+                return new Success<>(fr.result().get().apply(
+                    dr1.result().get(),
+                    dr2.result().get(),
+                    dr3.result().get()
+                ), fr.lifecycle().add(dr1.lifecycle()).add(dr2.lifecycle()).add(dr3.lifecycle()));
             }
 
             return Applicative.super.ap3(func, t1, t2, t3);

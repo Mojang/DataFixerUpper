@@ -2,11 +2,13 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.google.common.base.Suppliers;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.CompoundListCodec;
+import com.mojang.serialization.codecs.DispatchedMapCodec;
 import com.mojang.serialization.codecs.EitherCodec;
 import com.mojang.serialization.codecs.EitherMapCodec;
 import com.mojang.serialization.codecs.KeyDispatchCodec;
@@ -17,9 +19,11 @@ import com.mojang.serialization.codecs.PairMapCodec;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.SimpleMapCodec;
 import com.mojang.serialization.codecs.UnboundedMapCodec;
+import com.mojang.serialization.codecs.XorCodec;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -119,6 +123,30 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new EitherCodec<>(first, second);
     }
 
+    static <F, S> Codec<Either<F, S>> xor(final Codec<F> first, final Codec<S> second) {
+        return new XorCodec<>(first, second);
+    }
+
+    static <T> Codec<T> withAlternative(final Codec<T> primary, final Codec<? extends T> alternative) {
+        return Codec.either(
+            primary,
+            alternative
+        ).xmap(
+            Either::unwrap,
+            Either::left
+        );
+    }
+
+    static <T, U> Codec<T> withAlternative(final Codec<T> primary, final Codec<U> alternative, final Function<U, T> converter) {
+        return Codec.either(
+            primary,
+            alternative
+        ).xmap(
+            either -> either.map(v -> v, converter),
+            Either::left
+        );
+    }
+
     static <F, S> MapCodec<Pair<F, S>> mapPair(final MapCodec<F> first, final MapCodec<S> second) {
         return new PairMapCodec<>(first, second);
     }
@@ -128,7 +156,11 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     static <E> Codec<List<E>> list(final Codec<E> elementCodec) {
-        return new ListCodec<>(elementCodec);
+        return list(elementCodec, 0, Integer.MAX_VALUE);
+    }
+
+    static <E> Codec<List<E>> list(final Codec<E> elementCodec, final int minSize, final int maxSize) {
+        return new ListCodec<>(elementCodec, minSize, maxSize);
     }
 
     static <K, V> Codec<List<Pair<K, V>>> compoundList(final Codec<K> keyCodec, final Codec<V> elementCodec) {
@@ -143,12 +175,64 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new UnboundedMapCodec<>(keyCodec, elementCodec);
     }
 
-    static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec) {
-        return new OptionalFieldCodec<>(name, elementCodec);
+    static <K, V> Codec<Map<K, V>> dispatchedMap(final Codec<K> keyCodec, final Function<K, Codec<? extends V>> valueCodecFunction) {
+        return new DispatchedMapCodec<>(keyCodec, valueCodecFunction);
+    }
+
+    static <E> Codec<E> stringResolver(final Function<E, String> toString, final Function<String, E> fromString) {
+        return Codec.STRING.flatXmap(
+            name -> Optional.ofNullable(fromString.apply(name)).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Unknown element name:" + name)),
+            e -> Optional.ofNullable(toString.apply(e)).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Element with unknown name: " + e))
+        );
+    }
+
+    static <F> MapCodec<Optional<F>> optionalField(final String name, final Codec<F> elementCodec, final boolean lenient) {
+        return new OptionalFieldCodec<>(name, elementCodec, lenient);
+    }
+
+    static <A> Codec<A> recursive(final String name, final Function<Codec<A>, Codec<A>> wrapped) {
+        return new RecursiveCodec<>(name, wrapped);
+    }
+
+    static <A> Codec<A> lazyInitialized(final Supplier<Codec<A>> delegate) {
+        return new RecursiveCodec<>(delegate.toString(), self -> delegate.get());
+    }
+
+    class RecursiveCodec<T> implements Codec<T> {
+        private final String name;
+        private final Supplier<Codec<T>> wrapped;
+
+        private RecursiveCodec(final String name, final Function<Codec<T>, Codec<T>> wrapped) {
+            this.name = name;
+            this.wrapped = Suppliers.memoize(() -> wrapped.apply(this));
+        }
+
+        @Override
+        public <S> DataResult<Pair<T, S>> decode(final DynamicOps<S> ops, final S input) {
+            return wrapped.get().decode(ops, input);
+        }
+
+        @Override
+        public <S> DataResult<S> encode(final T input, final DynamicOps<S> ops, final S prefix) {
+            return wrapped.get().encode(input, ops, prefix);
+        }
+
+        @Override
+        public String toString() {
+            return "RecursiveCodec[" + name + ']';
+        }
     }
 
     default Codec<List<A>> listOf() {
         return list(this);
+    }
+
+    default Codec<List<A>> listOf(final int minSize, final int maxSize) {
+        return list(this, minSize, maxSize);
+    }
+
+    default Codec<List<A>> sizeLimitedListOf(final int maxSize) {
+        return listOf(0, maxSize);
     }
 
     default <S> Codec<S> xmap(final Function<? super A, ? extends S> to, final Function<? super S, ? extends A> from) {
@@ -177,14 +261,11 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default MapCodec<Optional<A>> optionalFieldOf(final String name) {
-        return optionalField(name, this);
+        return optionalField(name, this, false);
     }
 
     default MapCodec<A> optionalFieldOf(final String name, final A defaultValue) {
-        return optionalField(name, this).xmap(
-            o -> o.orElse(defaultValue),
-            a -> Objects.equals(a, defaultValue) ? Optional.empty() : Optional.of(a)
-        );
+        return optionalFieldOf(name, defaultValue, false);
     }
 
     default MapCodec<A> optionalFieldOf(final String name, final A defaultValue, final Lifecycle lifecycleOfDefault) {
@@ -193,7 +274,35 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     default MapCodec<A> optionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
         // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
-        return optionalField(name, this).stable().flatXmap(
+        return optionalFieldOf(name, fieldLifecycle, defaultValue, lifecycleOfDefault, false);
+    }
+
+    default MapCodec<Optional<A>> lenientOptionalFieldOf(final String name) {
+        return optionalField(name, this, true);
+    }
+
+    default MapCodec<A> lenientOptionalFieldOf(final String name, final A defaultValue) {
+        return optionalFieldOf(name, defaultValue, true);
+    }
+
+    default MapCodec<A> lenientOptionalFieldOf(final String name, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return lenientOptionalFieldOf(name, Lifecycle.experimental(), defaultValue, lifecycleOfDefault);
+    }
+
+    default MapCodec<A> lenientOptionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return optionalFieldOf(name, fieldLifecycle, defaultValue, lifecycleOfDefault, true);
+    }
+
+    private MapCodec<A> optionalFieldOf(final String name, final A defaultValue, final boolean lenient) {
+        return optionalField(name, this, lenient).xmap(
+            o -> o.orElse(defaultValue),
+            a -> Objects.equals(a, defaultValue) ? Optional.empty() : Optional.of(a)
+        );
+    }
+
+    private MapCodec<A> optionalFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault, final boolean lenient) {
+        // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
+        return optionalField(name, this, lenient).stable().flatXmap(
             o -> o.map(v -> DataResult.success(v, fieldLifecycle)).orElse(DataResult.success(defaultValue, lifecycleOfDefault)),
             a -> Objects.equals(a, defaultValue) ? DataResult.success(Optional.empty(), lifecycleOfDefault) : DataResult.success(Optional.of(a), fieldLifecycle)
         );
@@ -321,28 +430,32 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return MapCodec.unit(defaultValue).codec();
     }
 
-    default <E> Codec<E> dispatch(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> Codec<E> dispatch(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return dispatch("type", type, codec);
     }
 
-    default <E> Codec<E> dispatch(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> Codec<E> dispatch(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return partialDispatch(typeKey, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
-    default <E> Codec<E> dispatchStable(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> Codec<E> dispatchStable(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return partialDispatch("type", e -> DataResult.success(type.apply(e), Lifecycle.stable()), a -> DataResult.success(codec.apply(a), Lifecycle.stable()));
     }
 
-    default <E> Codec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends Codec<? extends E>>> codec) {
+    default <E> Codec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends MapCodec<? extends E>>> codec) {
         return new KeyDispatchCodec<>(typeKey, this, type, codec).codec();
     }
 
-    default <E> MapCodec<E> dispatchMap(final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> MapCodec<E> dispatchMap(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return dispatchMap("type", type, codec);
     }
 
-    default <E> MapCodec<E> dispatchMap(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends Codec<? extends E>> codec) {
+    default <E> MapCodec<E> dispatchMap(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
         return new KeyDispatchCodec<>(typeKey, this, type.andThen(DataResult::success), codec.andThen(DataResult::success));
+    }
+
+    default Codec<A> validate(final Function<A, DataResult<A>> checker) {
+        return flatXmap(checker, checker);
     }
 
     // private
@@ -351,7 +464,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
             if (value.compareTo(minInclusive) >= 0 && value.compareTo(maxInclusive) <= 0) {
                 return DataResult.success(value);
             }
-            return DataResult.error(() -> "Value " + value + " outside of range [" + minInclusive + ":" + maxInclusive + "]", value);
+            return DataResult.error(() -> "Value " + value + " outside of range [" + minInclusive + ":" + maxInclusive + "]");
         };
     }
 
@@ -368,6 +481,23 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     static Codec<Double> doubleRange(final double minInclusive, final double maxInclusive) {
         final Function<Double, DataResult<Double>> checker = checkRange(minInclusive, maxInclusive);
         return Codec.DOUBLE.flatXmap(checker, checker);
+    }
+
+    static Codec<String> string(final int minSize, final int maxSize) {
+        return Codec.STRING.validate(value -> {
+            final int length = value.length();
+            if (length < minSize) {
+                return DataResult.error(() -> "String \"" + value + "\" is too short: " + length + ", expected range [" + minSize + "-" + maxSize + "]");
+            }
+            if (length > maxSize) {
+                return DataResult.error(() -> "String \"" + value + "\" is too long: " + length + ", expected range [" + minSize + "-" + maxSize + "]");
+            }
+            return DataResult.success(value);
+        });
+    }
+
+    static Codec<String> sizeLimitedString(final int maxSize) {
+        return string(0, maxSize);
     }
 
     PrimitiveCodec<Boolean> BOOL = new PrimitiveCodec<Boolean>() {

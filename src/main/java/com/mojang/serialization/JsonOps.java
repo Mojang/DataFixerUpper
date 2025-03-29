@@ -81,8 +81,6 @@ public class JsonOps implements DynamicOps<JsonElement> {
         if (input instanceof JsonPrimitive) {
             if (input.getAsJsonPrimitive().isNumber()) {
                 return DataResult.success(input.getAsNumber());
-            } else if (input.getAsJsonPrimitive().isBoolean()) {
-                return DataResult.success(input.getAsBoolean() ? 1 : 0);
             }
             if (compressed && input.getAsJsonPrimitive().isString()) {
                 try {
@@ -91,9 +89,6 @@ public class JsonOps implements DynamicOps<JsonElement> {
                     return DataResult.error(() -> "Not a number: " + e + " " + input);
                 }
             }
-        }
-        if (input instanceof JsonPrimitive && input.getAsJsonPrimitive().isBoolean()) {
-            return DataResult.success(input.getAsJsonPrimitive().getAsBoolean() ? 1 : 0);
         }
         return DataResult.error(() -> "Not a number: " + input);
     }
@@ -105,12 +100,8 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
     @Override
     public DataResult<Boolean> getBooleanValue(final JsonElement input) {
-        if (input instanceof JsonPrimitive) {
-            if (input.getAsJsonPrimitive().isBoolean()) {
-                return DataResult.success(input.getAsBoolean());
-            } else if (input.getAsJsonPrimitive().isNumber()) {
-                return DataResult.success(input.getAsNumber().byteValue() != 0);
-            }
+        if (input instanceof JsonPrimitive && input.getAsJsonPrimitive().isBoolean()) {
+            return DataResult.success(input.getAsBoolean());
         }
         return DataResult.error(() -> "Not a boolean: " + input);
     }

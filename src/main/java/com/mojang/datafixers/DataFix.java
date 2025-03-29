@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 public abstract class DataFix {
@@ -42,18 +43,24 @@ public abstract class DataFix {
         return writeFixAndRead(name, type, newType, Function.identity());
     }
 
+    @SuppressWarnings("unchecked")
     protected <A, B> TypeRewriteRule writeFixAndRead(final String name, final Type<A> type, final Type<B> newType, final Function<Dynamic<?>, Dynamic<?>> fix) {
-        return fixTypeEverywhere(name, type, newType, ops -> input -> {
-            final Optional<? extends Dynamic<?>> written = type.writeDynamic(ops, input).resultOrPartial(LOGGER::error);
-            if (!written.isPresent()) {
+        final AtomicReference<Type<A>> patchedType = new AtomicReference<>();
+        final RewriteResult<A, B> view = unchecked(name, type, newType, ops -> input -> {
+            final Optional<? extends Dynamic<?>> written = patchedType.getPlain().writeDynamic(ops, input).resultOrPartial(LOGGER::error);
+            if (written.isEmpty()) {
                 throw new RuntimeException("Could not write the object in " + name);
             }
             final Optional<? extends Pair<Typed<B>, ?>> read = newType.readTyped(fix.apply(written.get())).resultOrPartial(LOGGER::error);
-            if (!read.isPresent()) {
+            if (read.isEmpty()) {
                 throw new RuntimeException("Could not read the new object in " + name);
             }
             return read.get().getFirst().getValue();
-        });
+        }, new BitSet());
+        final TypeRewriteRule rule = fixTypeEverywhere(type, view);
+        // Replace the input type within itself recursively, as this is what is actually passed to the fixer
+        patchedType.setPlain((Type<A>) type.all(rule, true, false).view().newType());
+        return rule;
     }
 
     protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function) {
@@ -61,7 +68,7 @@ public abstract class DataFix {
     }
 
     protected <A, B> TypeRewriteRule fixTypeEverywhere(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function, final BitSet bitSet) {
-        return fixTypeEverywhere(type, RewriteResult.create(View.create(name, type, newType, new NamedFunctionWrapper<>(name, function)), bitSet));
+        return fixTypeEverywhere(type, unchecked(name, type, newType, function, bitSet));
     }
 
     protected <A> TypeRewriteRule fixTypeEverywhereTyped(final String name, final Type<A> type, final Function<Typed<?>, Typed<?>> function) {
@@ -78,6 +85,10 @@ public abstract class DataFix {
 
     protected <A, B> TypeRewriteRule fixTypeEverywhereTyped(final String name, final Type<A> type, final Type<B> newType, final Function<Typed<?>, Typed<?>> function, final BitSet bitSet) {
         return fixTypeEverywhere(type, checked(name, type, newType, function, bitSet));
+    }
+
+    private static <A, B> RewriteResult<A, B> unchecked(final String name, final Type<A> type, final Type<B> newType, final Function<DynamicOps<?>, Function<A, B>> function, final BitSet bitSet) {
+        return RewriteResult.create(View.create(name, type, newType, new NamedFunctionWrapper<>(name, function)), bitSet);
     }
 
     @SuppressWarnings("unchecked")

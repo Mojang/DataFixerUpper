@@ -17,10 +17,12 @@ import java.util.stream.Stream;
 public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
     private final String name;
     private final Codec<A> elementCodec;
+    private final boolean lenient;
 
-    public OptionalFieldCodec(final String name, final Codec<A> elementCodec) {
+    public OptionalFieldCodec(final String name, final Codec<A> elementCodec, final boolean lenient) {
         this.name = name;
         this.elementCodec = elementCodec;
+        this.lenient = lenient;
     }
 
     @Override
@@ -30,10 +32,10 @@ public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
             return DataResult.success(Optional.empty());
         }
         final DataResult<A> parsed = elementCodec.parse(ops, value);
-        if (parsed.result().isPresent()) {
-            return parsed.map(Optional::of);
+        if (parsed.isError() && lenient) {
+            return DataResult.success(Optional.empty());
         }
-        return DataResult.success(Optional.empty());
+        return parsed.map(Optional::of).setPartial(parsed.resultOrPartial());
     }
 
     @Override
@@ -58,12 +60,12 @@ public class OptionalFieldCodec<A> extends MapCodec<Optional<A>> {
             return false;
         }
         final OptionalFieldCodec<?> that = (OptionalFieldCodec<?>) o;
-        return Objects.equals(name, that.name) && Objects.equals(elementCodec, that.elementCodec);
+        return Objects.equals(name, that.name) && Objects.equals(elementCodec, that.elementCodec) && lenient == that.lenient;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, elementCodec);
+        return Objects.hash(name, elementCodec, lenient);
     }
 
     @Override

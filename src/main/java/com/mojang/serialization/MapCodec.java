@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.serialization;
 
+import com.google.common.base.Suppliers;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -14,6 +15,48 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder<A>, MapEncoder<A> {
+    /**
+     * Transforms the given {@link Codec} into a {@link MapCodec} by assuming that the result of all elements is a map.
+     * <p>
+     * This {@link MapCodec} will fail to encode or decode as long as the given {@link Codec} does not return or receive
+     * a map.
+     */
+    public static <A> MapCodec<A> assumeMapUnsafe(final Codec<A> codec) {
+        return new MapCodec<>() {
+            private static final String COMPRESSED_VALUE_KEY = "value";
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return Stream.of(ops.createString(COMPRESSED_VALUE_KEY));
+            }
+
+            @Override
+            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                if (ops.compressMaps()) {
+                    final T value = input.get(COMPRESSED_VALUE_KEY);
+                    if (value == null) {
+                        return DataResult.error(() -> "Missing value");
+                    }
+                    return codec.parse(ops, value);
+                }
+                return codec.parse(ops, ops.createMap(input.entries()));
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                final DataResult<T> encoded = codec.encodeStart(ops, input);
+                if (ops.compressMaps()) {
+                    return prefix.add(COMPRESSED_VALUE_KEY, encoded);
+                }
+                final DataResult<MapLike<T>> encodedMapResult = encoded.flatMap(ops::getMap);
+                return encodedMapResult.map(encodedMap -> {
+                    encodedMap.entries().forEach(pair -> prefix.add(pair.getFirst(), pair.getSecond()));
+                    return prefix;
+                }).result().orElseGet(() -> prefix.withErrorsFrom(encodedMapResult));
+            }
+        };
+    }
+
     public final <O> RecordCodecBuilder<O, A> forGetter(final Function<O, A> getter) {
         return RecordCodecBuilder.of(getter, this);
     }
@@ -46,6 +89,40 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         };
     }
 
+    public static <A> MapCodec<A> recursive(final String name, final Function<Codec<A>, MapCodec<A>> wrapped) {
+        return new RecursiveMapCodec<>(name, wrapped);
+    }
+
+    private static class RecursiveMapCodec<A> extends MapCodec<A> {
+        private final String name;
+        private final Supplier<MapCodec<A>> wrapped;
+
+        private RecursiveMapCodec(final String name, final Function<Codec<A>, MapCodec<A>> wrapped) {
+            this.name = name;
+            this.wrapped = Suppliers.memoize(() -> wrapped.apply(codec()));
+        }
+
+        @Override
+        public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+            return wrapped.get().encode(input, ops, prefix);
+        }
+
+        @Override
+        public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+            return wrapped.get().decode(ops, input);
+        }
+
+        @Override
+        public <T> Stream<T> keys(final DynamicOps<T> ops) {
+            return wrapped.get().keys(ops);
+        }
+
+        @Override
+        public String toString() {
+            return "RecursiveMapCodec[" + name + ']';
+        }
+    }
+
     public MapCodec<A> fieldOf(final String name) {
         return codec().fieldOf(name);
     }
@@ -75,17 +152,7 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         };
     }
 
-    public static final class MapCodecCodec<A> implements Codec<A> {
-        private final MapCodec<A> codec;
-
-        public MapCodecCodec(final MapCodec<A> codec) {
-            this.codec = codec;
-        }
-
-        public MapCodec<A> codec() {
-            return codec;
-        }
-
+    public record MapCodecCodec<A>(MapCodec<A> codec) implements Codec<A> {
         @Override
         public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
             return codec.compressedDecode(ops, input).map(r -> Pair.of(r, input));
@@ -120,6 +187,10 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
     public <S> MapCodec<S> flatXmap(final Function<? super A, ? extends DataResult<? extends S>> to, final Function<? super S, ? extends DataResult<? extends A>> from) {
         return Codec.of(flatComap(from), flatMap(to), () -> toString() + "[flatXmapped]");
+    }
+
+    public MapCodec<A> validate(final Function<A, DataResult<A>> checker) {
+        return flatXmap(checker, checker);
     }
 
     public <E> MapCodec<A> dependent(final MapCodec<E> initialInstance, final Function<A, Pair<E, MapCodec<E>>> splitter, final BiFunction<A, E, A> combiner) {

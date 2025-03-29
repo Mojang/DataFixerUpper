@@ -3,6 +3,7 @@
 package com.mojang.datafixers;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.ObjectArrays;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.Type;
@@ -26,12 +27,12 @@ import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Triple;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public interface DSL {
     interface TypeReference {
@@ -155,8 +156,19 @@ public interface DSL {
         return and(first, result);
     }
 
+    static TypeTemplate and(final java.util.List<TypeTemplate> types) {
+        return switch (types.size()) {
+            case 0 -> throw new IllegalArgumentException("Must have at least one type");
+            case 1 -> types.get(0);
+            default -> and(
+                types.get(0),
+                types.subList(1, types.size()).toArray(TypeTemplate[]::new)
+            );
+        };
+    }
+
     static TypeTemplate allWithRemainder(final TypeTemplate first, final TypeTemplate... rest) {
-        return and(first, ArrayUtils.add(rest, remainder()));
+        return and(first, ObjectArrays.concat(rest, remainder()));
     }
 
     static <F, G> Type<Pair<F, G>> and(final Type<F> first, final Type<G> second) {
@@ -201,7 +213,7 @@ public interface DSL {
 
     @SuppressWarnings("unchecked")
     static <K> Type<Pair<K, ?>> taggedChoiceType(final String name, final Type<K> keyType, final Map<K, ? extends Type<?>> types) {
-        return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(Triple.of(name, keyType, types), k -> new TaggedChoice.TaggedChoiceType<>(k.getLeft(), (Type<K>) k.getMiddle(), new Object2ObjectOpenHashMap<>((Map<K, Type<?>>) k.getRight())));
+        return (Type<Pair<K, ?>>) Instances.TAGGED_CHOICE_TYPE_CACHE.computeIfAbsent(new Instances.TaggedChoiceCacheKey<>(name, keyType, types), Instances.TaggedChoiceCacheKey::build);
     }
 
     static <A, B> Type<Function<A, B>> func(final Type<A> input, final Type<B> output) {
@@ -412,6 +424,21 @@ public interface DSL {
         );
     }
 
+    @SafeVarargs
+    static TypeTemplate optionalFields(final Pair<String, TypeTemplate>... fields) {
+        return and(Stream.concat(
+            Arrays.stream(fields).map(entry -> optional(field(entry.getFirst(), entry.getSecond()))),
+            Stream.of(remainder())
+        ).toList());
+    }
+
+    static TypeTemplate optionalFieldsLazy(final Map<String, Supplier<TypeTemplate>> fields) {
+        return and(Stream.concat(
+            fields.entrySet().stream().map(entry -> optional(field(entry.getKey(), entry.getValue().get()))),
+            Stream.of(remainder())
+        ).toList());
+    }
+
     // Type matchers
 
     static OpticFinder<Dynamic<?>> remainderFinder() {
@@ -448,6 +475,12 @@ public interface DSL {
 
         private static final OpticFinder<Dynamic<?>> REMAINDER_FINDER = remainderType().finder();
 
-        private static final Map<Triple<String, Type<?>, Map<?, ? extends Type<?>>>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = Maps.newConcurrentMap();
+        private static final Map<TaggedChoiceCacheKey<?>, Type<? extends Pair<?, ?>>> TAGGED_CHOICE_TYPE_CACHE = Maps.newConcurrentMap();
+
+        public record TaggedChoiceCacheKey<K>(String name, Type<K> keyType, Map<K, ? extends Type<?>> types) {
+            public TaggedChoice.TaggedChoiceType<K> build() {
+                return new TaggedChoice.TaggedChoiceType<>(name, keyType, new Object2ObjectOpenHashMap<>(types));
+            }
+        }
     }
 }

@@ -4,7 +4,6 @@ package com.mojang.datafixers.functions;
 
 import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.DynamicOps;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -46,7 +45,7 @@ public abstract class PointFree<T> {
     }
 
     public static String indent(final int level) {
-        return StringUtils.repeat("  ", level);
+        return " ".repeat(level);
     }
 
     public abstract String toString(int level);

@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Codec;
@@ -10,75 +9,84 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.ListBuilder;
-import org.apache.commons.lang3.mutable.MutableObject;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
-public final class ListCodec<A> implements Codec<List<A>> {
-    private final Codec<A> elementCodec;
+public record ListCodec<E>(Codec<E> elementCodec, int minSize, int maxSize) implements Codec<List<E>> {
+    private <R> DataResult<R> createTooShortError(final int size) {
+        return DataResult.error(() -> "List is too short: " + size + ", expected range [" + minSize + "-" + maxSize + "]");
+    }
 
-    public ListCodec(final Codec<A> elementCodec) {
-        this.elementCodec = elementCodec;
+    private <R> DataResult<R> createTooLongError(final int size) {
+        return DataResult.error(() -> "List is too long: " + size + ", expected range [" + minSize + "-" + maxSize + "]");
     }
 
     @Override
-    public <T> DataResult<T> encode(final List<A> input, final DynamicOps<T> ops, final T prefix) {
-        final ListBuilder<T> builder = ops.listBuilder();
-
-        for (final A a : input) {
-            builder.add(elementCodec.encodeStart(ops, a));
+    public <T> DataResult<T> encode(final List<E> input, final DynamicOps<T> ops, final T prefix) {
+        if (input.size() < minSize) {
+            return createTooShortError(input.size());
         }
-
+        if (input.size() > maxSize) {
+            return createTooLongError(input.size());
+        }
+        final ListBuilder<T> builder = ops.listBuilder();
+        for (final E element : input) {
+            builder.add(elementCodec.encodeStart(ops, element));
+        }
         return builder.build(prefix);
     }
 
     @Override
-    public <T> DataResult<Pair<List<A>, T>> decode(final DynamicOps<T> ops, final T input) {
+    public <T> DataResult<Pair<List<E>, T>> decode(final DynamicOps<T> ops, final T input) {
         return ops.getList(input).setLifecycle(Lifecycle.stable()).flatMap(stream -> {
-            final ImmutableList.Builder<A> read = ImmutableList.builder();
-            final Stream.Builder<T> failed = Stream.builder();
-            // TODO: AtomicReference.getPlain/setPlain in java9+
-            final MutableObject<DataResult<Unit>> result = new MutableObject<>(DataResult.success(Unit.INSTANCE, Lifecycle.stable()));
-
-            stream.accept(t -> {
-                final DataResult<Pair<A, T>> element = elementCodec.decode(ops, t);
-                element.error().ifPresent(e -> failed.add(t));
-                result.setValue(result.getValue().apply2stable((r, v) -> {
-                    read.add(v.getFirst());
-                    return r;
-                }, element));
-            });
-
-            final ImmutableList<A> elements = read.build();
-            final T errors = ops.createList(failed.build());
-
-            final Pair<List<A>, T> pair = Pair.of(elements, errors);
-
-            return result.getValue().map(unit -> pair).setPartial(pair);
+            final DecoderState<T> decoder = new DecoderState<>(ops);
+            stream.accept(decoder::accept);
+            return decoder.build();
         });
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final ListCodec<?> listCodec = (ListCodec<?>) o;
-        return Objects.equals(elementCodec, listCodec.elementCodec);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(elementCodec);
     }
 
     @Override
     public String toString() {
         return "ListCodec[" + elementCodec + ']';
+    }
+
+    private class DecoderState<T> {
+        private static final DataResult<Unit> INITIAL_RESULT = DataResult.success(Unit.INSTANCE, Lifecycle.stable());
+
+        private final DynamicOps<T> ops;
+        private final List<E> elements = new ArrayList<>();
+        private final Stream.Builder<T> failed = Stream.builder();
+        private DataResult<Unit> result = INITIAL_RESULT;
+        private int totalCount;
+
+        private DecoderState(final DynamicOps<T> ops) {
+            this.ops = ops;
+        }
+
+        public void accept(final T value) {
+            totalCount++;
+            if (elements.size() >= maxSize) {
+                failed.add(value);
+                return;
+            }
+            final DataResult<Pair<E, T>> elementResult = elementCodec.decode(ops, value);
+            elementResult.error().ifPresent(error -> failed.add(value));
+            elementResult.resultOrPartial().ifPresent(pair -> elements.add(pair.getFirst()));
+            result = result.apply2stable((result, element) -> result, elementResult);
+        }
+
+        public DataResult<Pair<List<E>, T>> build() {
+            if (elements.size() < minSize) {
+                return createTooShortError(elements.size());
+            }
+            final T errors = ops.createList(failed.build());
+            final Pair<List<E>, T> pair = Pair.of(List.copyOf(elements), errors);
+            if (totalCount > maxSize) {
+                result = createTooLongError(totalCount);
+            }
+            return result.map(ignored -> pair).setPartial(pair);
+        }
     }
 }

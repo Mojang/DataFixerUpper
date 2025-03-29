@@ -88,7 +88,7 @@ public class DataFixerUpper implements DataFixer {
     }
 
     protected Type<?> getType(final DSL.TypeReference type, final int version) {
-        return getSchema(DataFixUtils.makeKey(version)).getType(type);
+        return getSchema(DataFixUtils.makeKey(version)).getTypeRaw(type);
     }
 
     protected static int getLowestSchemaSameVersion(final Int2ObjectSortedMap<Schema> schemas, final int versionKey) {
@@ -107,20 +107,20 @@ public class DataFixerUpper implements DataFixer {
         return fixerVersions.subSet(0, versionKey + 1).lastInt();
     }
 
-    protected TypeRewriteRule getRule(final int version, final int dataVersion) {
-        if (version >= dataVersion) {
+    protected TypeRewriteRule getRule(final int version, final int newVersion) {
+        if (version >= newVersion) {
             return TypeRewriteRule.nop();
         }
 
-        final int expandedVersion = getLowestFixSameVersion(DataFixUtils.makeKey(version));
-        final int expandedDataVersion = DataFixUtils.makeKey(dataVersion);
-
-        final long key = (long) expandedVersion << 32 | expandedDataVersion;
+        final long key = (long) version << 32 | newVersion;
         return rules.computeIfAbsent(key, k -> {
+            final int expandedVersion = getLowestFixSameVersion(DataFixUtils.makeKey(version));
+
             final List<TypeRewriteRule> rules = Lists.newArrayList();
             for (final DataFix fix : globalList) {
-                final int fixVersion = fix.getVersionKey();
-                if (fixVersion > expandedVersion && fixVersion <= expandedDataVersion) {
+                final int expandedFixVersion = fix.getVersionKey();
+                final int fixVersion = DataFixUtils.getVersion(expandedFixVersion);
+                if (expandedFixVersion > expandedVersion && fixVersion <= newVersion) {
                     final TypeRewriteRule fixRule = fix.getRule();
                     if (fixRule == TypeRewriteRule.nop()) {
                         continue;

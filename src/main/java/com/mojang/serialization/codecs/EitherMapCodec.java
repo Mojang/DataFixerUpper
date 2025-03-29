@@ -3,6 +3,7 @@
 package com.mojang.serialization.codecs;
 
 import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapCodec;
@@ -24,10 +25,14 @@ public final class EitherMapCodec<F, S> extends MapCodec<Either<F, S>> {
     @Override
     public <T> DataResult<Either<F, S>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
         final DataResult<Either<F, S>> firstRead = first.decode(ops, input).map(Either::left);
-        if (firstRead.result().isPresent()) {
+        if (firstRead.isSuccess()) {
             return firstRead;
         }
-        return second.decode(ops, input).map(Either::right);
+        final DataResult<Either<F, S>> secondRead = second.decode(ops, input).map(Either::right);
+        if (secondRead.isSuccess()) {
+            return secondRead;
+        }
+        return firstRead.apply2((f, s) -> s, secondRead);
     }
 
     @Override
