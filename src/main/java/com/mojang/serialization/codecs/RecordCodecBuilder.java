@@ -160,8 +160,8 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                         return new MapEncoder.Implementation<R>() {
                             @Override
                             public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-                                aEnc.encode(aFromO, ops, prefix);
                                 fEnc.encode(a1 -> input, ops, prefix);
+                                aEnc.encode(aFromO, ops, prefix);
                                 return prefix;
                             }
 
@@ -219,9 +219,9 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     return new MapEncoder.Implementation<R>() {
                         @Override
                         public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                            fEncoder.encode((a1, b1) -> input, ops, prefix);
                             aEncoder.encode(aFromO, ops, prefix);
                             bEncoder.encode(bFromO, ops, prefix);
-                            fEncoder.encode((a1, b1) -> input, ops, prefix);
                             return prefix;
                         }
 
@@ -292,10 +292,10 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     return new MapEncoder.Implementation<R>() {
                         @Override
                         public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                            fEncoder.encode((t1, t2, t3) -> input, ops, prefix);
                             e1.encode(v1, ops, prefix);
                             e2.encode(v2, ops, prefix);
                             e3.encode(v3, ops, prefix);
-                            fEncoder.encode((t1, t2, t3) -> input, ops, prefix);
                             return prefix;
                         }
 
@@ -373,11 +373,11 @@ public final class RecordCodecBuilder<O, F> implements App<RecordCodecBuilder.Mu
                     return new MapEncoder.Implementation<R>() {
                         @Override
                         public <T> RecordBuilder<T> encode(final R input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                            fEncoder.encode((t1, t2, t3, t4) -> input, ops, prefix);
                             e1.encode(v1, ops, prefix);
                             e2.encode(v2, ops, prefix);
                             e3.encode(v3, ops, prefix);
                             e4.encode(v4, ops, prefix);
-                            fEncoder.encode((t1, t2, t3, t4) -> input, ops, prefix);
                             return prefix;
                         }
 

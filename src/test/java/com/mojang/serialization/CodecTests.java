@@ -769,4 +769,61 @@ public class CodecTests {
         assertFromJavaFails(codec, 123);
         assertToJavaFails(codec, 123);
     }
+
+    private record RecordWith5Fields(int f1, int f2, int f3, int f4, int f5) {
+        public static final Codec<RecordWith5Fields> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.INT.fieldOf("f1").forGetter(RecordWith5Fields::f1),
+            Codec.INT.fieldOf("f2").forGetter(RecordWith5Fields::f2),
+            Codec.INT.fieldOf("f3").forGetter(RecordWith5Fields::f3),
+            Codec.INT.fieldOf("f4").forGetter(RecordWith5Fields::f4),
+            Codec.INT.fieldOf("f5").forGetter(RecordWith5Fields::f5)
+        ).apply(i, RecordWith5Fields::new));
+    }
+
+    private record RecordWith7Fields(int f1, int f2, int f3, int f4, int f5, int f6, int f7) {
+        public static final Codec<RecordWith7Fields> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.INT.fieldOf("f1").forGetter(RecordWith7Fields::f1),
+            Codec.INT.fieldOf("f2").forGetter(RecordWith7Fields::f2),
+            Codec.INT.fieldOf("f3").forGetter(RecordWith7Fields::f3),
+            Codec.INT.fieldOf("f4").forGetter(RecordWith7Fields::f4),
+            Codec.INT.fieldOf("f5").forGetter(RecordWith7Fields::f5),
+            Codec.INT.fieldOf("f6").forGetter(RecordWith7Fields::f6),
+            Codec.INT.fieldOf("f7").forGetter(RecordWith7Fields::f7)
+        ).apply(i, RecordWith7Fields::new));
+    }
+
+    private static void assertMapOrderEqual(Map<?, ?> expected, Object actual) {
+        assertTrue(actual instanceof Map<?, ?>);
+        assertEquals(
+            new ArrayList<>(expected.entrySet()),
+            new ArrayList<>(((Map<?, ?>) actual).entrySet())
+        );
+    }
+
+    @Test
+    public void recordCodec_maintainFieldOrder() {
+        assertMapOrderEqual(
+            Map.of(
+                "f1", 5,
+                "f2", 4,
+                "f3", 3,
+                "f4", 2,
+                "f5", 1
+            ),
+            toJava(RecordWith5Fields.CODEC, new RecordWith5Fields(5, 4, 3, 2, 1))
+        );
+
+        assertMapOrderEqual(
+            Map.of(
+                "f1", 7,
+                "f2", 6,
+                "f3", 5,
+                "f4", 4,
+                "f5", 3,
+                "f6", 2,
+                "f7", 1
+            ),
+            toJava(RecordWith7Fields.CODEC, new RecordWith7Fields(7, 6, 5, 4, 3, 2, 1))
+        );
+    }
 }
