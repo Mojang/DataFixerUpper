@@ -803,7 +803,7 @@ public class CodecTests {
     @Test
     public void recordCodec_maintainFieldOrder() {
         assertMapOrderEqual(
-            Map.of(
+            ImmutableMap.of(
                 "f1", 5,
                 "f2", 4,
                 "f3", 3,
@@ -814,7 +814,7 @@ public class CodecTests {
         );
 
         assertMapOrderEqual(
-            Map.of(
+            ImmutableMap.of(
                 "f1", 7,
                 "f2", 6,
                 "f3", 5,
