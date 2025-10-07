@@ -5,6 +5,7 @@ package com.mojang.serialization;
 import com.google.common.base.Suppliers;
 import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.codecs.KeyDispatchCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.function.BiFunction;
@@ -195,6 +196,22 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
 
     public <E> MapCodec<A> dependent(final MapCodec<E> initialInstance, final Function<A, Pair<E, MapCodec<E>>> splitter, final BiFunction<A, E, A> combiner) {
         return new Dependent<>(this, initialInstance, splitter, combiner);
+    }
+
+    public <E> Codec<E> dispatch(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
+        return partialDispatch(type.andThen(DataResult::success), codec.andThen(DataResult::success));
+    }
+
+    public <E> Codec<E> dispatchStable(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
+        return partialDispatch(e -> DataResult.success(type.apply(e), Lifecycle.stable()), a -> DataResult.success(codec.apply(a), Lifecycle.stable()));
+    }
+
+    public <E> Codec<E> partialDispatch(final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends MapCodec<? extends E>>> codec) {
+        return new KeyDispatchCodec<>(this, type, codec).codec();
+    }
+
+    public <E> MapCodec<E> dispatchMap(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
+        return new KeyDispatchCodec<>(this, type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
     private static class Dependent<O, E> extends MapCodec<O> {
