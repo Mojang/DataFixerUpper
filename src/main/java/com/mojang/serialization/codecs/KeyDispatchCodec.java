@@ -1,6 +1,5 @@
 package com.mojang.serialization.codecs;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapCodec;
@@ -14,14 +13,12 @@ import java.util.stream.Stream;
 
 public class KeyDispatchCodec<K, V> extends MapCodec<V> {
     private static final String COMPRESSED_VALUE_KEY = "value";
-    private final String typeKey;
-    private final Codec<K> keyCodec;
+    private final MapCodec<K> keyCodec;
     private final Function<? super V, ? extends DataResult<? extends K>> type;
     private final Function<? super K, ? extends DataResult<? extends MapDecoder<? extends V>>> decoder;
     private final Function<? super V, ? extends DataResult<? extends MapEncoder<V>>> encoder;
 
-    protected KeyDispatchCodec(final String typeKey, final Codec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends MapDecoder<? extends V>>> decoder, final Function<? super V, ? extends DataResult<? extends MapEncoder<V>>> encoder) {
-        this.typeKey = typeKey;
+    protected KeyDispatchCodec(final MapCodec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends MapDecoder<? extends V>>> decoder, final Function<? super V, ? extends DataResult<? extends MapEncoder<V>>> encoder) {
         this.keyCodec = keyCodec;
         this.type = type;
         this.decoder = decoder;
@@ -31,19 +28,14 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
     /**
      * Assumes codec(type(V)) is MapCodec<V>
      */
-    public KeyDispatchCodec(final String typeKey, final Codec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends MapCodec<? extends V>>> codec) {
-        this(typeKey, keyCodec, type, codec, v -> getCodec(type, codec, v));
+    public KeyDispatchCodec(final MapCodec<K> keyCodec, final Function<? super V, ? extends DataResult<? extends K>> type, final Function<? super K, ? extends DataResult<? extends MapCodec<? extends V>>> codec) {
+        this(keyCodec, type, codec, v -> getCodec(type, codec, v));
     }
 
     @Override
     public <T> DataResult<V> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        final T elementName = input.get(typeKey);
-        if (elementName == null) {
-            return DataResult.error(() -> "Input does not contain a key [" + typeKey + "]: " + input);
-        }
-
-        return keyCodec.decode(ops, elementName).flatMap(type ->
-            decoder.apply(type.getFirst()).flatMap(elementDecoder -> {
+        return keyCodec.decode(ops, input).flatMap(type ->
+            decoder.apply(type).flatMap(elementDecoder -> {
                 if (ops.compressMaps()) {
                     final T value = input.get(ops.createString(COMPRESSED_VALUE_KEY));
                     if (value == null) {
@@ -59,25 +51,30 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
     @Override
     public <T> RecordBuilder<T> encode(final V input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
         final DataResult<? extends MapEncoder<V>> encoderResult = encoder.apply(input);
-        final RecordBuilder<T> builder = prefix.withErrorsFrom(encoderResult);
-        if (encoderResult.isError()) {
+        final DataResult<? extends K> typeResult = this.type.apply(input);
+
+        final RecordBuilder<T> builder = prefix.withErrorsFrom(encoderResult).withErrorsFrom(typeResult);
+        if (encoderResult.isError() || typeResult.isError()) {
             return builder;
         }
 
-        final MapEncoder<V> elementEncoder = encoderResult.result().get();
+        final MapEncoder<V> elementEncoder = encoderResult.getOrThrow();
+        final K type = typeResult.getOrThrow();
+
         if (ops.compressMaps()) {
-            return prefix
-                .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)))
+            return keyCodec.encode(type, ops, builder)
                 .add(COMPRESSED_VALUE_KEY, elementEncoder.encoder().encodeStart(ops, input));
         }
 
-        return elementEncoder.encode(input, ops, prefix)
-            .add(typeKey, type.apply(input).flatMap(t -> keyCodec.encodeStart(ops, t)));
+        return elementEncoder.encode(input, ops, keyCodec.encode(type, ops, builder));
     }
 
     @Override
     public <T> Stream<T> keys(final DynamicOps<T> ops) {
-        return Stream.of(typeKey, COMPRESSED_VALUE_KEY).map(ops::createString);
+        return Stream.concat(
+            keyCodec.keys(ops),
+            Stream.of(ops.createString(COMPRESSED_VALUE_KEY))
+        );
     }
 
     @SuppressWarnings("unchecked")

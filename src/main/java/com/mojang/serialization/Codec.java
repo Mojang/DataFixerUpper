@@ -451,7 +451,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default <E> Codec<E> partialDispatch(final String typeKey, final Function<? super E, ? extends DataResult<? extends A>> type, final Function<? super A, ? extends DataResult<? extends MapCodec<? extends E>>> codec) {
-        return new KeyDispatchCodec<>(typeKey, this, type, codec).codec();
+        return new KeyDispatchCodec<>(fieldOf(typeKey), type, codec).codec();
     }
 
     default <E> MapCodec<E> dispatchMap(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
@@ -459,7 +459,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     default <E> MapCodec<E> dispatchMap(final String typeKey, final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
-        return new KeyDispatchCodec<>(typeKey, this, type.andThen(DataResult::success), codec.andThen(DataResult::success));
+        return new KeyDispatchCodec<>(fieldOf(typeKey), type.andThen(DataResult::success), codec.andThen(DataResult::success));
     }
 
     default Codec<A> validate(final Function<A, DataResult<A>> checker) {
