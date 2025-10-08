@@ -128,8 +128,12 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     static <T> Codec<T> withAlternative(final Codec<T> primary, final Codec<? extends T> alternative) {
+        return primary.withAlternative(alternative);
+    }
+
+    default Codec<A> withAlternative(final Codec<? extends A> alternative) {
         return Codec.either(
-            primary,
+            this,
             alternative
         ).xmap(
             Either::unwrap,
@@ -138,8 +142,12 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     }
 
     static <T, U> Codec<T> withAlternative(final Codec<T> primary, final Codec<U> alternative, final Function<U, T> converter) {
+        return primary.withAlternative(alternative, converter);
+    }
+
+    default <U> Codec<A> withAlternative(final Codec<U> alternative, final Function<U, A> converter) {
         return Codec.either(
-            primary,
+            this,
             alternative
         ).xmap(
             either -> either.map(v -> v, converter),
