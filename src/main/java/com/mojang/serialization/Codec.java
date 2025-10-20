@@ -737,5 +737,5 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         }
     };
 
-    MapCodec<Unit> EMPTY = MapCodec.of(Encoder.empty(), Decoder.unit(Unit.INSTANCE));
+    MapCodec<Unit> EMPTY = MapCodec.unit(Unit.INSTANCE);
 }

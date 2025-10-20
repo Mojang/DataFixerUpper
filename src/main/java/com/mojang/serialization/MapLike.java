@@ -9,6 +9,35 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public interface MapLike<T> {
+    MapLike<Object> EMPTY = new MapLike<>() {
+        @Nullable
+        @Override
+        public Object get(final Object key) {
+            return null;
+        }
+
+        @Nullable
+        @Override
+        public Object get(final String key) {
+            return null;
+        }
+
+        @Override
+        public Stream<Pair<Object, Object>> entries() {
+            return Stream.empty();
+        }
+
+        @Override
+        public String toString() {
+            return "EmptyMapLike";
+        }
+    };
+
+    @SuppressWarnings("unchecked")
+    static <T> MapLike<T> empty() {
+        return (MapLike<T>) EMPTY;
+    }
+
     @Nullable
     T get(final T key);
 
@@ -18,6 +47,10 @@ public interface MapLike<T> {
     Stream<Pair<T, T>> entries();
 
     static <T> MapLike<T> forMap(final Map<T, T> map, final DynamicOps<T> ops) {
+        if (map.isEmpty()) {
+            return empty();
+        }
+
         return new MapLike<T>() {
             @Nullable
             @Override

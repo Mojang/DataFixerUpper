@@ -389,7 +389,62 @@ public abstract class MapCodec<A> extends CompressorHolder implements MapDecoder
         return unit(() -> defaultValue);
     }
 
-    public static <A> MapCodec<A> unit(final Supplier<A> defaultValue) {
-        return MapCodec.of(Encoder.empty(), Decoder.unit(defaultValue));
+    public static <A> MapCodec<A> unit(final Supplier<A> value) {
+        return new MapCodec<>() {
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return Stream.empty();
+            }
+
+            @Override
+            public <T> DataResult<A> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return DataResult.success(value.get());
+            }
+
+            @Override
+            public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
+                return prefix;
+            }
+
+            @Override
+            public Codec<A> codec() {
+                return unitCodec(value);
+            }
+
+            @Override
+            public String toString() {
+                return "Unit[" + value.get() + "]";
+            }
+        };
+    }
+
+    public static <A> Codec<A> unitCodec(final A value) {
+        return unitCodec(() -> value);
+    }
+
+    /**
+     * Replacement for {@link MapCodecCodec} that does not allocate new builder, but otherwise has same effect of containing structure.
+     * Value will be represented as {@link DynamicOps#emptyMap()}
+     */
+    public static <A> Codec<A> unitCodec(final Supplier<A> value) {
+        return new Codec<>() {
+            @Override
+            public <T> DataResult<Pair<A, T>> decode(final DynamicOps<T> ops, final T input) {
+                // Check required mostly for parsing of optional fields in data fixers
+                final DataResult<?> check = ops.compressMaps() ? ops.getList(input) : ops.getMap(input);
+                return check.map(ignore -> Pair.of(value.get(), input));
+            }
+
+            @Override
+            public <T> DataResult<T> encode(final A input, final DynamicOps<T> ops, final T prefix) {
+                // Enforces type, but also updates empty() to emptyMap()
+                return ops.mergeToMap(prefix, MapLike.empty());
+            }
+
+            @Override
+            public String toString() {
+                return "Unit[" + value.get() + "]";
+            }
+        };
     }
 }
