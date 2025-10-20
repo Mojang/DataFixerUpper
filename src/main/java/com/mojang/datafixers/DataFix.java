@@ -51,7 +51,8 @@ public abstract class DataFix {
             if (written.isEmpty()) {
                 throw new RuntimeException("Could not write the object in " + name);
             }
-            final Optional<? extends Pair<Typed<B>, ?>> read = newType.readTyped(fix.apply(written.get())).resultOrPartial(LOGGER::error);
+            final Dynamic<?> fixed = fix.apply(written.get());
+            final Optional<? extends Pair<Typed<B>, ?>> read = newType.readTyped(fixed).resultOrPartial(LOGGER::error);
             if (read.isEmpty()) {
                 throw new RuntimeException("Could not read the new object in " + name);
             }

@@ -164,7 +164,8 @@ public abstract class Type<A> implements App<Type.Mu, A> {
         if (!expectedType.equals(f.newType(), true, true)) {
             return DataResult.error(() -> "Rewritten type doesn't match");
         }
-        return f.newType().codec().encode(f.function().evalCached().apply(ops).apply(value), ops, rest);
+        final B fixed = f.function().evalCached().apply(ops).apply(value);
+        return f.newType().codec().encode(fixed, ops, rest);
     }
 
     @SuppressWarnings("unchecked")

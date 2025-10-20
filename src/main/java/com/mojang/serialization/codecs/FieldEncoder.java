@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 package com.mojang.serialization.codecs;
 
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Encoder;
 import com.mojang.serialization.MapEncoder;
@@ -21,7 +22,8 @@ public class FieldEncoder<A> extends MapEncoder.Implementation<A> {
 
     @Override
     public <T> RecordBuilder<T> encode(final A input, final DynamicOps<T> ops, final RecordBuilder<T> prefix) {
-        return prefix.add(name, elementCodec.encodeStart(ops, input));
+        final DataResult<T> encodedContents = elementCodec.encodeStart(ops, input);
+        return prefix.add(name, encodedContents);
     }
 
     @Override
