@@ -66,7 +66,9 @@ public class KeyDispatchCodec<K, V> extends MapCodec<V> {
                 .add(COMPRESSED_VALUE_KEY, elementEncoder.encoder().encodeStart(ops, input));
         }
 
-        return elementEncoder.encode(input, ops, keyCodec.encode(type, ops, builder));
+        // Encode key AFTER value
+        // This is important for fixing types with remainder, since it will contain old fields, including type
+        return keyCodec.encode(type, ops, elementEncoder.encode(input, ops, builder));
     }
 
     @Override

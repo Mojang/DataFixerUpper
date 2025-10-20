@@ -3,6 +3,7 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.junit.Test;
 
@@ -881,6 +882,35 @@ public class CodecTests {
                 "type", "never_with_partial",
                 "value", "Some text"
             ))
+        );
+    }
+
+    @Test
+    public void valueDispatch_keyHasPriorityOverContents() {
+        // Minimized common pattern found in datafixer codecs: a tagged choice with contents that eventually include remainder
+        final Codec<Pair<String, Dynamic<?>>> codec = Codec.STRING.dispatch("type", Pair::getFirst, type -> MapCodec.assumeMapUnsafe(Codec.PASSTHROUGH).xmap(v -> Pair.of(type, v), Pair::getSecond));
+
+        final Map<String, String> originalContents = Map.of(
+            "type", "some_type",
+            "value", "some_value"
+        );
+        final Pair<String, Dynamic<?>> parsedResult = fromJava(codec, originalContents);
+
+        assertEquals(
+            Pair.of(
+                "some_type",
+                new Dynamic<>(JavaOps.INSTANCE, originalContents)
+            ),
+            parsedResult
+        );
+
+        final Pair<String, Dynamic<?>> modifiedResult = parsedResult.mapFirst(t -> "some_other_type");
+        assertEquals(
+            Map.of(
+                "type", "some_other_type",
+                "value", "some_value"
+            ),
+            toJava(codec, modifiedResult)
         );
     }
 }
