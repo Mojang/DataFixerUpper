@@ -12,6 +12,7 @@ import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -146,6 +147,13 @@ public class JsonOps implements DynamicOps<JsonElement> {
             return DataResult.error(() -> "mergeToList called with not a list: " + list, list);
         }
 
+        if (values.isEmpty()) {
+            if (list == empty()) {
+                return DataResult.success(emptyList());
+            }
+            return DataResult.success(list);
+        }
+
         final JsonArray result = new JsonArray();
         if (list != empty()) {
             result.addAll(list.getAsJsonArray());
@@ -178,6 +186,13 @@ public class JsonOps implements DynamicOps<JsonElement> {
             return DataResult.error(() -> "mergeToMap called with not a map: " + map, map);
         }
 
+        final Iterator<Pair<JsonElement, JsonElement>> valuesIterator = values.entries().iterator();
+        if (!valuesIterator.hasNext()) {
+            if (map == empty()) {
+                return DataResult.success(emptyMap());
+            }
+            return DataResult.success(map);
+        }
         final JsonObject output = new JsonObject();
         if (map != empty()) {
             map.getAsJsonObject().entrySet().forEach(entry -> output.add(entry.getKey(), entry.getValue()));
@@ -185,7 +200,7 @@ public class JsonOps implements DynamicOps<JsonElement> {
 
         final List<JsonElement> missed = Lists.newArrayList();
 
-        values.entries().forEach(entry -> {
+        valuesIterator.forEachRemaining(entry -> {
             final JsonElement key = entry.getFirst();
             if (!(key instanceof JsonPrimitive) || !key.getAsJsonPrimitive().isString() && !compressed) {
                 missed.add(key);
