@@ -3,7 +3,10 @@
 package com.mojang.serialization;
 
 import com.google.common.collect.ImmutableMap;
+import com.mojang.datafixers.DSL;
+import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.junit.Test;
 
@@ -911,6 +914,87 @@ public class CodecTests {
                 "value", "some_value"
             ),
             toJava(codec, modifiedResult)
+        );
+    }
+
+    @Test
+    public void unitMapCodecEncoding() {
+        final Object marker = new Object();
+
+        assertRoundTrip(
+            MapCodec.unit(marker).codec(),
+            marker,
+            Map.of()
+        );
+    }
+
+    @Test
+    public void algebraicTypeCodec() {
+        @SuppressWarnings("unchecked") final Codec<Object> codec = (Codec<Object>) DSL.or(
+            DSL.optionalFields(
+                "a", DSL.string().template(),
+                "b", DSL.string().template()
+            ),
+            DSL.string().template()
+        ).toSimpleType().codec();
+
+
+        assertRoundTrip(
+            codec,
+            Either.left( // first choice in top OR
+                Pair.of( // values for fields (a, b, remainder), encoded as nested pairs (a + (b + remainder))
+                    Either.left("foo"), // field a is present
+                    Pair.of(
+                        Either.right(Unit.INSTANCE), // field b is missing
+                        new Dynamic<>(JavaOps.INSTANCE, Map.of( // remainder
+                            "a", "foo"
+                        ))
+                    )
+                )
+            ),
+            Map.of(
+                "a", "foo"
+            )
+        );
+
+        assertRoundTrip(
+            codec,
+            Either.left( // first choice in top OR
+                Pair.of(
+                    Either.right(Unit.INSTANCE), // field a is missing
+                    Pair.of(
+                        Either.left("bar"), // field b is present
+                        new Dynamic<>(JavaOps.INSTANCE, Map.of( // remainder
+                            "b", "bar"
+                        ))
+                    )
+                )
+            ),
+            Map.of(
+                "b", "bar"
+            )
+        );
+
+        assertRoundTrip(
+            codec,
+            Either.left( // first choice in top OR
+                Pair.of(
+                    Either.right(Unit.INSTANCE), // field a is missing
+                    Pair.of(
+                        Either.right(Unit.INSTANCE), // field b is missing
+                        new Dynamic<>(JavaOps.INSTANCE, Map.of())
+                    )
+                )
+            ),
+            Map.of()
+        );
+
+        assertRoundTrip(
+            codec,
+            Either.right( // second choice in top OR
+                "foo" // No remainder, just actual value
+            ),
+            "foo"
         );
     }
 }
