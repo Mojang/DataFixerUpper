@@ -22,12 +22,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Schema {
-    protected final Object2IntMap<String> RECURSIVE_TYPES = new Object2IntOpenHashMap<>();
-    private final Map<String, Supplier<TypeTemplate>> TYPE_TEMPLATES = Maps.newHashMap();
-    private final Map<String, Type<?>> TYPES;
+    private final Object2IntMap<String> recursiveTypes = new Object2IntOpenHashMap<>();
+    private final Map<String, Supplier<TypeTemplate>> typeTemplates = Maps.newHashMap();
+    private final Map<String, Type<?>> types;
     private final int versionKey;
     private final String name;
-    protected final Schema parent;
+    private final Schema parent;
 
     public Schema(final int versionKey, final Schema parent) {
         this.versionKey = versionKey;
@@ -35,7 +35,7 @@ public class Schema {
         name = "V" + DataFixUtils.getVersion(versionKey) + (subVersion == 0 ? "" : "." + subVersion);
         this.parent = parent;
         registerTypes(this, registerEntities(this), registerBlockEntities(this));
-        TYPES = buildTypes();
+        types = buildTypes();
     }
 
     protected Map<String, Type<?>> buildTypes() {
@@ -43,16 +43,16 @@ public class Schema {
 
         final List<TypeTemplate> templates = Lists.newArrayList();
 
-        for (final Object2IntMap.Entry<String> entry : RECURSIVE_TYPES.object2IntEntrySet()) {
+        for (final Object2IntMap.Entry<String> entry : recursiveTypes.object2IntEntrySet()) {
             templates.add(DSL.check(entry.getKey(), entry.getIntValue(), getTemplate(entry.getKey())));
         }
 
         final TypeTemplate choice = templates.stream().reduce(DSL::or).get();
         final TypeFamily family = new RecursiveTypeFamily(name, choice);
 
-        for (final String name : TYPE_TEMPLATES.keySet()) {
+        for (final String name : typeTemplates.keySet()) {
             final Type<?> type;
-            final int recurseId = RECURSIVE_TYPES.getOrDefault(name, -1);
+            final int recurseId = recursiveTypes.getOrDefault(name, -1);
             if (recurseId != -1) {
                 type = family.apply(recurseId);
             } else {
@@ -64,19 +64,19 @@ public class Schema {
     }
 
     public Set<String> types() {
-        return TYPES.keySet();
+        return types.keySet();
     }
 
     public Type<?> getTypeRaw(final DSL.TypeReference type) {
         final String name = type.typeName();
-        return TYPES.computeIfAbsent(name, key -> {
+        return types.computeIfAbsent(name, key -> {
             throw new IllegalArgumentException("Unknown type: " + name);
         });
     }
 
     public Type<?> getType(final DSL.TypeReference type) {
         final String name = type.typeName();
-        final Type<?> type1 = TYPES.computeIfAbsent(name, key -> {
+        final Type<?> type1 = types.computeIfAbsent(name, key -> {
             throw new IllegalArgumentException("Unknown type: " + name);
         });
         if (type1 instanceof RecursivePoint.RecursivePointType<?>) {
@@ -86,13 +86,13 @@ public class Schema {
     }
 
     public TypeTemplate resolveTemplate(final String name) {
-        return TYPE_TEMPLATES.getOrDefault(name, () -> {
+        return typeTemplates.getOrDefault(name, () -> {
             throw new IllegalArgumentException("Unknown type: " + name);
         }).get();
     }
 
     public TypeTemplate id(final String name) {
-        final int id = RECURSIVE_TYPES.getOrDefault(name, -1);
+        final int id = recursiveTypes.getOrDefault(name, -1);
         if (id != -1) {
             return DSL.id(id);
         }
@@ -140,10 +140,10 @@ public class Schema {
     }
 
     public void registerType(final boolean recursive, final DSL.TypeReference type, final Supplier<TypeTemplate> template) {
-        TYPE_TEMPLATES.put(type.typeName(), template);
+        typeTemplates.put(type.typeName(), template);
         // TODO: calculate recursiveness instead of hardcoding
-        if (recursive && !RECURSIVE_TYPES.containsKey(type.typeName())) {
-            RECURSIVE_TYPES.put(type.typeName(), RECURSIVE_TYPES.size());
+        if (recursive && !recursiveTypes.containsKey(type.typeName())) {
+            recursiveTypes.put(type.typeName(), recursiveTypes.size());
         }
     }
 
