@@ -38,6 +38,16 @@ public class JsonOps implements DynamicOps<JsonElement> {
     }
 
     @Override
+    public JsonElement emptyMap() {
+        return new JsonObject();
+    }
+
+    @Override
+    public JsonElement emptyList() {
+        return new JsonArray();
+    }
+
+    @Override
     public <U> U convertTo(final DynamicOps<U> outOps, final JsonElement input) {
         if (input instanceof JsonObject) {
             return convertMap(outOps, input);
