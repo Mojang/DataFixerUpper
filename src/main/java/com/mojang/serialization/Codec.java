@@ -11,7 +11,6 @@ import com.mojang.serialization.codecs.CompoundListCodec;
 import com.mojang.serialization.codecs.DispatchedMapCodec;
 import com.mojang.serialization.codecs.EitherCodec;
 import com.mojang.serialization.codecs.EitherMapCodec;
-import com.mojang.serialization.codecs.KeyDispatchCodec;
 import com.mojang.serialization.codecs.ListCodec;
 import com.mojang.serialization.codecs.OptionalFieldCodec;
 import com.mojang.serialization.codecs.PairCodec;
@@ -428,14 +427,6 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
     @Override
     default Codec<A> promotePartial(final Consumer<String> onError) {
         return Codec.of(this, Decoder.super.promotePartial(onError));
-    }
-
-    static <A> Codec<A> unit(final A defaultValue) {
-        return unit(() -> defaultValue);
-    }
-
-    static <A> Codec<A> unit(final Supplier<A> defaultValue) {
-        return MapCodec.unit(defaultValue).codec();
     }
 
     default <E> Codec<E> dispatch(final Function<? super E, ? extends A> type, final Function<? super A, ? extends MapCodec<? extends E>> codec) {
