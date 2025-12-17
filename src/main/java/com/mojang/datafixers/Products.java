@@ -54,6 +54,38 @@ public interface Products {
             return new P8<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
         }
 
+        public <T2, T3, T4, T5, T6, T7, T8, T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final P8<F, T2, T3, T4, T5, T6, T7, T8, T9> p) {
+            return new P9<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P9<F, T2, T3, T4, T5, T6, T7, T8, T9, T10> p) {
+            return new P10<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P10<F, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> p) {
+            return new P11<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P11<F, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> p) {
+            return new P12<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P12<F, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P13<F, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12, p.t13);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P14<F, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12, p.t13, p.t14);
+        }
+
+        public <T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P15<F, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12, p.t13, p.t14, p.t15);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function<T1, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -95,6 +127,38 @@ public interface Products {
             return new P8<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
         }
 
+        public <T3, T4, T5, T6, T7, T8, T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final P7<F, T3, T4, T5, T6, T7, T8, T9> p) {
+            return new P9<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
+        public <T3, T4, T5, T6, T7, T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P8<F, T3, T4, T5, T6, T7, T8, T9, T10> p) {
+            return new P10<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
+        public <T3, T4, T5, T6, T7, T8, T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P9<F, T3, T4, T5, T6, T7, T8, T9, T10, T11> p) {
+            return new P11<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9);
+        }
+
+        public <T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P10<F, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> p) {
+            return new P12<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10);
+        }
+
+        public <T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P11<F, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11);
+        }
+
+        public <T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P12<F, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12);
+        }
+
+        public <T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P13<F, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12, p.t13);
+        }
+
+        public <T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P14<F, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12, p.t13, p.t14);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final BiFunction<T1, T2, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -129,6 +193,38 @@ public interface Products {
             return new P8<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5);
         }
 
+        public <T4, T5, T6, T7, T8, T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final P6<F, T4, T5, T6, T7, T8, T9> p) {
+            return new P9<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T4, T5, T6, T7, T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P7<F, T4, T5, T6, T7, T8, T9, T10> p) {
+            return new P10<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
+        public <T4, T5, T6, T7, T8, T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P8<F, T4, T5, T6, T7, T8, T9, T10, T11> p) {
+            return new P11<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
+        public <T4, T5, T6, T7, T8, T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P9<F, T4, T5, T6, T7, T8, T9, T10, T11, T12> p) {
+            return new P12<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9);
+        }
+
+        public <T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P10<F, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10);
+        }
+
+        public <T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P11<F, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11);
+        }
+
+        public <T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P12<F, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12);
+        }
+
+        public <T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P13<F, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12, p.t13);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function3<T1, T2, T3, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -160,6 +256,38 @@ public interface Products {
             return new P8<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4);
         }
 
+        public <T5, T6, T7, T8, T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final P5<F, T5, T6, T7, T8, T9> p) {
+            return new P9<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T5, T6, T7, T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P6<F, T5, T6, T7, T8, T9, T10> p) {
+            return new P10<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T5, T6, T7, T8, T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P7<F, T5, T6, T7, T8, T9, T10, T11> p) {
+            return new P11<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
+        public <T5, T6, T7, T8, T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P8<F, T5, T6, T7, T8, T9, T10, T11, T12> p) {
+            return new P12<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
+        public <T5, T6, T7, T8, T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P9<F, T5, T6, T7, T8, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9);
+        }
+
+        public <T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P10<F, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10);
+        }
+
+        public <T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P11<F, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11);
+        }
+
+        public <T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P12<F, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11, p.t12);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function4<T1, T2, T3, T4, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -188,6 +316,38 @@ public interface Products {
             return new P8<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3);
         }
 
+        public <T6, T7, T8, T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final P4<F, T6, T7, T8, T9> p) {
+            return new P9<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T6, T7, T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P5<F, T6, T7, T8, T9, T10> p) {
+            return new P10<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T6, T7, T8, T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P6<F, T6, T7, T8, T9, T10, T11> p) {
+            return new P11<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T6, T7, T8, T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P7<F, T6, T7, T8, T9, T10, T11, T12> p) {
+            return new P12<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
+        public <T6, T7, T8, T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P8<F, T6, T7, T8, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
+        public <T6, T7, T8, T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P9<F, T6, T7, T8, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9);
+        }
+
+        public <T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P10<F, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10);
+        }
+
+        public <T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P11<F, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10, p.t11);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function5<T1, T2, T3, T4, T5, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -213,6 +373,38 @@ public interface Products {
             return new P8<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2);
         }
 
+        public <T7, T8, T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final P3<F, T7, T8, T9> p) {
+            return new P9<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3);
+        }
+
+        public <T7, T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P4<F, T7, T8, T9, T10> p) {
+            return new P10<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T7, T8, T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P5<F, T7, T8, T9, T10, T11> p) {
+            return new P11<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T7, T8, T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P6<F, T7, T8, T9, T10, T11, T12> p) {
+            return new P12<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T7, T8, T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P7<F, T7, T8, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
+        public <T7, T8, T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P8<F, T7, T8, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
+        public <T7, T8, T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P9<F, T7, T8, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9);
+        }
+
+        public <T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P10<F, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9, p.t10);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function6<T1, T2, T3, T4, T5, T6, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -235,6 +427,38 @@ public interface Products {
             return new P8<>(t1, t2, t3, t4, t5, t6, t7, t8);
         }
 
+        public <T8, T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final P2<F, T8, T9> p) {
+            return new P9<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2);
+        }
+
+        public <T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P3<F, T8, T9, T10> p) {
+            return new P10<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2, p.t3);
+        }
+
+        public <T8, T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P4<F, T8, T9, T10, T11> p) {
+            return new P11<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T8, T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P5<F, T8, T9, T10, T11, T12> p) {
+            return new P12<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T8, T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P6<F, T8, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T8, T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P7<F, T8, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
+        public <T8, T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P8<F, T8, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
+        public <T8, T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P9<F, T8, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8, p.t9);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function7<T1, T2, T3, T4, T5, T6, T7, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -254,6 +478,38 @@ public interface Products {
         App<F, T7> t7,
         App<F, T8> t8
     ) {
+        public <T9> P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(final App<F, T9> t9) {
+            return new P9<>(t1, t2, t3, t4, t5, t6, t7, t8, t9);
+        }
+
+        public <T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final P2<F, T9, T10> p) {
+            return new P10<>(t1, t2, t3, t4, t5, t6, t7, t8, p.t1, p.t2);
+        }
+
+        public <T9, T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P3<F, T9, T10, T11> p) {
+            return new P11<>(t1, t2, t3, t4, t5, t6, t7, t8, p.t1, p.t2, p.t3);
+        }
+
+        public <T9, T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P4<F, T9, T10, T11, T12> p) {
+            return new P12<>(t1, t2, t3, t4, t5, t6, t7, t8, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T9, T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P5<F, T9, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, t5, t6, t7, t8, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T9, T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P6<F, T9, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, t7, t8, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T9, T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P7<F, T9, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, t8, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
+        public <T9, T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P8<F, T9, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7, p.t8);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function8<T1, T2, T3, T4, T5, T6, T7, T8, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -274,6 +530,34 @@ public interface Products {
         App<F, T8> t8,
         App<F, T9> t9
     ) {
+        public <T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(final App<F, T10> t10) {
+            return new P10<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+        }
+
+        public <T10, T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final P2<F, T10, T11> p) {
+            return new P11<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, p.t1, p.t2);
+        }
+
+        public <T10, T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P3<F, T10, T11, T12> p) {
+            return new P12<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, p.t1, p.t2, p.t3);
+        }
+
+        public <T10, T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P4<F, T10, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T10, T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P5<F, T10, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T10, T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P6<F, T10, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
+        public <T10, T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P7<F, T10, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6, p.t7);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function9<T1, T2, T3, T4, T5, T6, T7, T8, T9, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -295,6 +579,30 @@ public interface Products {
         App<F, T9> t9,
         App<F, T10> t10
     ) {
+        public <T11> P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(final App<F, T11> t11) {
+            return new P11<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11);
+        }
+
+        public <T11, T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final P2<F, T11, T12> p) {
+            return new P12<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, p.t1, p.t2);
+        }
+
+        public <T11, T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P3<F, T11, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, p.t1, p.t2, p.t3);
+        }
+
+        public <T11, T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P4<F, T11, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T11, T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P5<F, T11, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
+        public <T11, T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P6<F, T11, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, p.t1, p.t2, p.t3, p.t4, p.t5, p.t6);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -317,6 +625,26 @@ public interface Products {
         App<F, T10> t10,
         App<F, T11> t11
     ) {
+        public <T12> P12<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> and(final App<F, T12> t12) {
+            return new P12<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12);
+        }
+
+        public <T12, T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final P2<F, T12, T13> p) {
+            return new P13<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, p.t1, p.t2);
+        }
+
+        public <T12, T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P3<F, T12, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, p.t1, p.t2, p.t3);
+        }
+
+        public <T12, T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P4<F, T12, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, p.t1, p.t2, p.t3, p.t4);
+        }
+
+        public <T12, T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P5<F, T12, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, p.t1, p.t2, p.t3, p.t4, p.t5);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -340,6 +668,22 @@ public interface Products {
         App<F, T11> t11,
         App<F, T12> t12
     ) {
+        public <T13> P13<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> and(final App<F, T13> t13) {
+            return new P13<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13);
+        }
+
+        public <T13, T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final P2<F, T13, T14> p) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, p.t1, p.t2);
+        }
+
+        public <T13, T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P3<F, T13, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, p.t1, p.t2, p.t3);
+        }
+
+        public <T13, T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P4<F, T13, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, p.t1, p.t2, p.t3, p.t4);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -364,6 +708,18 @@ public interface Products {
         App<F, T12> t12,
         App<F, T13> t13
     ) {
+        public <T14> P14<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> and(final App<F, T14> t14) {
+            return new P14<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14);
+        }
+
+        public <T14, T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final P2<F, T14, T15> p) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, p.t1, p.t2);
+        }
+
+        public <T14, T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P3<F, T14, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, p.t1, p.t2, p.t3);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -389,6 +745,14 @@ public interface Products {
         App<F, T13> t13,
         App<F, T14> t14
     ) {
+        public <T15> P15<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> and(final App<F, T15> t15) {
+            return new P15<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15);
+        }
+
+        public <T15, T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final P2<F, T15, T16> p) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, p.t1, p.t2);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, R> function) {
             return apply(instance, instance.point(function));
         }
@@ -415,6 +779,10 @@ public interface Products {
         App<F, T14> t14,
         App<F, T15> t15
     ) {
+        public <T16> P16<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> and(final App<F, T16> t16) {
+            return new P16<>(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16);
+        }
+
         public <R> App<F, R> apply(final Applicative<F, ?> instance, final Function15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, R> function) {
             return apply(instance, instance.point(function));
         }
