@@ -18,59 +18,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.mojang.serialization.TestUtils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CodecTests {
     private static final Codec<String> TO_LOWER_CASE = Codec.STRING.xmap(s -> s.toLowerCase(Locale.ROOT), s -> s.toLowerCase(Locale.ROOT));
-
-    private static <T> Object toJava(final Codec<T> codec, final T value) {
-        return codec.encodeStart(JavaOps.INSTANCE, value).getOrThrow(AssertionError::new);
-    }
-
-    private static <T> T fromJava(final Codec<T> codec, final Object value) {
-        return codec.parse(JavaOps.INSTANCE, value).getOrThrow(AssertionError::new);
-    }
-
-    private static <T> T fromJavaOrPartial(final Codec<T> codec, final Object value) {
-        return codec.parse(JavaOps.INSTANCE, value).getPartialOrThrow(AssertionError::new);
-    }
-
-    private static String fromJavaErrorMessage(final Codec<String> codec, final Object value) {
-        return codec.parse(JavaOps.INSTANCE, value).error().orElseThrow(AssertionError::new).message();
-    }
-
-    private static void assertFromJavaFails(final Codec<?> codec, final Object value) {
-        final DataResult<?> result = codec.parse(JavaOps.INSTANCE, value);
-        assertTrue("Expected data result error, but got: " + result.result(), result.isError());
-    }
-
-    private static void assertFromJavaFailsPartial(final Codec<?> codec, final Object value) {
-        final DataResult<?> result = codec.parse(JavaOps.INSTANCE, value);
-        assertTrue("Expected data result error, but got: " + result.resultOrPartial(), result.resultOrPartial().isEmpty());
-    }
-
-    private static <T> void assertToJavaFails(final Codec<T> codec, final T value) {
-        final DataResult<Object> result = codec.encodeStart(JavaOps.INSTANCE, value);
-        assertTrue("Expected data result error, but got: " + result.result(), result.isError());
-    }
-
-    private static <T> void assertRoundTrip(final Codec<T> codec, final T value, final Object java) {
-        assertEquals(
-            java,
-            toJava(codec, value)
-        );
-        assertEquals(
-            value,
-            fromJava(codec, java)
-        );
-    }
-
-    private static <T> void assertRoundTrips(final List<Codec<T>> codecs, final T value, final Object java) {
-        for (final Codec<T> codec : codecs) {
-            assertRoundTrip(codec, value, java);
-        }
-    }
 
     @Test
     public void unboundedMap_simple() {
