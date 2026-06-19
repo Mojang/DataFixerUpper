@@ -23,10 +23,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.annotation.Nullable;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -138,35 +136,40 @@ public final class RecursiveTypeFamily implements TypeFamily {
         return sType.unfold().findType(aType, bType, matcher, false).mapLeft(o -> o.castOuterUnchecked(sType, tType));
     }
 
+    private record EverywhereCacheKey(int index, TypeRewriteRule rule, PointFreeRule optimizationRule) {}
+    private final Map<EverywhereCacheKey, Optional<RewriteResult<?, ?>>> everywhereCache = new ConcurrentHashMap<>();
     public Optional<RewriteResult<?, ?>> everywhere(final int index, final TypeRewriteRule rule, final PointFreeRule optimizationRule) {
-        final Type<?> sourceType = apply(index).unfold();
-        final RewriteResult<?, ?> sourceView = DataFixUtils.orElse(sourceType.everywhere(rule, optimizationRule, false, false), RewriteResult.nop(sourceType));
-        final RecursivePoint.RecursivePointType<?> newType = buildMuType(sourceView.view().newType(), null);
-        final RecursiveTypeFamily newFamily = newType.family();
+        final EverywhereCacheKey key = new EverywhereCacheKey(index, rule, optimizationRule);
+        return everywhereCache.computeIfAbsent(key, k -> {
+            final Type<?> sourceType = apply(index).unfold();
+            final RewriteResult<?, ?> sourceView = DataFixUtils.orElse(sourceType.everywhere(rule, optimizationRule, false, false), RewriteResult.nop(sourceType));
+            final RecursivePoint.RecursivePointType<?> newType = buildMuType(sourceView.view().newType(), null);
+            final RecursiveTypeFamily newFamily = newType.family();
 
-        final List<RewriteResult<?, ?>> views = Lists.newArrayList();
-        boolean foundAny = false;
-        // FB -> B
-        for (int i = 0; i < size; i++) {
-            final RecursivePoint.RecursivePointType<?> type = apply(i);
-            final Type<?> unfold = type.unfold();
-            boolean nop1 = true;
-            // FB -> GB
-            final RewriteResult<?, ?> view = DataFixUtils.orElse(unfold.everywhere(rule, optimizationRule, false, true), RewriteResult.nop(unfold));
-            if (!view.view().isNop()) {
-                nop1 = false;
+            final List<RewriteResult<?, ?>> views = Lists.newArrayList();
+            boolean foundAny = false;
+            // FB -> B
+            for (int i = 0; i < size; i++) {
+                final RecursivePoint.RecursivePointType<?> type = apply(i);
+                final Type<?> unfold = type.unfold();
+                boolean nop1 = true;
+                // FB -> GB
+                final RewriteResult<?, ?> view = DataFixUtils.orElse(unfold.everywhere(rule, optimizationRule, false, true), RewriteResult.nop(unfold));
+                if (!view.view().isNop()) {
+                    nop1 = false;
+                }
+
+                final RecursivePoint.RecursivePointType<?> newMuType = buildMuType(view.view().newType(), newFamily);
+                final boolean nop = cap2(views, type, rule, optimizationRule, nop1, view, newMuType);
+                foundAny = foundAny || !nop;
             }
-
-            final RecursivePoint.RecursivePointType<?> newMuType = buildMuType(view.view().newType(), newFamily);
-            final boolean nop = cap2(views, type, rule, optimizationRule, nop1, view, newMuType);
-            foundAny = foundAny || !nop;
-        }
-        if (!foundAny) {
-            return Optional.empty();
-        }
-        final Algebra algebra = new ListAlgebra("everywhere", views);
-        final RewriteResult<?, ?> fold = fold(algebra, newFamily).apply(index);
-        return Optional.of(RewriteResult.create(View.create(fold.view().function()), fold.recData()));
+            if (!foundAny) {
+                return Optional.empty();
+            }
+            final Algebra algebra = new ListAlgebra("everywhere", views);
+            final RewriteResult<?, ?> fold = fold(algebra, newFamily).apply(index);
+            return Optional.of(RewriteResult.create(View.create(fold.view().function()), fold.recData()));
+        });
     }
 
     private <A, B> boolean cap2(final List<RewriteResult<?, ?>> views, final RecursivePoint.RecursivePointType<A> type, final TypeRewriteRule rule, final PointFreeRule optimizationRule, boolean nop, RewriteResult<?, ?> view, final RecursivePoint.RecursivePointType<B> newType) {
