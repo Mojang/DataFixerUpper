@@ -241,10 +241,10 @@ public record Sum(TypeTemplate f, TypeTemplate g) implements TypeTemplate {
         public <FT, FR> Either<TypedOptic<Either<F, G>, ?, FT, FR>, FieldNotFoundException> findTypeInChildren(final Type<FT> type, final Type<FR> resultType, final TypeMatcher<FT, FR> matcher, final boolean recurse) {
             final Either<TypedOptic<F, ?, FT, FR>, FieldNotFoundException> firstOptic = first.findType(type, resultType, matcher, recurse);
             final Either<TypedOptic<G, ?, FT, FR>, FieldNotFoundException> secondOptic = second.findType(type, resultType, matcher, recurse);
-            if (firstOptic.left().isPresent() && secondOptic.left().isPresent()) {
+            if (firstOptic.isLeft() && secondOptic.isLeft()) {
                 return Either.left(mergeOptics(firstOptic.left().get(), secondOptic.left().get()));
             }
-            if (firstOptic.left().isPresent()) {
+            if (firstOptic.isLeft()) {
                 return firstOptic.mapLeft(this::capLeft);
             }
             return secondOptic.mapLeft(this::capRight);
