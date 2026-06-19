@@ -10,6 +10,7 @@ import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.RewriteResult;
 import com.mojang.datafixers.TypedOptic;
 import com.mojang.datafixers.kinds.K1;
+import com.mojang.datafixers.optics.Optic;
 import com.mojang.datafixers.optics.Optics;
 import com.mojang.datafixers.types.Func;
 import com.mojang.datafixers.types.constant.EmptyPart;
@@ -21,15 +22,7 @@ import com.mojang.datafixers.types.templates.Sum;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -191,7 +184,7 @@ public interface PointFreeRule {
     enum SortProj implements CompRewrite {
         INSTANCE;
 
-        // (ap π1 f)◦(ap π2 g) -> (ap π2 g)◦(ap π1 f)
+        // (ap π2 g)◦(ap π1 f) -> (ap π1 f)◦(ap π2 g)
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof final Apply<?, ?> applyFirst && second instanceof final Apply<?, ?> applySecond) {
@@ -213,20 +206,22 @@ public interface PointFreeRule {
         }
 
         @SuppressWarnings("unchecked")
-        private <R, A, A2, B, B2> R cap(final Apply<?, ?> first, final Apply<?, ?> second) {
-            final ProfunctorTransformer<Pair<A, B2>, Pair<A2, B2>, A, A2> firstFunc = (ProfunctorTransformer<Pair<A, B2>, Pair<A2, B2>, A, A2>) (Object) first.func;
-            final ProfunctorTransformer<Pair<A, B>, Pair<A, B2>, B, B2> secondFunc = (ProfunctorTransformer<Pair<A, B>, Pair<A, B2>, B, B2>) (Object) second.func;
-            final PointFree<Function<A, A2>> firstArg = (PointFree<Function<A, A2>>) first.arg;
-            final PointFree<Function<B, B2>> secondArg = (PointFree<Function<B, B2>>) second.arg;
+        private <R, A, A2, B, B2, C1, C2, D1, D2> R cap(final Apply<?, ?> first, final Apply<?, ?> second) {
+            final Apply<Function<C1, D1>, Function<Pair<A2, B>, Pair<A2, B2>>> firstApply = (Apply<Function<C1, D1>, Function<Pair<A2, B>, Pair<A2, B2>>>) first;
+            final Apply<Function<C2, D2>, Function<Pair<A, B>, Pair<A2, B>>> secondApply = (Apply<Function<C2, D2>, Function<Pair<A, B>, Pair<A2, B>>>) second;
+            final ProfunctorTransformer<Pair<A2, B>, Pair<A2, B2>, C1, D1> firstFunc = (ProfunctorTransformer<Pair<A2, B>, Pair<A2, B2>, C1, D1>) firstApply.func;
+            final ProfunctorTransformer<Pair<A, B>, Pair<A2, B>, C2, D2> secondFunc = (ProfunctorTransformer<Pair<A, B>, Pair<A2, B>, C2, D2>) secondApply.func;
+            final PointFree<Function<C1, D1>> firstArg = firstApply.arg;
+            final PointFree<Function<C2, D2>> secondArg = secondApply.arg;
 
-            final Func<Pair<A, B2>, Pair<A2, B2>> firstType = (Func<Pair<A, B2>, Pair<A2, B2>>) first.type;
-            final Func<Pair<A, B>, Pair<A, B2>> secondType = (Func<Pair<A, B>, Pair<A, B2>>) second.type;
+            final Func<Pair<A2, B>, Pair<A2, B2>> firstType = (Func<Pair<A2, B>, Pair<A2, B2>>) firstApply.type;
+            final Func<Pair<A, B>, Pair<A2, B>> secondType = (Func<Pair<A, B>, Pair<A2, B>>) secondApply.type;
             final Product.ProductType<A, B> input = (Product.ProductType<A, B>) secondType.first();
             final Product.ProductType<A2, B2> output = (Product.ProductType<A2, B2>) firstType.second();
 
             return (R) new Comp<>(
-                new Apply<>(secondFunc.castOuterUnchecked(DSL.and(output.first(), input.second()), output), secondArg),
-                new Apply<>(firstFunc.castOuterUnchecked(input, DSL.and(output.first(), input.second())), firstArg)
+                new Apply<>(secondFunc.castOuterUnchecked(DSL.and(input.first(), output.second()), output), secondArg),
+                new Apply<>(firstFunc.castOuterUnchecked(input, DSL.and(input.first(), output.second())), firstArg)
             );
         }
     }
@@ -234,7 +229,7 @@ public interface PointFreeRule {
     enum SortInj implements CompRewrite {
         INSTANCE;
 
-        // (ap i1 f)◦(ap i2 g) -> (ap i2 g)◦(ap i1 f)
+        // (ap i2 g)◦(ap i1 f) -> (ap i1 f)◦(ap i2 g)
         @Override
         public Optional<? extends PointFree<? extends Function<?, ?>>> doRewrite(final PointFree<? extends Function<?, ?>> first, final PointFree<? extends Function<?, ?>> second) {
             if (first instanceof final Apply<?, ?> applyFirst && second instanceof final Apply<?, ?> applySecond) {
@@ -256,20 +251,22 @@ public interface PointFreeRule {
         }
 
         @SuppressWarnings("unchecked")
-        private <R, A, A2, B, B2> R cap(final Apply<?, ?> first, final Apply<?, ?> second) {
-            final ProfunctorTransformer<Either<A, B2>, Either<A2, B2>, A, A2> firstFunc = (ProfunctorTransformer<Either<A, B2>, Either<A2, B2>, A, A2>) (Object) first.func;
-            final ProfunctorTransformer<Either<A, B>, Either<A, B2>, B, B2> secondFunc = (ProfunctorTransformer<Either<A, B>, Either<A, B2>, B, B2>) (Object) second.func;
-            final PointFree<Function<A, A2>> firstArg = (PointFree<Function<A, A2>>) first.arg;
-            final PointFree<Function<B, B2>> secondArg = (PointFree<Function<B, B2>>) second.arg;
+        private <R, A, A2, B, B2, C1, C2, D1, D2> R cap(final Apply<?, ?> first, final Apply<?, ?> second) {
+            final Apply<Function<C1, D1>, Function<Either<A2, B>, Either<A2, B2>>> firstApply = (Apply<Function<C1, D1>, Function<Either<A2, B>, Either<A2, B2>>>) first;
+            final Apply<Function<C2, D2>, Function<Either<A, B>, Either<A2, B>>> secondApply = (Apply<Function<C2, D2>, Function<Either<A, B>, Either<A2, B>>>) second;
+            final ProfunctorTransformer<Either<A2, B>, Either<A2, B2>, C1, D1> firstFunc = (ProfunctorTransformer<Either<A2, B>, Either<A2, B2>, C1, D1>) firstApply.func;
+            final ProfunctorTransformer<Either<A, B>, Either<A2, B>, C2, D2> secondFunc = (ProfunctorTransformer<Either<A, B>, Either<A2, B>, C2, D2>) secondApply.func;
+            final PointFree<Function<C1, D1>> firstArg = firstApply.arg;
+            final PointFree<Function<C2, D2>> secondArg = secondApply.arg;
 
-            final Func<Either<A, B2>, Either<A2, B2>> firstType = (Func<Either<A, B2>, Either<A2, B2>>) first.type;
-            final Func<Either<A, B>, Either<A, B2>> secondType = (Func<Either<A, B>, Either<A, B2>>) second.type;
+            final Func<Either<A2, B>, Either<A2, B2>> firstType = (Func<Either<A2, B>, Either<A2, B2>>) firstApply.type;
+            final Func<Either<A, B>, Either<A2, B>> secondType = (Func<Either<A, B>, Either<A2, B>>) secondApply.type;
             final Sum.SumType<A, B> input = (Sum.SumType<A, B>) secondType.first();
             final Sum.SumType<A2, B2> output = (Sum.SumType<A2, B2>) firstType.second();
 
             return (R) new Comp<>(
-                new Apply<>(secondFunc.castOuterUnchecked(DSL.or(output.first(), input.second()), output), secondArg),
-                new Apply<>(firstFunc.castOuterUnchecked(input, DSL.or(output.first(), input.second())), firstArg)
+                new Apply<>(secondFunc.castOuterUnchecked(DSL.or(input.first(), output.second()), output), secondArg),
+                new Apply<>(firstFunc.castOuterUnchecked(input, DSL.or(input.first(), output.second())), firstArg)
             );
         }
     }
@@ -292,12 +289,13 @@ public interface PointFreeRule {
                     }
 
                     if (prefixSize == decomposedFirst.size() && prefixSize == decomposedSecond.size()) {
-                        return Optional.of(capApp(transformerFirst.optic, capComp(applyFirst.arg, applySecond.arg)));
+                        final TypedOptic<?, ?, ?, ?> mergedOptic = new TypedOptic<>(transformerFirst.optic.bounds(), mergeOptics(decomposedFirst, decomposedSecond));
+                        return Optional.of(capApp(mergedOptic, capComp(applyFirst.arg, applySecond.arg)));
                     }
 
                     final Set<TypeToken<? extends K1>> bounds = Sets.union(transformerFirst.optic.bounds(), transformerSecond.optic.bounds());
 
-                    final TypedOptic<?, ?, ?, ?> prefix = new TypedOptic<>(bounds, decomposedFirst.subList(0, prefixSize));
+                    final TypedOptic<?, ?, ?, ?> prefix = new TypedOptic<>(bounds, mergeOptics(decomposedFirst.subList(0, prefixSize), decomposedSecond.subList(0, prefixSize)));
                     final PointFree<?> firstFork = capApp(new TypedOptic<>(bounds, decomposedFirst.subList(prefixSize, decomposedFirst.size())), applyFirst.arg);
                     final PointFree<?> secondFork = capApp(new TypedOptic<>(bounds, decomposedSecond.subList(prefixSize, decomposedSecond.size())), applySecond.arg);
 
@@ -315,6 +313,33 @@ public interface PointFreeRule {
                 }
             }
             return size;
+        }
+
+        private static List<? extends TypedOptic.Element<?, ?, ?, ?>> mergeOptics(final List<? extends TypedOptic.Element<?, ?, ?, ?>> first, final List<? extends TypedOptic.Element<?, ?, ?, ?>> second) {
+            final int size = Math.min(first.size(), second.size());
+            final List<TypedOptic.Element<?, ?, ?, ?>> output = new ArrayList<>();
+            for (int i = 0; i < size; i++) {
+                final TypedOptic.Element<?, ?, ?, ?> firstElement = first.get(i);
+                final TypedOptic.Element<?, ?, ?, ?> secondElement = second.get(i);
+                if (firstElement.optic() != secondElement.optic()) {
+                    output.add(firstElement);
+                } else {
+                    output.add(mergeOpticUnchecked(firstElement, secondElement));
+                }
+            }
+            if (first.size() > second.size()) {
+                output.addAll(first.subList(size, first.size()));
+            } else if (second.size() > first.size()) {
+                output.addAll(second.subList(size, second.size()));
+            }
+            return output;
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <S, T, U, A, B, C> TypedOptic.Element<S, U, A, C> mergeOpticUnchecked(TypedOptic.Element<?, ?, ?, ?> first, TypedOptic.Element<?, ?, ?, ?> second) {
+            TypedOptic.Element<T, U, B, C> firstCasted = (TypedOptic.Element<T, U, B, C>) first;
+            TypedOptic.Element<S, T, A, B> secondCasted = (TypedOptic.Element<S, T, A, B>) second;
+            return new TypedOptic.Element<>(secondCasted.sType(), firstCasted.tType(), secondCasted.aType(), firstCasted.bType(), (Optic<?, S, U, A, C>) firstCasted.optic());
         }
 
         private <A, B, C> PointFree<Function<A, C>> capComp(final PointFree<?> f1, final PointFree<?> f2) {
