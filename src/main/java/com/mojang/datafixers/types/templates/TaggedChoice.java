@@ -237,7 +237,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
         public <FT, FR> Either<TypedOptic<Pair<K, ?>, ?, FT, FR>, FieldNotFoundException> findTypeInChildren(final Type<FT> type, final Type<FR> resultType, final TypeMatcher<FT, FR> matcher, final boolean recurse) {
             final Map<K, ? extends TypedOptic<?, ?, FT, FR>> optics = types.entrySet().stream()
                 .map(e -> Pair.of(e.getKey(), e.getValue().findType(type, resultType, matcher, recurse)))
-                .filter(e -> e.getSecond().left().isPresent())
+                .filter(e -> e.getSecond().isLeft())
                 .map(e -> e.mapSecond(o -> o.left().get()))
                 .collect(Pair.toMap())
                 ;

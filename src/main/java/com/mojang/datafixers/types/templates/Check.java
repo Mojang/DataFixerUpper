@@ -64,6 +64,7 @@ public record Check(String name, int index, TypeTemplate element) implements Typ
     @Override
     public IntFunction<RewriteResult<?, ?>> hmap(final TypeFamily family, final IntFunction<RewriteResult<?, ?>> function) {
         return index -> {
+            if (index != this.index) return RewriteResult.nop(apply(family).apply(index));
             final RewriteResult<?, ?> elementResult = element.hmap(family, function).apply(index);
             return cap(family, index, elementResult);
         };

@@ -427,14 +427,12 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
             final DataResult<B> rb = unbox(b);
 
             // for less recursion
-            if (fr.result().isPresent()
-                && ra.result().isPresent()
-                && rb.result().isPresent()
+            if (fr instanceof Success<BiFunction<A, B, R>> fs
+                && ra instanceof Success<A> sa
+                && rb instanceof Success<B> sb
             ) {
-                return new Success<>(fr.result().get().apply(
-                    ra.result().get(),
-                    rb.result().get()
-                ), fr.lifecycle().add(ra.lifecycle()).add(rb.lifecycle()));
+                return new Success<>(fs.value.apply(sa.value, sb.value),
+                    fr.lifecycle().add(ra.lifecycle()).add(rb.lifecycle()));
             }
 
             return Applicative.super.ap2(func, a, b);
@@ -448,16 +446,13 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
             final DataResult<T3> dr3 = unbox(t3);
 
             // for less recursion
-            if (fr.result().isPresent()
-                && dr1.result().isPresent()
-                && dr2.result().isPresent()
-                && dr3.result().isPresent()
+            if (fr instanceof Success<Function3<T1, T2, T3, R>> fs
+                && dr1 instanceof Success<T1> s1
+                && dr2 instanceof Success<T2> s2
+                && dr3 instanceof Success<T3> s3
             ) {
-                return new Success<>(fr.result().get().apply(
-                    dr1.result().get(),
-                    dr2.result().get(),
-                    dr3.result().get()
-                ), fr.lifecycle().add(dr1.lifecycle()).add(dr2.lifecycle()).add(dr3.lifecycle()));
+                return new Success<>(fs.value.apply(s1.value, s2.value, s3.value),
+                    fr.lifecycle().add(dr1.lifecycle()).add(dr2.lifecycle()).add(dr3.lifecycle()));
             }
 
             return Applicative.super.ap3(func, t1, t2, t3);
