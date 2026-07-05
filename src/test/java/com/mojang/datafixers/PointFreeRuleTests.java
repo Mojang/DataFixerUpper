@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 
 public class PointFreeRuleTests {
     @Test
-    public void projRules_sortedCorrectly() {
+    public void projRules_outputTypesCorrectly() {
         final PointFree<Function<String, List<String>>> firstFunc = Functions.fun("firstTerm", ops -> List::of, DSL.string(), DSL.list(DSL.string()));
         final PointFree<Function<Integer, Float>> secondFunc = Functions.fun("secondTerm", ops -> num -> num.floatValue() + 0.5F, DSL.intType(), DSL.floatType());
         final PointFree<Function<Pair<String, Integer>, Pair<List<String>, Float>>> twoThenOne =
@@ -79,7 +79,7 @@ public class PointFreeRuleTests {
     }
 
     @Test
-    public void injRules_sortedCorrectly() {
+    public void injRules_outputTypesCorrectly() {
         final PointFree<Function<String, List<String>>> firstFunc = Functions.fun("firstTerm", ops -> List::of, DSL.string(), DSL.list(DSL.string()));
         final PointFree<Function<Integer, Float>> secondFunc = Functions.fun("secondTerm", ops -> num -> num.floatValue() + 0.5F, DSL.intType(), DSL.floatType());
         final PointFree<Function<Either<String, Integer>, Either<List<String>, Float>>> twoThenOne =
@@ -140,7 +140,7 @@ public class PointFreeRuleTests {
     }
 
     @Test
-    public void lensComp_groupedCorrectly() {
+    public void lensComp_inputTypesCorrectly() {
 
         final PointFree<Function<Float, String>> firstFunc = Functions.fun("firstTerm", ops -> Object::toString, DSL.floatType(), DSL.string());
         final PointFree<Function<Integer, Float>> secondFunc = Functions.fun("secondTerm", ops -> num -> num.floatValue() + 0.5F, DSL.intType(), DSL.floatType());

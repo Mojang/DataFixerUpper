@@ -98,7 +98,7 @@ public class DataFixerTests {
     }
 
     @Test
-    public void test() {
+    public void datafixer_fixesNestedTypes() {
         final DataFixerBuilder builder = new DataFixerBuilder(300);
         final OldSchema oldSchema = new OldSchema();
         final NewSchema newSchema = new NewSchema(oldSchema);
