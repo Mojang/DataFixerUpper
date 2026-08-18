@@ -40,7 +40,7 @@ public interface BaseMapCodec<K, V> {
             }
         }
 
-        // failures and duplicates are rare, so it is okay to fall back to HashMap
+        // failures and duplicates are rare, so it is okay to fall back to linked HashMap
         // no failures: best performance
         // failure:     acceptable performance
         if (!anyDecodeFailure) {
