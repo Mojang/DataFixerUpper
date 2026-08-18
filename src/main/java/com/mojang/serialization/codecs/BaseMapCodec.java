@@ -13,7 +13,6 @@ import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.List;
 import java.util.Map;
