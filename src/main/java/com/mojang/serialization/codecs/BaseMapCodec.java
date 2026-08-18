@@ -11,6 +11,7 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
@@ -56,7 +57,7 @@ public interface BaseMapCodec<K, V> {
 
     // HashMap fallback to check for failures and duplicates
     private <T> DataResult<Map<K, V>> fallbackDecode(final DynamicOps<T> ops, final List<Pair<T, T>> pairs) {
-        final Object2ObjectMap<K, V> read = new Object2ObjectOpenHashMap<>();
+        final Object2ObjectMap<K, V> read = new Object2ObjectLinkedOpenHashMap<>();
         final Stream.Builder<Pair<T, T>> failed = Stream.builder();
 
         final DataResult<Unit> result = pairs.stream().reduce(
