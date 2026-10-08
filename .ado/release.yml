@@ -8,7 +8,7 @@ trigger:
 pr: none
 
 variables:
-  javaMajorVersion: 17
+  javaMajorVersion: 25
   rConnection: 'mc-java-sc'
   storageAccount: 'librariesminecraftnet'
   storageAccountContainer: 'librariesminecraftnet'
@@ -19,7 +19,9 @@ jobs:
   displayName: 'Build for release'
 
   pool: 'MC-Build-1ES-Azure-Pipeline-Linux'
-  container: mcr.microsoft.com/openjdk/jdk:17-ubuntu
+  container:
+    image: javaplatformacr.azurecr.io/mc-java-25-build-image
+    endpoint: javaplatformacr-sc
 
   workspace:
     clean: all
