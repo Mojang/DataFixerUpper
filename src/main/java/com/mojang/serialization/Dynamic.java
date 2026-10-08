@@ -7,7 +7,7 @@ import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Pair;
 
 import javax.annotation.CheckReturnValue;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
@@ -26,7 +26,7 @@ public class Dynamic<T> extends DynamicLike<T> {
         this(ops, ops.empty());
     }
 
-    public Dynamic(final DynamicOps<T> ops, @Nullable final T value) {
+    public Dynamic(final DynamicOps<T> ops, final @Nullable T value) {
         super(ops);
         this.value = value == null ? ops.empty() : value;
     }

@@ -17,7 +17,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntFunction;
@@ -50,7 +50,7 @@ public record Hook(TypeTemplate element, HookFunction preRead, HookFunction post
     }
 
     @Override
-    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, @Nullable final String name, final Type<FT> type, final Type<FR> resultType) {
+    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, final @Nullable String name, final Type<FT> type, final Type<FR> resultType) {
         return element.findFieldOrType(index, name, type, resultType);
     }
 

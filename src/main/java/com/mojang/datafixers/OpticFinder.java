@@ -5,7 +5,7 @@ package com.mojang.datafixers;
 import com.mojang.datafixers.types.Type;
 import com.mojang.datafixers.util.Either;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface OpticFinder<FT> {
     Type<FT> type();
@@ -16,7 +16,7 @@ public interface OpticFinder<FT> {
         return findType(containerType, type(), recurse);
     }
 
-    default <GT> OpticFinder<FT> inField(@Nullable final String name, final Type<GT> type) {
+    default <GT> OpticFinder<FT> inField(final @Nullable String name, final Type<GT> type) {
         final OpticFinder<FT> outer = this;
         return new OpticFinder<FT>() {
             @Override

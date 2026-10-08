@@ -10,7 +10,7 @@ import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -480,8 +480,7 @@ public class CodecTests {
             this.codec = codec;
         }
 
-        @Nullable
-        private static DispatchType lookup(final String name) {
+        private static @Nullable DispatchType lookup(final String name) {
             for (final DispatchType type : values()) {
                 if (type.getSerializedName().equals(name)) {
                     return type;
