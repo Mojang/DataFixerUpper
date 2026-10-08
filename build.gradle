@@ -3,10 +3,10 @@ apply plugin: 'maven-publish'
 
 group = 'com.mojang'
 version = project.hasProperty('buildNumber') ? "${project.majorMinor}.${project.buildNumber}" : "${project.majorMinor}.0-SNAPSHOT"
-def javaMajorVersion = project.hasProperty('javaMajorVersion') ? "${project.javaMajorVersion}" : "17"
 
-sourceCompatibility = "${javaMajorVersion}"
-targetCompatibility = "${javaMajorVersion}"
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
 
 buildscript {
     repositories {
@@ -37,7 +37,7 @@ dependencies {
 }
 
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
