@@ -188,7 +188,7 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
 
     static <E> Codec<E> stringResolver(final Function<E, String> toString, final Function<String, E> fromString) {
         return Codec.STRING.flatXmap(
-            name -> Optional.ofNullable(fromString.apply(name)).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Unknown element name:" + name)),
+            name -> Optional.ofNullable(fromString.apply(name)).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Unknown element name: " + name)),
             e -> Optional.ofNullable(toString.apply(e)).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Element with unknown name: " + e))
         );
     }
