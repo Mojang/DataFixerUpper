@@ -17,7 +17,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
@@ -54,7 +54,7 @@ public record Check(String name, int index, TypeTemplate element) implements Typ
     }
 
     @Override
-    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, @Nullable final String name, final Type<FT> type, final Type<FR> resultType) {
+    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, final @Nullable String name, final Type<FT> type, final Type<FR> resultType) {
         if (index == this.index) {
             return element.findFieldOrType(index, name, type, resultType);
         }

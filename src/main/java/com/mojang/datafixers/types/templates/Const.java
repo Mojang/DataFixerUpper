@@ -15,7 +15,7 @@ import com.mojang.datafixers.types.families.TypeFamily;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.IntFunction;
 
@@ -61,7 +61,7 @@ public record Const(Type<?> type) implements TypeTemplate {
     }
 
     @Override
-    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, @Nullable final String name, final Type<FT> type, final Type<FR> resultType) {
+    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, final @Nullable String name, final Type<FT> type, final Type<FR> resultType) {
         return DSL.fieldFinder(name, type).findType(this.type, resultType, false).mapLeft(field -> new Const(field.tType()));
     }
 

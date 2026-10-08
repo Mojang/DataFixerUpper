@@ -39,7 +39,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Map;
@@ -85,7 +85,7 @@ public final class TaggedChoice<K> implements TypeTemplate {
     }
 
     @Override
-    public <A, B> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, @Nullable final String name, final Type<A> type, final Type<B> resultType) {
+    public <A, B> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, final @Nullable String name, final Type<A> type, final Type<B> resultType) {
         return Either.right(new Type.FieldNotFoundException("Not implemented"));
     }
 

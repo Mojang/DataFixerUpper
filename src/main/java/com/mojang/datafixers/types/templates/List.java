@@ -17,7 +17,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Optional;
 import java.util.function.IntFunction;
 
@@ -64,7 +64,7 @@ public record List(TypeTemplate element) implements TypeTemplate {
     }
 
     @Override
-    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, @Nullable final String name, final Type<FT> type, final Type<FR> resultType) {
+    public <FT, FR> Either<TypeTemplate, Type.FieldNotFoundException> findFieldOrType(final int index, final @Nullable String name, final Type<FT> type, final Type<FR> resultType) {
         return element.findFieldOrType(index, name, type, resultType).mapLeft(List::new);
     }
 

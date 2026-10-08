@@ -13,15 +13,14 @@ import com.mojang.datafixers.types.templates.TaggedChoice;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 
 public final class FieldFinder<FT> implements OpticFinder<FT> {
-    @Nullable
-    private final String name;
+    private final @Nullable String name;
     private final Type<FT> type;
 
-    public FieldFinder(@Nullable final String name, final Type<FT> type) {
+    public FieldFinder(final @Nullable String name, final Type<FT> type) {
         this.name = name;
         this.type = type;
     }
@@ -57,11 +56,10 @@ public final class FieldFinder<FT> implements OpticFinder<FT> {
 
     private static final class Matcher<FT, FR> implements Type.TypeMatcher<FT, FR> {
         private final Type<FR> resultType;
-        @Nullable
-        private final String name;
+        private final @Nullable String name;
         private final Type<FT> type;
 
-        public Matcher(@Nullable final String name, final Type<FT> type, final Type<FR> resultType) {
+        public Matcher(final @Nullable String name, final Type<FT> type, final Type<FR> resultType) {
             this.resultType = resultType;
             this.name = name;
             this.type = type;

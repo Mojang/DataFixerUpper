@@ -10,7 +10,7 @@ import com.mojang.serialization.DynamicOps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,8 +22,7 @@ public abstract class DataFix {
 
     private final Schema outputSchema;
     private final boolean changesType;
-    @Nullable
-    private TypeRewriteRule rule;
+    private @Nullable TypeRewriteRule rule;
 
     public DataFix(final Schema outputSchema, final boolean changesType) {
         this.outputSchema = outputSchema;
