@@ -7,18 +7,8 @@ import com.mojang.datafixers.DataFixUtils;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
-import com.mojang.serialization.codecs.CompoundListCodec;
-import com.mojang.serialization.codecs.DispatchedMapCodec;
-import com.mojang.serialization.codecs.EitherCodec;
-import com.mojang.serialization.codecs.EitherMapCodec;
-import com.mojang.serialization.codecs.ListCodec;
-import com.mojang.serialization.codecs.OptionalFieldCodec;
-import com.mojang.serialization.codecs.PairCodec;
-import com.mojang.serialization.codecs.PairMapCodec;
-import com.mojang.serialization.codecs.PrimitiveCodec;
-import com.mojang.serialization.codecs.SimpleMapCodec;
-import com.mojang.serialization.codecs.UnboundedMapCodec;
-import com.mojang.serialization.codecs.XorCodec;
+import com.mojang.serialization.codecs.*;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -197,6 +187,10 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
         return new OptionalFieldCodec<>(name, elementCodec, lenient);
     }
 
+    static <F> MapCodec<@Nullable F> nullableField(final String name, final Codec<F> elementCodec, final boolean lenient) {
+        return new NullableFieldCodec<>(name, elementCodec, lenient);
+    }
+
     static <A> Codec<A> recursive(final String name, final Function<Codec<A>, Codec<A>> wrapped) {
         return new RecursiveCodec<>(name, wrapped);
     }
@@ -264,6 +258,54 @@ public interface Codec<A> extends Encoder<A>, Decoder<A> {
             Encoder.super.fieldOf(name),
             Decoder.super.fieldOf(name),
             () -> "Field[" + name + ": " + toString() + "]"
+        );
+    }
+
+    default MapCodec<@Nullable A> nullableFieldOf(final String name) {
+        return nullableField(name, this, false);
+    }
+
+    default MapCodec<@Nullable A> nullableFieldOf(final String name, final A defaultValue) {
+        return nullableFieldOf(name, defaultValue, false);
+    }
+
+    default MapCodec<@Nullable A> nullableFieldOf(final String name, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return nullableFieldOf(name, Lifecycle.experimental(), defaultValue, lifecycleOfDefault);
+    }
+
+    default MapCodec<@Nullable A> nullableFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
+        return nullableFieldOf(name, fieldLifecycle, defaultValue, lifecycleOfDefault, false);
+    }
+
+    default MapCodec<@Nullable A> lenientNullableFieldOf(final String name) {
+        return nullableField(name, this, true);
+    }
+
+    default MapCodec<@Nullable A> lenientNullableFieldOf(final String name, final A defaultValue) {
+        return nullableFieldOf(name, defaultValue, true);
+    }
+
+    default MapCodec<@Nullable A> lenientNullableFieldOf(final String name, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return nullableFieldOf(name, Lifecycle.experimental(), defaultValue, lifecycleOfDefault, true);
+    }
+
+    default MapCodec<@Nullable A> lenientNullableFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault) {
+        return nullableFieldOf(name, fieldLifecycle, defaultValue, lifecycleOfDefault, true);
+    }
+
+    private MapCodec<@Nullable A> nullableFieldOf(final String name, final A defaultValue, final boolean lenient) {
+        return nullableField(name, this, lenient).xmap(
+                o -> o == null ? defaultValue : o,
+                a -> Objects.equals(a, defaultValue) ? null : a
+        );
+    }
+
+    private MapCodec<@Nullable A> nullableFieldOf(final String name, final Lifecycle fieldLifecycle, final A defaultValue, final Lifecycle lifecycleOfDefault, final boolean lenient) {
+        // setting lifecycle to stable on the outside since it will be overriden by the passed parameters
+        return nullableField(name, this, lenient).stable().flatXmap(
+                o -> o == null ? DataResult.success(defaultValue, lifecycleOfDefault) : DataResult.success(o, fieldLifecycle),
+                a -> Objects.equals(a, defaultValue) ? DataResult.success(null, lifecycleOfDefault) : DataResult.success(a, fieldLifecycle)
         );
     }
 

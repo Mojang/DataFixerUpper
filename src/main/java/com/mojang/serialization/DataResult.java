@@ -42,11 +42,11 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
     }
 
     static <R> DataResult<R> error(final Supplier<String> message, final R partialResult, final Lifecycle lifecycle) {
-        return new Error<>(message, Optional.of(partialResult), lifecycle);
+        return new Error<>(message, Optional.ofNullable(partialResult), true, lifecycle);
     }
 
     static <R> DataResult<R> error(final Supplier<String> message, final Lifecycle lifecycle) {
-        return new Error<>(message, Optional.empty(), lifecycle);
+        return new Error<>(message, Optional.empty(), false, lifecycle);
     }
 
     static <K, V> Function<K, DataResult<V>> partialGet(final Function<K, V> partialGet, final Supplier<String> errorPrefix) {
@@ -137,7 +137,7 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
     record Success<R>(R value, Lifecycle lifecycle) implements DataResult<R> {
         @Override
         public Optional<R> result() {
-            return Optional.of(value);
+            return Optional.ofNullable(value);
         }
 
         @Override
@@ -152,12 +152,12 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
 
         @Override
         public Optional<R> resultOrPartial(final Consumer<String> onError) {
-            return Optional.of(value);
+            return Optional.ofNullable(value);
         }
 
         @Override
         public Optional<R> resultOrPartial() {
-            return Optional.of(value);
+            return Optional.ofNullable(value);
         }
 
         @Override
@@ -207,7 +207,7 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
             if (functionResult instanceof final Success<Function<R, R2>> funcSuccess) {
                 return new Success<>(funcSuccess.value.apply(value), combinedLifecycle);
             } else if (functionResult instanceof final Error<Function<R, R2>> funcError) {
-                return new Error<>(funcError.messageSupplier, funcError.partialValue.map(f -> f.apply(value)), combinedLifecycle);
+                return new Error<>(funcError.messageSupplier, funcError.hasPartial ? Optional.ofNullable(funcError.partialValue.orElse(null).apply(value)) : Optional.empty(), funcError.hasPartial, combinedLifecycle);
             } else {
                 throw new UnsupportedOperationException();
             }
@@ -250,6 +250,7 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
     record Error<R>(
         Supplier<String> messageSupplier,
         Optional<R> partialValue,
+        boolean hasPartial,
         Lifecycle lifecycle
     ) implements DataResult<R> {
         public String message() {
@@ -268,18 +269,18 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
 
         @Override
         public boolean hasResultOrPartial() {
-            return partialValue.isPresent();
+            return hasPartial;
         }
 
         @Override
         public Optional<R> resultOrPartial(final Consumer<String> onError) {
             onError.accept(messageSupplier.get());
-            return partialValue;
+            return hasPartial ? partialValue : Optional.empty();
         }
 
         @Override
         public Optional<R> resultOrPartial() {
-            return partialValue;
+            return hasPartial ? partialValue : Optional.empty();
         }
 
         @Override
@@ -289,8 +290,8 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
 
         @Override
         public <E extends Throwable> R getPartialOrThrow(final Function<String, E> exceptionSupplier) throws E {
-            if (partialValue.isPresent()) {
-                return partialValue.get();
+            if (hasPartial) {
+                return partialValue.orElse(null);
             }
             throw exceptionSupplier.apply(message());
         }
@@ -298,10 +299,10 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
         @Override
         @SuppressWarnings("unchecked")
         public <T> Error<T> map(final Function<? super R, ? extends T> function) {
-            if (partialValue.isEmpty()) {
+            if (!hasPartial) {
                 return (Error<T>) this;
             }
-            return new Error<>(messageSupplier, partialValue.map(function), lifecycle);
+            return new Error<>(messageSupplier, Optional.ofNullable(function.apply(partialValue.orElse(null))), true, lifecycle);
         }
 
         @Override
@@ -323,21 +324,21 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
         @Override
         public DataResult<R> promotePartial(final Consumer<String> onError) {
             onError.accept(messageSupplier.get());
-            return partialValue.<DataResult<R>>map(value -> new Success<>(value, lifecycle)).orElse(this);
+            return hasPartial ? new Success<>(partialValue.orElse(null), lifecycle) : this;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public <R2> Error<R2> flatMap(final Function<? super R, ? extends DataResult<R2>> function) {
-            if (partialValue.isEmpty()) {
+            if (!hasPartial) {
                 return (Error<R2>) this;
             }
-            final DataResult<R2> second = function.apply(partialValue.get());
+            final DataResult<R2> second = function.apply(partialValue.orElse(null));
             final Lifecycle combinedLifecycle = lifecycle.add(second.lifecycle());
             if (second instanceof final Success<R2> secondSuccess) {
-                return new Error<>(messageSupplier, Optional.of(secondSuccess.value), combinedLifecycle);
+                return new Error<>(messageSupplier, Optional.ofNullable(secondSuccess.value), true, combinedLifecycle);
             } else if (second instanceof final Error<R2> secondError) {
-                return new Error<>(() -> appendMessages(messageSupplier.get(), secondError.messageSupplier.get()), secondError.partialValue, combinedLifecycle);
+                return new Error<>(() -> appendMessages(messageSupplier.get(), secondError.messageSupplier.get()), secondError.partialValue, secondError.hasPartial, combinedLifecycle);
             } else {
                 // TODO: Replace with record pattern matching in Java 21
                 throw new UnsupportedOperationException();
@@ -348,11 +349,12 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
         public <R2> Error<R2> ap(final DataResult<Function<R, R2>> functionResult) {
             final Lifecycle combinedLifecycle = lifecycle.add(functionResult.lifecycle());
             if (functionResult instanceof final Success<Function<R, R2>> func) {
-                return new Error<>(messageSupplier, partialValue.map(func.value), combinedLifecycle);
+                return new Error<>(messageSupplier, hasPartial ? Optional.ofNullable(func.value.apply(partialValue.orElse(null))) : Optional.empty(), hasPartial, combinedLifecycle);
             } else if (functionResult instanceof final Error<Function<R, R2>> funcError) {
                 return new Error<>(
                     () -> appendMessages(messageSupplier.get(), funcError.messageSupplier.get()),
-                    partialValue.flatMap(a -> funcError.partialValue.map(f -> f.apply(a))),
+                    hasPartial && funcError.hasPartial ? Optional.ofNullable(funcError.partialValue.orElse(null).apply(partialValue.orElse(null))) : Optional.empty(),
+                    hasPartial && funcError.hasPartial,
                     combinedLifecycle
                 );
             } else {
@@ -368,12 +370,12 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
 
         @Override
         public Error<R> setPartial(final R partial) {
-            return new Error<>(messageSupplier, Optional.of(partial), lifecycle);
+            return new Error<>(messageSupplier, Optional.ofNullable(partial), true, lifecycle);
         }
 
         @Override
         public Error<R> mapError(final UnaryOperator<String> function) {
-            return new Error<>(() -> function.apply(messageSupplier.get()), partialValue, lifecycle);
+            return new Error<>(() -> function.apply(messageSupplier.get()), partialValue, hasPartial, lifecycle);
         }
 
         @Override
@@ -381,7 +383,7 @@ public sealed interface DataResult<R> extends App<DataResult.Mu, R> permits Data
             if (this.lifecycle.equals(lifecycle)) {
                 return this;
             }
-            return new Error<>(messageSupplier, partialValue, lifecycle);
+            return new Error<>(messageSupplier, partialValue, hasPartial, lifecycle);
         }
 
         @Override
