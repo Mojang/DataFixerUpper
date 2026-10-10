@@ -60,6 +60,14 @@ sourceSets {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+            'Automatic-Module-Name': 'com.mojang.dfu'
+        )
+    }
+}
+
 artifacts {
     archives jar
     archives sourcesJar
