@@ -11,9 +11,10 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -24,10 +25,41 @@ public interface BaseMapCodec<K, V> {
     Codec<V> elementCodec();
 
     default <T> DataResult<Map<K, V>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
-        final Object2ObjectMap<K, V> read = new Object2ObjectArrayMap<>();
+        final List<Pair<T, T>> pairs = input.entries().toList();
+
+        final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
+        boolean anyDecodeFailure = false;
+        for (final Pair<T, T> pair : pairs) {
+            final Optional<K> k = keyCodec().parse(ops, pair.getFirst()).result();
+            final Optional<V> v = elementCodec().parse(ops, pair.getSecond()).result();
+            if (k.isPresent() && v.isPresent()) {
+                builder.put(k.get(), v.get());
+            } else {
+                anyDecodeFailure = true;
+                break;
+            }
+        }
+
+        // failures and duplicates are rare, so it is okay to fall back to linked HashMap
+        // no failures: best performance
+        // failure:     acceptable performance
+        if (!anyDecodeFailure) {
+            try {
+                return DataResult.success(builder.buildOrThrow());
+            } catch (IllegalArgumentException duplicateKey) {
+                return fallbackDecode(ops, pairs);
+            }
+        }
+
+        return fallbackDecode(ops, pairs);
+    }
+
+    // HashMap fallback to check for failures and duplicates
+    private <T> DataResult<Map<K, V>> fallbackDecode(final DynamicOps<T> ops, final List<Pair<T, T>> pairs) {
+        final Object2ObjectMap<K, V> read = new Object2ObjectLinkedOpenHashMap<>();
         final Stream.Builder<Pair<T, T>> failed = Stream.builder();
 
-        final DataResult<Unit> result = input.entries().reduce(
+        final DataResult<Unit> result = pairs.stream().reduce(
             DataResult.success(Unit.INSTANCE, Lifecycle.stable()),
             (r, pair) -> {
                 final DataResult<K> key = keyCodec().parse(ops, pair.getFirst());
